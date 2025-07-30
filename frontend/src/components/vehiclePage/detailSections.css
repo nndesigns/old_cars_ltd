@@ -1,0 +1,235 @@
+/* SECTION STYLE (REGARDLESS OF PLACEMENT) */
+
+.section {
+          border: 1px solid black;
+          width: 100%;
+          margin-block: 4.5rem 3rem;
+
+          >.section_h3 {
+                    font-size: 1.7em;
+                    letter-spacing: -.25px;
+                    color: var(--primaryColor);
+                    margin-bottom: 1.25rem
+          }
+}
+
+
+
+/* ABOUT THE PRICE */
+.aboutPrice_main{
+          padding:1rem;
+          padding-bottom:24px;
+          border-radius:15px;
+          border: 2px solid lightgrey;
+
+          .priceDrop_box{
+              max-width: 9rem;;
+              /* border: 1px solid black; */
+
+
+              .priceDrop_btn {
+                    font-size:1em;
+                    border-radius: 30px;
+                    background-color: var(--moneyGreen);
+                    font-weight: 500;
+                    color: white;
+                    padding: .55rem .75rem;
+                    border: none;  
+                    margin-bottom: 1.35rem;      
+                     }
+              
+              .was_price{
+                    color: "grey";
+                    padding-left: .45rem;;
+
+                    .crossOut{
+                              text-decoration: line-through;
+                    }
+              }
+
+                    .actualPrice {
+                    color: var(--primaryColor);
+                    font-weight: 600;
+                    font-size: 1.3rem;
+                    display: flex;
+                    align-items: center;
+                    gap: .2rem;
+                    position:relative;
+
+                    svg{
+                       &:first-child{
+                         font-size: 2.25rem;
+                         fill:var(--moneyGreen);
+                         z-index:1;
+                      }
+                       &:nth-child(2){
+                          font-size: 1.2rem;
+                         fill: white;
+                         position:absolute;
+                         top:9px;
+                         left:.55rem;
+                         z-index: 2;
+                       }
+                    }
+              }
+          }
+          .aboutPrice_para{
+                    margin-top:1.5rem;
+          }
+    
+}
+
+/* OVERVIEW */
+.overview_grid{
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          grid-auto-rows: auto;
+          gap: .75rem; 
+
+          .grid_cell{
+                    display:flex;
+                    flex-direction: column;
+          }
+}
+
+.grid_cell >svg{
+          fill: var(--primaryColor);
+                    font-size: 2.75em;
+}
+
+h4.cell_title {
+          font-size: 1.2em;
+          color: var(--primaryColor);
+          letter-spacing: -1px;
+}
+
+.grid_para {
+          font-size: .9em;
+          margin-top: .15rem;
+          line-height: 1.5;
+          color: rgb(100, 100, 100);
+}
+
+
+.overview_grid_mobile > .grid_cell:nth-child(-n+3) {
+          display: flex;
+          flex-direction: row;
+          gap:1rem;
+          align-items: center;       
+          margin-bottom: 1rem;
+          padding-left: .5rem;
+}
+
+.overview_grid_mobile > .bottom_grid{
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          grid-auto-rows: auto;
+          gap: .75rem;
+
+          >.grid_cell{
+                    display:flex;
+                    gap:0;
+                    flex-direction: column;
+                    align-items: flex-start;
+          }
+}
+
+
+/* DELIVERY BOX */
+.delivery{
+          border-radius: 15px;
+          box-shadow: var(--boxShadow2);
+          padding: 1rem;
+          padding-bottom: 24px
+}
+
+.tabs_box {
+          position: sticky;
+          top: 0; 
+          background-color: white;
+          z-index: 3;
+          border: 1px solid orange;                             
+
+          >.tab_btn {
+                    padding: 26px 18px;
+                    font-weight: 550;
+                    font-size: 1.08rem;
+                    color: var(--iconColor);
+                    background-color: transparent;
+                    cursor: pointer;
+                    border: none;
+
+                    &.active {
+                              color: var(--invCardTitle);
+                    }
+          }
+
+          >.blueBar {
+                    display: block;
+                    position: relative;
+                    height: 5px;
+                    background-color: var(--invCardTitle);
+                    transition: width 0.23s ease-in-out, left 0.23s ease-in-out;
+          }
+
+          /* TABS DROPDOWN */
+          >.tabs_dropdown {
+                    height: 78px;
+                    border: 2px solid blue
+          }
+}
+
+.fullWidth_hr {
+          position: sticky;
+          /* top: 150px; static height of .tabs_box */
+          width: 100%;
+          box-shadow:
+                    0px 3px 4px rgba(0, 0, 0, 0.5),
+                    0px 8px 12px rgba(0, 0, 0, 0.3),
+                    0px 20px 24px rgba(0, 0, 0, 0.15),
+                    0px 30px 40px rgba(0, 0, 0, 0.08);      
+                    border-color: transparent;
+          height: 0px;
+}
+  
+
+
+
+
+
+          .top_grid {
+                    display: grid;
+                    grid-template-columns: 3fr 1fr;
+                    grid-template-rows: auto auto auto;
+                    margin-top: .65rem;
+                    column-gap: 1.75rem;
+
+
+
+                    .aboutPrice {
+                              grid-column: 1;
+                              grid-row: 1;
+                    }
+
+                    .overview {
+                              grid-column: 1;
+                              grid-row: 2;
+                    }
+
+                    .features {
+                              grid-column: 1;
+                              grid-row: 3;
+                    }
+
+                    .delivery {
+                              grid-column: 2;
+                              grid-row: 1 / span 3;
+                              /* Span all three rows */
+                              position: sticky;
+                              top: 5.4rem;
+
+                    }
+
+          }
+
+

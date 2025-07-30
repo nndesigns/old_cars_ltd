@@ -1,0 +1,206 @@
+
+.filter_root {
+          padding-top: .75rem;
+          width:100%;
+
+          > *{
+               margin-inline:16px;
+          }
+            }
+
+/********** SORT BY FILTER **********/
+.radioInputHidden {
+          display: none;
+}
+.radioLabelStyle{
+          display: flex;
+          align-items: center;
+          margin-bottom: 1rem;
+          margin-inline:0;
+          cursor: pointer;
+          font-size: .95em;
+}
+
+.customRadio {
+          height: 24px;
+          width: 24px;
+          border: 2px solid var(--iconColor);
+          border-radius: 50%;
+          position: relative;
+          margin-right: 12px;
+}
+/* UNCHECKED HOVER */
+.radioInputHidden:hover+.customRadio:after {
+          content: "";
+          position: absolute;
+          top: -12px;
+          left: -11.6725px;
+          width: 44px;
+          height: 44px;
+          background-color: rgba(56,111,165, .4);
+          border-radius: 50%;
+}
+/* CHECKED, NOT HOVERED STYLES */
+.radioInputHidden:checked + .customRadio:after{
+          content: "";
+          position: absolute;
+          top: -2px;
+          left: -2px;
+          width: 24px;
+          height: 24px;
+          border: 8px solid var(--iconColor);
+          background-color: none;
+          border-radius: 50%;
+}
+
+/*  CHECKED HOVERED - :AFTER */
+.radioInputHidden:checked:hover+.customRadio:after {
+          content: "";
+          position: absolute;
+          top: -18px;
+          left: -17.673px;
+          width: 44px;
+          height: 44px;
+          border: 10px solid rgba(56, 111, 165, .4);
+          background-color: transparent;
+          border-radius: 50%;
+}
+
+.radioInputHidden:checked:hover+.customRadio {
+          border: 8px solid var(--iconColor);
+}
+
+/********** MAKE FILTER **********/
+
+.checkboxes_container{
+
+          .custom_checkbox_label {
+               display: flex;
+               align-items: center;
+               text-transform: capitalize;
+               gap: 1.15rem;
+               margin-bottom: 2rem;
+               font-size: .95rem;
+               cursor: pointer;
+               border-radius: 6px;
+               transition: background-color 0.2s;
+          }
+
+          .custom_checkbox_input {
+               display: none;
+          }
+
+          .custom_checkbox_visual {
+               height: 24px;
+                    width: 24px;
+               border: 2px solid var(--iconColor);
+               border-radius: 2px;
+               background-color: white;
+               display: inline-block;
+               position: relative;
+               transition: background-color 0.2s, border-color 0.2s;
+          }
+
+          /* Show checkmark when checked */
+          .custom_checkbox_input:checked+.custom_checkbox_visual::after {
+               content: '✔';
+               position: absolute;
+               top: 50%;
+               left: 50%;
+               transform: translate(-50%, -50%);
+               font-size: 1rem;
+               color: white;
+          }
+
+          /* Customize checked background */
+          .custom_checkbox_input:checked+.custom_checkbox_visual {
+               background-color: var(--invCardTitle);
+               border-color: transparent;
+          }
+}
+
+/********** MODEL FILTER **********/
+.tab_headers {
+/* border: none; */
+     display:flex;
+     align-items: center;
+     overflow: scroll;
+     background-color: var(--tileBG);
+     /* width: 100%; */
+     margin-bottom: 1rem;
+     margin-inline: 0;
+     scrollbar-width: none;
+     -ms-overflow-style: none; 
+     padding-inline: 0px;
+     padding-block:0;
+
+     &::-webkit-scrollbar{
+          display:none;
+     }
+
+   
+
+      >button {
+          border:1px solid transparent;
+          font-size: 1rem;
+          color: var(--iconColor);
+          font-weight:600;
+          background: transparent;
+          padding: 12px 20px;
+          position: relative;
+          cursor: pointer;
+          text-wrap: nowrap;
+
+          &.scrollRightBtn, &.scrollLeftBtn{
+               /* border: 1px solid blue; */
+               position:absolute;
+               background: white;
+               cursor: pointer;
+               z-index:2;
+               padding: .7em
+          }
+          &.scrollRightBtn{
+           right:0; 
+          box-shadow: -6px 0 6px -2px rgba(0, 0, 0, 0.3);
+          border-top-left-radius: 8px;
+               border-bottom-left-radius: 8px;
+
+
+          }
+          &.scrollLeftBtn{
+           left: 0;    
+          box-shadow: 6px 0 6px -2px rgba(0, 0, 0, 0.3);
+          border-top-right-radius: 8px;
+               border-bottom-right-radius: 8px;
+          }
+
+          &:hover{
+               border: 1px solid lightgrey;
+               &.scrollRightBtn{
+                    border-right:1px solid transparent;
+               }
+          }
+
+
+          &.active{
+               color: var(--invCardTitle);
+               &::after {
+                         content: "";
+                         position: absolute;
+                         bottom: 0;
+                         left: 0;
+                         width: 100%;
+                         height: 5px;
+                         background-color: var(--invCardTitle);    }
+          }
+     
+     }
+
+}
+
+.makes_h4{
+  
+               margin-bottom: 1rem;
+      
+}
+

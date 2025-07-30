@@ -1,0 +1,217 @@
+
+.vehiclePage_center_box{
+          position:relative;
+          flex-direction: column;
+          align-items: center;
+          justify-content: unset;
+}
+
+
+.mc_top{
+          display: flex;
+          justify-content: space-between;
+}
+
+.like_calc_box{
+          position: relative;
+          display:flex;
+          gap:.5rem;
+          align-items: center;
+          height: min-content;
+}
+.favCountBubble{
+          position: absolute;
+          top: -1.12rem;
+          left: 1.12rem;
+          z-index: 5;
+          font-size: .9em;
+background-color: var(--invCardTitle);
+color: white;
+border-radius: 11px;
+padding: 2px 6px;
+}
+
+.like_calc_svg{
+height: 1.8rem;
+width:1.8rem;
+cursor:pointer;
+font-weight: 200;
+}
+
+h1.carTitle {
+         font-size: 1.7rem;
+          line-height: 30px;
+          font-weight: 600;
+          letter-spacing: -1.5px;
+}
+
+h3.carSubtitle {
+          letter-spacing: -.3px;
+         font-size: 1.2rem;
+          font-weight: 550;     
+ }
+
+ .vinCopyBtn {
+           padding: 0.9rem;
+           background-color: var(--tileBG);
+           color: rgb(126, 126, 126);
+           border-radius: 8px;
+           font-size: 0.8em;
+           border: none;
+           display: flex;
+           align-items: center;
+           gap: 0.5rem;
+           transition: background-color 0.14s ease;
+           margin-block: 1.2rem;
+
+           >svg{
+                    font-size: 1.5em;
+           }
+ }
+
+ .vinCopyBtn:hover {
+           cursor: pointer;
+           background-color: rgb(217, 217, 217);       }
+
+.vinCopiedSpan, .toggleLikeSpan{
+          position: /* absolute */fixed;
+          z-index: 50;
+          font-size: 1.2em;
+          letter-spacing: 1.1;
+          font-weight: 550;
+          bottom: 2rem;
+          padding: 1rem 2rem;
+          background-color: var(--btnBG);
+          border-radius: 13px;
+          color: white;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+
+          >a{
+               color: white;
+               text-decoration: none;  
+               margin-left: 1.5rem;   
+          }
+}
+/***** IMG SCROLL GALLERY *****/
+
+.gallery_wrapper{
+          position: relative;
+          width:100%;
+          height: 218px;          
+}
+.first_img_container {
+          height: 100%;
+          display: flex;
+           justify-content: center;
+          width: 290px;
+          overflow-x: clip;
+}
+
+.first_image{
+      height:100%;     
+}
+.image_grid{
+          display: grid;
+          gap: 5px;
+          grid-auto-flow: column;
+          grid-template-rows: 1fr 1fr;
+          grid-auto-columns: 190px;
+          scroll-snap-type: x mandatory;
+}
+.grid_item {
+          height: 104px;
+          overflow: hidden;
+}
+.grid_img {
+          object-fit: cover;
+          min-height: 100%;
+          object-position: center;
+          min-width: 190px;
+          max-width: 100%;
+
+}
+
+@media (min-width: 640px) {
+          .gallery_wrapper {
+                    height: 320px;
+          }
+
+          .first_img_container{
+                    width: unset;
+                    max-width:none;
+                    overflow-x: unset;
+                    justify-content:unset;
+          }
+          .image_grid{
+                    grid-auto-columns:240px
+          }
+          .grid_item {
+                    height: 155px;         
+          }
+          .grid_img{
+                     min-width: 240px;
+          }
+         h3.carSubtitle{
+          font-size: 1.4em;
+         }
+
+}
+
+@media (min-width: 900px) {
+          .gallery_wrapper {
+                    height: 350px;
+          }
+          .image_grid{
+                    grid-auto-columns:275px
+          }
+          .grid_item {
+                    height: 170px;        
+           }
+           .grid_img{
+                    min-width: 275px;
+           }
+             /* H1 */
+          h1.carTitle{
+                    font-size: 43px;
+                    line-height: 49px;
+          }
+
+}
+
+@media (min-width: 1200px) {
+          .gallery_wrapper {
+                    height: 476px;
+          }      
+          .image_grid{
+                    grid-auto-columns:305px;
+          }
+          .grid_item {
+          height: 233px;
+          }
+          .grid_img{
+                    min-width:305px;
+          }
+       
+}
+
+.gallery_root{
+          display: flex;
+          align-items: center;
+          width:100%;
+          padding-inline: 5px;
+          height: 100%;
+          overflow-x: scroll;
+          gap:5px;
+          scrollbar-width: none;
+          -ms-overflow-style: none; 
+}
+.gallery_root::-webkit-scrollbar{
+          display: none;
+}
+
+.first_image, .grid_img{
+          border-radius: 4px;
+}
+
+
+/******** ********/

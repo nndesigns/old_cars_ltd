@@ -1,0 +1,9 @@
+export { ReactComponent as SuvIcon } from "./sport-utilities.svg";
+export { ReactComponent as TruckIcon } from "./pickup-trucks.svg";
+export { ReactComponent as SedanIcon } from "./sedans.svg";
+export { ReactComponent as CoupeIcon } from "./coupes.svg";
+export { ReactComponent as SportsCarIcon } from "./sports-cars.svg";
+export { ReactComponent as ConvertibleIcon } from "./convertibles.svg";
+export { ReactComponent as LuxuryIcon } from "./luxury-vehicles.svg";
+export { ReactComponent as WagonIcon } from "./wagons.svg";
+export { ReactComponent as VanIcon } from "./vans.svg";

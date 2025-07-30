@@ -1,0 +1,377 @@
+
+
+
+.cars_content {
+          width: max-content !important;
+         padding-bottom: 2rem;
+          position: relative;
+          display: flex;
+          flex-direction: row;
+          padding-inline: 0px !important;
+          border: 1px solid lightgrey;
+        
+   
+          padding-right: 1rem;
+         scrollbar-width: none;
+            -ms-overflow-style: none;
+         
+            &::-webkit-scrollbar {
+               display: none;        }
+
+      
+}
+
+
+/*  LEFT PANEL */
+.left_panel{
+  
+   display: flex;
+   flex-direction: column;
+   position:sticky;
+   top: 0;
+   min-width: 320px;
+   max-width: 320px;
+  height: 100dvh;        
+   overflow: hidden;
+            
+            >button.filterSortBtn{
+              margin: 1.25em;
+              fill: var(--invCardTitle);
+              color: var(--invCardTitle);
+              letter-spacing: -.5px;
+              font-size: .985em;
+              font-weight: 600;
+              display: flex;
+              align-items: center;
+              width:max-content;
+              cursor: pointer;
+              background-color: transparent;
+              border: none ;
+
+             >svg{
+               margin-right: .75rem;
+              }
+              >span{
+               font-weight: 300;
+               margin-left: .2rem;
+              }
+          }
+
+          button.clearFilterBtn{
+            position:absolute;
+            top:1.2rem;
+            /* margin-top:1.25rem; */
+            background-color: transparent;
+            border: none;
+            text-decoration: underline;
+            font-size: .7em;
+            color: grey;
+            cursor:pointer
+          }
+          /* 'X' in mobile FilterPanel */
+          >svg{
+            font-size: 1.7rem;
+            position: absolute;
+            top: .7rem;
+            right: .85rem;
+            cursor: pointer
+
+          }
+          
+          hr{
+          
+             background-color: lightgrey;
+             border: none;
+             /* border-color: lightgray; */
+             z-index:5
+            
+          }
+          .saveSearch_box{
+                    position: relative;
+                    text-align: center;
+                    padding: 20px 12px;
+                    box-shadow: 0 6px 8px -6px rgba(0, 0, 0, 0.25);
+                    z-index: 10;
+                    min-height: 89px;
+
+                    p{
+                       font-size: .85rem;
+                       line-height:1.5;
+                       min-width:172px;   margin-bottom: .5rem    
+                    }
+          }
+}
+/* FILTER PILLS BOX */
+.filterPillsBox {
+   display: flex;
+   flex-wrap: wrap;
+   gap: .5rem;
+   padding-top:2px;
+   padding-inline: 1rem;
+   padding-bottom: 1.5rem;
+   align-items: flex-start;
+   max-height: 172px;
+   overflow: scroll;
+
+   >span.filterPill:hover {
+      background-color: #253132
+   }
+
+   >span.togglePill:hover {
+      background-color: #cfdbec;
+   }
+
+}
+
+.filterPill {
+   border-radius: 50px;
+   line-height: 1;
+   font-size: .9rem;
+   display: flex;
+   align-items: center;
+   white-space: nowrap;
+   gap: .25rem;
+   padding: .4rem;
+   padding-left: .7rem;
+   background-color: var(--iconColor);
+   color: white;
+   transition: background-color .2s ease-out;
+
+   &.togglePill {
+      background-color: var(--tileBG);
+      color: var(--invCardTitle);
+
+      >svg {
+         fill: var(--invCardTitle);
+      }
+   }
+
+   >svg {
+      font-size: 1.4em;
+      fill: white;
+   }
+
+   >svg:hover {
+      cursor: pointer;
+   }
+}
+
+/* SCROLL BOX (FILTER MENU & ACTIVE FILTER CONTAINER */
+
+.h3ClearWrapper{
+   display: inline-flex;
+   justify-content: space-between;
+   align-content: center;
+   padding: .5rem 1rem;
+}
+
+.activeFilter_h3{
+   letter-spacing: -.5px;
+}
+
+/* wrapping FilterMenu or Filter component */
+
+.scrollBox_filterMenu,
+.scrollBox_filter {
+   overflow-y: scroll;
+   flex-grow: 1;
+   position: relative;
+   scrollbar-gutter: stable;
+}
+.scrollBox_filterMenu{
+   width: 100%;
+  margin-bottom: 75px;
+  scrollbar-width: auto;
+
+ 
+
+/* FilterMenu */
+   >.filterMenuStyle{ 
+      width:100%;
+      position: absolute;
+      top: 0;
+      height: 108%;
+   }
+   
+}
+
+.scrollBox_filterMenu::-webkit-scrollbar {
+      width: 6px;
+}
+
+.scrollBox_filterMenu::-webkit-scrollbar-thumb {
+   background-color: var(--iconColor);
+   border-radius: 4px;
+}
+
+.scrollBox_filterMenu::-webkit-scrollbar-track {
+   background: transparent;}
+
+.scrollBox_filter{
+   width: 100%;
+}
+
+.filter_root {
+   width: 100%;
+   z-index: 4;
+   position: absolute;
+   top: 0;
+}
+
+@media(max-width: 820px){
+
+   .filterMenuStyle{
+      height:unset;
+      bottom: 4.3rem;
+   }
+
+   .filter_root{
+    bottom: 4.3rem;
+    overflow:scroll;
+   }
+}
+/* RIGHT PANEL  */
+.right_panel{
+         max-width: 1600px;
+         min-width: 0 ;
+          margin-left: 1rem;
+
+          & >*{
+            padding-right: 1rem;
+          }
+          
+         
+          h3{
+             letter-spacing: -.5px;
+             font-weight:700;
+          padding: 1.25rem;
+          padding-left: 0;
+          }
+
+          /*<CAROUSELS carStyle=true/> (root div)  */
+          >.wrapper_box {             
+               flex: 1;
+               padding-block: 3rem 2rem;
+               
+               border-radius: 20px;
+               background-color: var(--tileBG);
+               position: relative; 
+               display: flex;
+               align-items: center;
+               justify-content: space-between;
+
+               @media(max-width:820px){
+                  padding-right: 0px;
+               }
+          }
+}
+
+@media(max-width:820px){
+
+   .cars_content{
+      border-top: none;
+   }
+   .right_panel{
+         margin-left: 0;
+
+         h3{
+            padding: 1rem; 
+            border-block:  1px solid lightgrey;     
+         }
+
+         > .wrapper_box{
+                  border-radius: 0px;
+         }
+      }
+
+      .mobileFilterRowWrapper {
+         position: relative;
+         display: flex;
+         /* border: 1px solid red; */
+         padding-right: 1rem;
+
+         >button {
+            position: absolute;
+            z-index: 3;
+            cursor: pointer;
+            height: 100%;
+            padding: 10px;
+            border: none;
+            background: white;
+            box-shadow: none;
+
+            >svg {
+               font-size: large;
+
+            }
+         }
+
+         >button.scrollLeftBtn {
+            left: 0;
+            border-right: 1px solid lightgrey
+         }
+
+         >button.scrollRightBtn {
+            right: 0;
+            border-left: 1px solid lightgrey;
+         }
+
+
+         >.mobileFilterRow {
+            display: flex;
+            padding-block: .25rem;
+            padding-left: 1rem;
+            scrollbar-width: none;
+            overflow: scroll;
+
+            -ms-overflow-style: none;
+
+            &::-webkit-scrollbar {
+               display: none;
+            }
+
+            >.filterPillsBox {
+               min-width: max-content;
+               padding: 0;
+               flex-wrap: nowrap;
+
+            }
+
+            >button {
+               margin-left: .5rem;
+               border: none;
+               background-color: var(--tileBG);
+               color: var(--iconColor);
+               cursor: pointer;
+
+               >svg {
+                  fill: var(--iconColor);
+               }
+
+               &:hover {
+                  background-color: lightgrey;
+               }
+            }
+
+         }
+      }
+
+      .mobileFilterPanelFooter{
+         position:absolute;
+         z-index: 4;
+         background-color: white;
+         bottom:0;
+         width:100%;
+         padding-block: 10px;
+         box-shadow: var(--dropShadowTop);
+
+         > button{
+            display:block;
+            margin:  0 auto;
+            padding-inline: 3rem;
+            width: min-content
+         }
+      }
+
+                  
+}
