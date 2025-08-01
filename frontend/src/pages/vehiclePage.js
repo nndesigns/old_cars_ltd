@@ -118,6 +118,8 @@ const VehiclePage = ({ inventory }) => {
   if (!carData) {
     return <div>Vehicle not found</div>;
   }
+
+  // console.log("carData", carData);
   const isHearted = heartedCars.some((car) => car.id === carData.id);
 
   const handleCopyVin = () => {

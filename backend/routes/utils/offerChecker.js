@@ -1,4 +1,4 @@
-const db = require("../../config/db");
+/* const db = require("../../config/db");
 
 async function offerCheckerBatch(locationsArray) {
   if (!locationsArray.length) return {};
@@ -26,4 +26,30 @@ async function offerCheckerBatch(locationsArray) {
   }
   return resultMap;
 }
+module.exports = { offerCheckerBatch };
+ */
+
+async function offerCheckerBatch(locationsArray, inventoryData) {
+  if (!locationsArray.length) return {};
+
+  const resultMap = {};
+
+  // Create a Set of city_state keys to quickly look up
+  const targetKeys = new Set(
+    locationsArray.map(({ city, state }) => `${city}_${state}`)
+  );
+
+  // Filter inventory and count matches
+  for (const item of inventoryData) {
+    const key = `${item.city}_${item.state}`;
+    const status = String(item.status); // DynamoDB fields might come in as strings or numbers
+
+    if (targetKeys.has(key) && (status === "1" || status === 1)) {
+      resultMap[key] = (resultMap[key] || 0) + 1;
+    }
+  }
+
+  return resultMap;
+}
+
 module.exports = { offerCheckerBatch };

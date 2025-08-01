@@ -5,6 +5,11 @@ const csv = require("csv-parser");
 
 const { offerCheckerBatch } = require("./utils/offerChecker");
 
+//for calling new DynamoDB 'offerCheckerBatch'
+const { ScanCommand } = require("@aws-sdk/client-dynamodb");
+const { unmarshall } = require("@aws-sdk/util-dynamodb");
+const client = require("../config/dynamoClient");
+
 module.exports = function (app) {
   const zipData = [];
 
@@ -110,10 +115,17 @@ module.exports = function (app) {
     const radius = 30;
     let finalResults;
 
+    const command = new ScanCommand({
+      TableName: "Inventory_OldCarsLtd",
+    });
+    const response = await client.send(command);
+    const inventory = response.Items.map(unmarshall);
+
     // if >1 matches obj
     if (matches.length > 1) {
       //check 'inventory' table for unique 'city + state' records, return map (city_state: # of inv rows)
-      const matchOfferCounts = await offerCheckerBatch(matches);
+
+      const matchOfferCounts = await offerCheckerBatch(matches, inventory);
       //map offerCts to 'matches' (now 'enrichedMatches')
       //sorted by .offerCt values (most first)
       const enrichedMatches = matches
@@ -132,7 +144,10 @@ module.exports = function (app) {
           //use single 'matches' zipData obj's lat & long, to get all other zipData obj's (uniq city + state) w/in 'radius' (array)
           const nearbyCities = getNearbyCities(match, zipData, radius);
           //get map (city_state: # of inv rows) for nearbyCities
-          const nearbyOfferCounts = await offerCheckerBatch(nearbyCities);
+          const nearbyOfferCounts = await offerCheckerBatch(
+            nearbyCities,
+            inventory
+          );
 
           // console.log("nearbyOfferCounts", nearbyOfferCounts);
 

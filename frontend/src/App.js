@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 
-import axios from "axios";
+// import axios from "axios";
+
+//fetch Inventory from DynamoDB
+import { getInventory } from "./components/axiosCalls.js"; ////NEW INV API
 import {
   BrowserRouter as Router,
   Route,
@@ -151,11 +154,11 @@ function App() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Only dispatch location fetch once on mount
+  //  FETCH INVENTORY  Only dispatch location fetch once on mount
   useEffect(() => {
     if (inventory.length > 0) return;
     //if no invenotry
-    const fetchInventory = async () => {
+    /*     const fetchInventory = async () => {
       try {
         const response = await axios.get("http://localhost:5001/api/inventory");
         if (!_.isEqual(inventory, response.data)) {
@@ -164,9 +167,18 @@ function App() {
       } catch (err) {
         console.error("Error fetching inventory:", err);
       }
-    };
+    }; */
+    // fetchInventory();
+    async function fetchData() {
+      try {
+        const fetchedInventory = await getInventory();
+        setInventory(fetchedInventory);
+      } catch (err) {
+        console.error("Error loading inventory:", err);
+      }
+    }
 
-    fetchInventory();
+    fetchData();
   }, [inventory]);
 
   //GET USER LOCATION, SAVE TO REDUX

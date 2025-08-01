@@ -1,5 +1,6 @@
 const AWS = require("aws-sdk");
 const { URL } = require("url");
+const { ScanCommand } = require("@aws-sdk/client-dynamodb");
 
 const s3 = new AWS.S3({
   region: "us-east-2",
@@ -42,7 +43,7 @@ module.exports = (app) => {
     Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
       arr.slice(i * size, i * size + size)
     );
-
+  // GET MODEL IMAGES ROUTE
   app.post("/api/batch", async (req, res) => {
     const { modelIds, inv } = req.body;
 
@@ -106,6 +107,28 @@ module.exports = (app) => {
     } catch (error) {
       console.error("DynamoDB error:", error);
       res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // GET INVENTORY ROUTE
+  app.post("/api/inv", async (req, res) => {
+    try {
+      const command = new ScanCommand({
+        TableName: "Inventory_OldCarsLtd",
+      });
+
+      const response = await client.send(command);
+
+      // DynamoDB returns items in raw AttributeValue format (e.g., { S: "text" })
+      // Convert them to plain JS objects using unmarshall:
+      const { unmarshall } = require("@aws-sdk/util-dynamodb");
+
+      const items = response.Items.map(unmarshall); // now it's clean JSON
+
+      res.json(items); // returns array of objects
+    } catch (err) {
+      console.error("Error fetching inventory:", err);
+      res.status(500).json({ error: "Failed to fetch inventory" });
     }
   });
 };
