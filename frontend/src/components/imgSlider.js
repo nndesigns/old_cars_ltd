@@ -123,13 +123,26 @@ const ViewMoreSlide = styled(Box)(({ theme }) => ({
   },
 }));
 
-const ImgSlider = ({ urls, cardHoveredRef, favorites }) => {
+const ImgSlider = ({
+  urls,
+  // cardHoveredRef,
+  favorites,
+  isHovered,
+}) => {
+  useEffect(() => {
+    console.log("ImgSlider mounted");
+  }, []);
+
+  useEffect(() => {
+    console.log("ImgSlider props changed", { urls, isHovered });
+  }, [urls, isHovered]);
+
   const trackRef = useRef(null);
   const [animating, setAnimating] = useState(false);
 
   const [visualIndex, setVisualIndex] = useState(0);
   const transformStyle = `translateX(-${visualIndex * 100}%)`;
-  const [isHovered, setIsHovered] = useState(false);
+  // const [isHovered, setIsHovered] = useState(cardHoveredRef.current);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
 
   useEffect(() => {
@@ -162,14 +175,18 @@ const ImgSlider = ({ urls, cardHoveredRef, favorites }) => {
       setAnimating(false);
     }, 500);
   };
+  // when 22 InventoryCards are mapped in InventoryGrid, I get 22 'setInterval' handler took 115ms 'violations' , computer freezes
+  // useEffect(() => {
+  //   const id = setInterval(() => {
+  //     setIsHovered(cardHoveredRef.current);
+  //   }, 50); // poll every 50ms
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      setIsHovered(cardHoveredRef.current);
-    }, 50); // poll every 50ms
+  //   return () => clearInterval(id);
+  // }, [cardHoveredRef]);
 
-    return () => clearInterval(id);
-  }, [cardHoveredRef]);
+  // useEffect(() => {
+  //   setIsHovered(cardHoveredRef.current);
+  // }, [cardHoveredRef]);
 
   //// RETURN
   return (

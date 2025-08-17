@@ -72,7 +72,11 @@ const MobileFilterRow = ({
   };
 
   return (
-    <div className="mobileFilterRowWrapper" ref={mobileFilterRowWrapperRef}>
+    <div
+      className="mobileFilterRowWrapper"
+      ref={mobileFilterRowWrapperRef}
+      style={{ border: "2px solid purple" }}
+    >
       {!atScrollStart && isScrollable && (
         <button
           className="scrollLeftBtn"

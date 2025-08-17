@@ -1,7 +1,165 @@
+/* TABS BOX */
+.tabs_box {
+      position: sticky;
+      top: 0;
+      background-color: white;
+      z-index: 3;
+      display: flex;
+      width: 100%;
+
+      >.tab_li {
+            padding: 26px 18px;
+            position: relative;
+            font-weight: 550;
+            font-size: 1.08rem;
+            color: var(--iconColor);
+            background-color: transparent;
+            cursor: pointer;
+            border: none;
+            list-style-type: none;
+      }
+
+      /* TABS DROPDOWN */
+      >.dropdown_wrapper {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            height: 73px;
+
+            >.tabs_dropdown {
+                  width: 100%;
+                  height: 100%;
+
+                  >.dropdown-toggle {
+                        width: 100%;
+                        height: 100%;
+                        border: none;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding-inline: 1rem;
+                        cursor: pointer;
+                        font-weight: 600;
+                        font-size: 1em;
+                        background-color: transparent;
+                        color: grey;
+                  }
+
+                  >.dropdown-menu {
+                        list-style-type: none;
+                        background-color: white;
+
+                        padding: 1rem;
+                        border-radius: 20px;
+                        box-shadow: var(--boxShadow2);
+                        margin-left: 1rem;
+
+                        >.dropdown-item {
+                              cursor: pointer;
+                              font-weight: 600;
+                              padding-block: .5rem;
+                              padding-left: .5rem;
+
+                              &:hover {
+                                    background-color: var(--tileBG);
+                              }
+
+                        }
+                  }
+            }
+
+
+            >.second_child {
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  padding-inline: .5rem;
+                  height: 100%;
+
+                  border-left: 1px solid lightgrey;
+
+                  >* {
+                        transform: scale(.8);
+                  }
+            }
+
+      }
+}
+
+@media(max-width:900px) {
+      .tabs_box {
+            padding-inline: 0px !important;
+      }
+}
+
+
+
+div.fullWidth_div {
+      position: sticky;
+      top: 70px;
+      height: 1px;
+      width: 100%;
+      box-shadow:
+            0px 3px 4px rgba(0, 0, 0, 0.5),
+            0px 8px 12px rgba(0, 0, 0, 0.3),
+            0px 20px 24px rgba(0, 0, 0, 0.15),
+            0px 30px 40px rgba(0, 0, 0, 0.08);
+}
+
+
+.top_grid {
+      /* border: 1px solid blue; */
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      grid-template-rows: auto auto auto;
+      margin-top: .65rem;
+      column-gap: /* 1.75rem */4rem;
+
+
+
+      .aboutPrice {
+            grid-column: 1;
+            grid-row: 1;
+      }
+
+      .overview {
+            grid-column: 1;
+            grid-row: 2;
+      }
+
+      .features {
+            grid-column: 1;
+            grid-row: 3;
+      }
+
+      .delivery {
+            grid-column: 2;
+            grid-row: 1 / span 3;
+            /* Span all three rows */
+            position: sticky;
+            top: 5.4rem;
+      }
+
+}
+
+@media(max-width:765px) {
+      .top_grid {
+            display: flex;
+            flex-direction: column;
+
+            >.section {
+                  margin-block: 3.8rem 2rem;
+            }
+
+      }
+}
+
+
+
 /* SECTION STYLE (REGARDLESS OF PLACEMENT) */
 
 .section {
-          border: 1px solid black;
+          /* border: 1px solid black; */
           width: 100%;
           margin-block: 4.5rem 3rem;
 
@@ -11,6 +169,10 @@
                     color: var(--primaryColor);
                     margin-bottom: 1.25rem
           }
+}
+
+.features, .delivery{
+      margin-bottom:0;
 }
 
 
@@ -89,12 +251,17 @@
           .grid_cell{
                     display:flex;
                     flex-direction: column;
+
+                >svg{
+                  margin-bottom: .2rem;
+                }    
           }
 }
 
 .grid_cell >svg{
-          fill: var(--primaryColor);
-                    font-size: 2.75em;
+      fill: var(--invCardTitle);
+      font-size: 2.7em;
+      flex-shrink: 0;
 }
 
 h4.cell_title {
@@ -134,7 +301,6 @@ h4.cell_title {
           }
 }
 
-
 /* DELIVERY BOX */
 .delivery{
           border-radius: 15px;
@@ -143,93 +309,68 @@ h4.cell_title {
           padding-bottom: 24px
 }
 
-.tabs_box {
-          position: sticky;
-          top: 0; 
-          background-color: white;
-          z-index: 3;
-          border: 1px solid orange;                             
+/* FEATURES & SPECS */
+.features{
+      >p{
+            margin-bottom: 1.5rem;
+            margin-left:.25rem;
 
-          >.tab_btn {
-                    padding: 26px 18px;
-                    font-weight: 550;
-                    font-size: 1.08rem;
-                    color: var(--iconColor);
-                    background-color: transparent;
-                    cursor: pointer;
-                    border: none;
-
-                    &.active {
-                              color: var(--invCardTitle);
-                    }
-          }
-
-          >.blueBar {
-                    display: block;
-                    position: relative;
-                    height: 5px;
-                    background-color: var(--invCardTitle);
-                    transition: width 0.23s ease-in-out, left 0.23s ease-in-out;
-          }
-
-          /* TABS DROPDOWN */
-          >.tabs_dropdown {
-                    height: 78px;
-                    border: 2px solid blue
-          }
+      }
 }
 
-.fullWidth_hr {
-          position: sticky;
-          /* top: 150px; static height of .tabs_box */
-          width: 100%;
-          box-shadow:
-                    0px 3px 4px rgba(0, 0, 0, 0.5),
-                    0px 8px 12px rgba(0, 0, 0, 0.3),
-                    0px 20px 24px rgba(0, 0, 0, 0.15),
-                    0px 30px 40px rgba(0, 0, 0, 0.08);      
-                    border-color: transparent;
-          height: 0px;
+.features_img_box{
+      display: flex;
+      flex-direction: column;
+      align-items:center;
+      background: radial-gradient(circle,
+                        rgb(56, 111, 165) 0%,
+                        rgb(40, 80, 120) 100%);
+      border-radius:12px;
+      padding: 1.5rem;
+      color: white;
+      gap:1rem;
+      margin-bottom:2rem;
+
+      >* {
+                  flex: 1;
+            }
+      
+      >img{
+            width: 40%;
+      }
+      >.features_img_textBox{
+            text-align: center;
+              
+            >h4 {
+                        font-size: 1.8rem;
+                        font-weight: 550;
+                        letter-spacing: -.5px;
+                        margin-bottom: .5rem;
+                  }
+            >p{
+                  font-size: .9em
+            }
+      }
+      
 }
-  
+@media(min-width:900px){
+      .features_img_box{
+            flex-direction: row;
+            gap: 3rem;
+            padding: 3rem;
+            
+          
+            > .features_img_textBox {
+                    text-align: start;     }
+      }
+
+    
+}
 
 
-
-
-
-          .top_grid {
-                    display: grid;
-                    grid-template-columns: 3fr 1fr;
-                    grid-template-rows: auto auto auto;
-                    margin-top: .65rem;
-                    column-gap: 1.75rem;
-
-
-
-                    .aboutPrice {
-                              grid-column: 1;
-                              grid-row: 1;
-                    }
-
-                    .overview {
-                              grid-column: 1;
-                              grid-row: 2;
-                    }
-
-                    .features {
-                              grid-column: 1;
-                              grid-row: 3;
-                    }
-
-                    .delivery {
-                              grid-column: 2;
-                              grid-row: 1 / span 3;
-                              /* Span all three rows */
-                              position: sticky;
-                              top: 5.4rem;
-
-                    }
-
-          }
+.delivery{
+      height:max-content;
+      
+}
 
 

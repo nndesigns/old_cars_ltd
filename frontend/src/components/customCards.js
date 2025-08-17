@@ -158,8 +158,8 @@ const StyleCard = styled(Card, {
   // Apply conditional styles based on forCarsPage
   ...(forCarsPage && {
     backgroundColor: "none",
-    height: "9.75rem",
-    width: "9.75rem",
+    height: !showArrows ? "8.75rem" : "9.75rem",
+    width: !showArrows ? "8.75rem" : "9.75rem",
     display: "flex",
     flexDirection: "column",
     justifyContent: "flex-end",

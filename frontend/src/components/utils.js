@@ -268,3 +268,12 @@ export const formatPrice = (value) => {
     </>
   );
 };
+
+export const getUniqueStyles = (vehArr) => {
+  const uniqueStyles = [
+    ...new Set(
+      vehArr.flatMap((obj) => obj.style.split(",").map((s) => s.trim()))
+    ),
+  ];
+  return uniqueStyles;
+};

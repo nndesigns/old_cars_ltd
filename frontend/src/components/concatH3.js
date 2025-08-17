@@ -17,7 +17,7 @@ const pluralize = (word) => {
   return `${word}s`;
 };
 
-const ConcatH3 = ({ appliedFilters }) => {
+const ConcatH3 = ({ appliedFilters, noResults }) => {
   const {
     carSize,
     yearFrom,
@@ -46,7 +46,11 @@ const ConcatH3 = ({ appliedFilters }) => {
 
   // 2. Year Range
   if (yearFrom && yearTo) {
-    segments.push(`${yearFrom} - ${yearTo}`);
+    if (yearFrom === yearTo) {
+      segments.push(`${yearFrom}`);
+    } else {
+      segments.push(`${yearFrom} - ${yearTo}`);
+    }
   } else if (yearFrom) {
     segments.push(`${yearFrom} & newer`);
   } else if (yearTo) {
@@ -123,7 +127,9 @@ const ConcatH3 = ({ appliedFilters }) => {
     segments.push(`with ${formatList(cylinders.map(String), "or")} cylinders`);
 
   // Final label
-  const resultString = `Used ${segments.join(" ")} for sale`;
+  const resultString = noResults
+    ? `No used ${segments.join(" ")} available`
+    : `Used ${segments.join(" ")} for sale`;
 
   return (
     <h3
@@ -132,6 +138,8 @@ const ConcatH3 = ({ appliedFilters }) => {
         overflow: "hidden",
         textOverflow: "ellipsis",
         margin: 0,
+        fontSize: noResults ? "2em" : "",
+        paddingRight: noResults ? "0" : "",
       }}
       title={resultString} // Optional tooltip with full text
     >

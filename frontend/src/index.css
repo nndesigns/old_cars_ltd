@@ -142,6 +142,11 @@ p{
 
 @media (max-width:766px){
 
+  p{
+    font-size:.95em;
+    line-height:1.4
+  }
+
 .center_box .middle_content>h2.favorites_h2 {
     margin-block: 1rem;
    

@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useState } from "react";
 import { styled } from "@mui/material/styles";
 import Card from "@mui/joy/Card";
 import Box from "@mui/material/Box";
@@ -13,10 +13,12 @@ import { toggleHeart } from "../user/favoritesSlice";
 import { formatPrice } from "./utils.js";
 
 const InventoryCard = ({ carData, nearYou, favorites }) => {
-  const cardHoveredRef = useRef(false);
+  // const cardHoveredRef = useRef(false);
   const dispatch = useDispatch();
   const heartedCars = useSelector((state) => state.favorites.heartedCars);
   const isHearted = heartedCars.some((car) => car.id === carData.id); // or carData.stock
+
+  const [isHovered, setIsHovered] = useState(false);
 
   const navigate = useNavigate();
 
@@ -105,14 +107,19 @@ const InventoryCard = ({ carData, nearYou, favorites }) => {
   // console.log("memoizedUrls", memoizedUrls);
   return (
     <StyledCard
-      onMouseEnter={() => (cardHoveredRef.current = true)}
-      onMouseLeave={() => (cardHoveredRef.current = false)}
+      onMouseEnter={() =>
+        /* (cardHoveredRef.current = true) */ setIsHovered(true)
+      }
+      onMouseLeave={() =>
+        /* (cardHoveredRef.current = false) */ setIsHovered(false)
+      }
       onClick={() => navigate(`/car/${carData.id}`)}
     >
       <ImgSlider
         urls={memoizedUrls}
-        cardHoveredRef={cardHoveredRef}
-        // nearYou={nearYou}
+        // cardHoveredRef={cardHoveredRef}
+        isHovered={isHovered}
+        setIsHovered={setIsHovered}
         favorites={favorites}
       />
 

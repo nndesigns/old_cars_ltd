@@ -1,20 +1,39 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { styled } from "@mui/material/styles";
-import Box from "@mui/material/Box";
+import "./searchbar.css";
+import { useNavigate } from "react-router-dom";
+
 import { CiSearch } from "react-icons/ci";
-import SearchInput from "./searchInput.js";
-import { handleLocationSearch, handleInvSearch } from "./searchHandlers.js";
+import {
+  SearchInput,
+  InputWrapper,
+  InputWrapperBorder,
+  SearchBtn,
+} from "./searchInput.js";
+import {
+  handleLocationSearch,
+  handleInvSearch,
+  invStringSearch,
+  makeModelSearch,
+} from "./searchHandlers.js";
+import { Box } from "@mui/material";
+import Button from "../buttons/button.js";
 
 function Searchbar({
+  currentRoute,
   darkRoute,
   mode,
+  inv,
   locationFocusRef,
   locationValueRef,
+  setAppliedFilters,
+  setOrderedFilters,
+  handleClearFilters,
   ...props //setLocaObjs
 }) {
   const [border, setBorder] = useState(false);
   const isFocused = useRef(false);
   const inputRef = useRef(null); // element ref
+  // const listItemRef = useRef(null)
   const [invSearch, setInvSearch] = useState("");
   const [locationSearch, setLocationSearch] = useState(
     props.searchedValue //search from LCM?
@@ -24,20 +43,26 @@ function Searchbar({
       : ""
   );
 
+  //Invenotry Search
+  const [dropMatches, setDropMatches] = useState();
+  const [showDroplist, setShowDroplist] = useState(false);
+
+  const navigate = useNavigate();
+
   const activeSearch =
     mode === "location" || mode === "locationChange"
       ? locationSearch
       : invSearch;
+
   const setActiveSearch =
     // if it's either location modal, set 'locationSearch' useState
     mode === "location" || mode === "locationChange"
       ? setLocationSearch
       : setInvSearch;
-
+  // STYLE CHANGES
   const handleHover = () => {
     setBorder(true); // Or any action you want to take on hover
   };
-
   const handleMouseLeave = () => {
     if (isFocused.current) {
       return; //leave the border present
@@ -47,108 +72,111 @@ function Searchbar({
   };
 
   ///////// HANDLE ON BLUR (LocationModal Searchbar)
-  const handleOnBlur = () => {
+  const handleOnBlur = (e) => {
     setBorder(false);
     isFocused.current = false;
+    inputRef.current.blur();
+    setShowDroplist(false);
     if (locationFocusRef && locationFocusRef.current) {
       locationFocusRef.current = false;
     }
   };
   ///////// HANDLE FOCUS
-  const handleFocus = () => {
+  const handleFocus = (e) => {
     if (locationFocusRef) {
       //if focus ref was passed into SB as itself (NB > LM > SB)
       locationFocusRef.current = true; // set NB ref state to true
     }
     isFocused.current = true; //local comp focus Ref
+    if (!border) {
+      setBorder(true);
+    }
+    if (mode === "inventory" && inputRef.current.value.length > 0) {
+      handleSubmit(e.key);
+      setShowDroplist(true);
+    }
   };
   ///////// HANDLE CHANGE
   const handleChange = (e) => {
+    if (inputRef.current.value.length == 0) {
+      if (mode === "inventory") {
+        setShowDroplist(false);
+      }
+    }
     setActiveSearch(e.target.value);
   };
 
   ///////// HANDLE SUBMIT /////////////
-  const handleSubmit = useCallback(async () => {
-    if (mode === "location") {
-      //before setting the props.setShowLocationChangeModal useState to true,
-      if (locationSearch.length === 0) {
-        locationValueRef.current = ""; //reflect that in the Navbar useState
-      } else {
-        props.setShowLocationChangeModal(true); //update Navbar modal useState
-        locationValueRef.current = locationSearch; //assign curr search value to Navbar useRef (to shared  to LCM)
-        //RUN API  TO RETRIEVE LOC OBJS (from us_zips.csv)
+  const handleSubmit = useCallback(
+    async (key) => {
+      if (mode === "location") {
+        //before setting the props.setShowLocationChangeModal useState to true,
+        if (locationSearch.length === 0) {
+          locationValueRef.current = ""; //reflect that in the Navbar useState
+        } else {
+          props.setShowLocationChangeModal(true); //update Navbar modal useState
+          locationValueRef.current = locationSearch; //assign curr search value to Navbar useRef (to shared  to LCM)
+          //RUN API  TO RETRIEVE LOC OBJS (from us_zips.csv)
+          const results = await handleLocationSearch(locationSearch);
+          // console.log("results", results);
+          props.setLocObjs(results); //<-- assigns to locObjs Navbar useState
+        }
+      } else if (mode === "locationChange") {
+        locationValueRef.current = locationSearch;
+        //RUN API  TO RETRIEVE LOC OBJS
         const results = await handleLocationSearch(locationSearch);
         // console.log("results", results);
-        props.setLocObjs(results); //<-- assigns to locObjs Navbar useState
+        props.setLocObjs(results); //<-- parent Navbar useState update
+      } else {
+        if (key === "Enter") {
+          handleOnBlur();
+          if (inputRef.current.value.length) {
+            // invStringSearch(
+            //   navigate,
+            //   currentRoute,
+            //   setAppliedFilters,
+            //   setOrderedFilters,
+            //   handleClearFilters,
+            //   dropMatches,
+            //   inputRef.current.value
+            // );
+          }
+        } else {
+          // if key is not enter (ex; letter or backspace)
+          if (inputRef.current.value.length) {
+            const matches = handleInvSearch(invSearch, inv);
+            setDropMatches(matches);
+            setShowDroplist(true);
+          } else {
+            setShowDroplist(false);
+          }
+        }
       }
-    } else if (mode === "locationChange") {
-      locationValueRef.current = locationSearch;
-      //RUN API  TO RETRIEVE LOC OBJS
-      const results = await handleLocationSearch(locationSearch);
-      // console.log("results", results);
-      props.setLocObjs(results); //<-- parent Navbar useState update
-    } else {
-      // handleInvSearch(invSearch);
-    }
-  }, [mode, locationSearch, invSearch, locationValueRef, props]);
+    },
+    [mode, locationSearch, invSearch, inv, locationValueRef, props]
+  );
 
   useEffect(() => {
     //local focus ref is true & input rendered
     if (isFocused.current && inputRef.current) {
       inputRef.current.focus(); // keeps the input focused despite comp re-render ( w/ setActiveSearch() <-- search value change)
+      if (inputRef.current.value.length == 0) {
+        setShowDroplist(false);
+      }
     }
   }, [isFocused, activeSearch]); // Runs when isFocused state updates
 
-  const InputWrapper = styled(Box)(({ theme }) => ({
-    position: "relative",
-    border: "none",
-    height: "48px",
-    width: "100%",
-    padding: 0,
-    boxShadow: darkRoute ? "none" : "10px 10px 10px rgba(0,0,0,.2)",
-    borderRadius: "8px",
-    boxSizing: "border-box",
-  }));
-
-  const InputWrapperBorder = styled(Box, {
-    shouldForwardProp: (prop) => prop !== "darkRoute",
-  })(({ theme, darkRoute }) => ({
-    position: "absolute",
-    width: !darkRoute ? "calc(100% - 8px)" : "100%",
-    height: !darkRoute ? "calc(100% - 8px)" : "100%",
-    top: !darkRoute ? "4px" : "0",
-    left: !darkRoute ? "4px" : "0",
-    backgroundColor: "transparent",
-    outline: border
-      ? "2px solid var(--invCardTitle)"
-      : darkRoute
-      ? "1px solid lightGrey"
-      : "2px solid transparent",
-    paddingTop: 0,
-    borderRadius: "5px",
-    display: "flex",
-    transition: "outline 0.5s ease-in-out",
-    pointerEvents: "none",
-  }));
-
-  const SearchBtn = styled("button")(({ theme }) => ({
-    height: "48px" /*  "100%" */,
-    width: "100%",
-    verticalAlign: "middle",
-    display: "inline-block",
-    maxWidth: "57px",
-    border: "none",
-    backgroundColor: darkRoute ? "var(--tileBG)" : "white",
-    borderRadius: "0px 8px 8px 0px",
-    padding: "unset",
-    "&:hover": {
-      backgroundColor: "white",
-    },
-  }));
-
   return (
-    <InputWrapper onMouseEnter={handleHover} onMouseLeave={handleMouseLeave}>
-      <InputWrapperBorder darkRoute={darkRoute}></InputWrapperBorder>
+    <InputWrapper
+      onMouseEnter={handleHover}
+      onMouseLeave={handleMouseLeave}
+      darkRoute={darkRoute}
+    >
+      <InputWrapperBorder
+        darkRoute={darkRoute}
+        border={border}
+        showDroplist={showDroplist}
+      />
       <SearchInput
         darkRoute={darkRoute}
         border={border}
@@ -162,14 +190,23 @@ function Searchbar({
             ? "Search City or Zip"
             : "Search by make, model, or keyword"
         }
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            handleSubmit();
+        onKeyUp={(e) => {
+          if (mode === "location" || mode === "locationChange") {
+            if (e.key === "Enter") {
+              handleSubmit();
+            }
+          } else {
+            handleSubmit(e.key);
           }
         }}
+        showDroplist={showDroplist}
       />
       {/* SEARCH BTN */}
-      <SearchBtn onClick={handleSubmit}>
+      <SearchBtn
+        onClick={handleSubmit}
+        darkRoute={darkRoute}
+        showDroplist={showDroplist}
+      >
         <CiSearch
           style={{
             transform: "scale(1.6)",
@@ -177,6 +214,60 @@ function Searchbar({
           }}
         />
       </SearchBtn>
+      {showDroplist && (
+        <Box className="droplist">
+          <div className="droplist_item search_val">
+            Search for: "{inputRef.current.value}"
+          </div>
+          {Object.entries(dropMatches).map(
+            ([key, values]) =>
+              values.length > 0 && (
+                <div className="droplist_section" key={key}>
+                  <h3>{key}</h3>
+                  <ul>
+                    {values.slice(0, 7).map((item, index) => (
+                      <li
+                        className="droplist_item"
+                        key={index}
+                        onMouseDown={() => {
+                          makeModelSearch(
+                            navigate,
+                            currentRoute,
+                            setAppliedFilters,
+                            setOrderedFilters,
+                            handleClearFilters,
+                            key,
+                            item,
+                            inputRef,
+                            setInvSearch
+                          );
+                          handleOnBlur();
+                        }}
+                      >
+                        {key === "Model"
+                          ? item.display
+                          : key === "Year"
+                          ? item.display
+                          : item}
+                      </li>
+                    ))}
+                  </ul>
+                  {values.length > 7 && (
+                    <Button
+                      text={`View ${values.length - 7} more..`}
+                      outlineStyle2={true}
+                      style={{
+                        marginLeft: ".25rem",
+                        marginTop: ".5rem",
+                        transform: "scale(.85)",
+                      }}
+                    />
+                  )}
+                </div>
+              )
+          )}
+        </Box>
+      )}
     </InputWrapper>
   );
 }

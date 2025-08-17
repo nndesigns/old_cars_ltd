@@ -3,7 +3,13 @@ import Navbar from "./navbar.js";
 import Searchbar from "./searchbar/searchbar.js";
 import Box from "@mui/material/Box";
 
-const Header = ({ currentRoute, inv }) => {
+const Header = ({
+  currentRoute,
+  inv,
+  setAppliedFilters,
+  setOrderedFilters,
+  handleClearFilters,
+}) => {
   const bottomShadow = "0 8px 16px -4px rgba(0, 0, 0, 0.12)";
   const darkRoutes = ["favorites", "cars", "car"];
 
@@ -38,8 +44,13 @@ const Header = ({ currentRoute, inv }) => {
       >
         <Navbar darkRoute={darkRoutes.includes(currentRoute)} inv={inv} />
         <Searchbar
+          currentRoute={currentRoute}
           darkRoute={darkRoutes.includes(currentRoute)}
           mode="inventory"
+          inv={inv}
+          setAppliedFilters={setAppliedFilters}
+          setOrderedFilters={setOrderedFilters}
+          handleClearFilters={handleClearFilters}
         />
       </Box>
     </Box>

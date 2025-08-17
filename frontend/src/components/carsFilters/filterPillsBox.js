@@ -13,6 +13,8 @@ const capitalizeWords = (str) =>
 const FilterPillsBox = ({ appliedFilters, closePill, mobile }) => {
   const [showAll, setShowAll] = useState(false);
 
+  // console.log("appliedFilters red' in FilterPillsBox", appliedFilters);
+
   ////////////// ADJUST 'CLOSE PILL'  TO ACCOUNT FOR CLOSING A MODEL PILL CORRECTLY
 
   const formatPillLabel = ({ key, label }) => {
@@ -79,14 +81,25 @@ const FilterPillsBox = ({ appliedFilters, closePill, mobile }) => {
 
     // Handle year range
     if (hasYearFrom && hasYearTo) {
-      pills.push({
-        key: `yearRange-${yearFrom}-${yearTo}`,
-        label: `${yearFrom} - ${yearTo}`,
-        onClick: () => {
-          closePill("yearFrom", yearFrom);
-          closePill("yearTo", yearTo);
-        },
-      });
+      if (yearFrom === yearTo) {
+        pills.push({
+          key: `yearRange-${yearFrom}-${yearTo}`,
+          label: `${yearFrom}`,
+          onClick: () => {
+            closePill("yearFrom", yearFrom);
+            closePill("yearTo", yearTo);
+          },
+        });
+      } else {
+        pills.push({
+          key: `yearRange-${yearFrom}-${yearTo}`,
+          label: `${yearFrom} - ${yearTo}`,
+          onClick: () => {
+            closePill("yearFrom", yearFrom);
+            closePill("yearTo", yearTo);
+          },
+        });
+      }
     } else {
       if (hasYearFrom) {
         pills.push({

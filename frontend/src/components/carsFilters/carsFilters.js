@@ -102,21 +102,45 @@ function MakeFilter({
   orderedFilters,
   setOrderedFilters,
 }) {
+  //click handler took 292ms
   const handleCheckboxChange = (make) => {
-    setAppliedFilters((prevState) => {
-      const newMakes = prevState.makes.includes(make)
-        ? prevState.makes.filter((m) => m !== make)
-        : [...prevState.makes, make];
+    setAppliedFilters((prev) => {
+      let newMakes = [...prev.makes];
+      let newModels = { ...prev.Models };
+      let newStyles = [...prev.styles];
+      console.log("prev.styles", prev.styles);
+      //if prev AF.makes already includes rec'd 'make'
+      if (prev.makes.includes(make)) {
+        //then clicking meant 'remove', filter it out, reassign filtered out
+        newMakes = prev.makes.filter((m) => m !== make);
+        //if the removed make is a 'key' in prev.models obj
+        if (prev.models.hasOwnProperty(make)) {
+          const { [make]: _, ...modelsWithoutMake } = prev.models;
+          //reassign prev.models obj excluding that 'make' key entry
+          newModels = modelsWithoutMake;
+          //if removal made prev.models obj empty, remove 'models' from orderedFilters
+          if (Object.keys(modelsWithoutMake).length === 0) {
+            setOrderedFilters((prevOrdered) =>
+              prevOrdered.filter((item) => item !== "models")
+            );
+          }
+        }
+      } else {
+        //otherwise if it didn't, add it in, reassign added in
+        newMakes = [...prev.makes, make];
+      }
 
+      //if taken out & now it's empty, remove 'makes' orderedFilter
       if (newMakes.length === 0) {
         setOrderedFilters((prevOrdered) =>
           prevOrdered.filter((filter) => filter !== "makes")
         );
+        //otherwise if it's not empty & orderedFilters doesn't yet include 'makes', incude it
       } else if (!orderedFilters.includes("makes")) {
         setOrderedFilters([...orderedFilters, "makes"]);
       }
 
-      return { ...prevState, makes: newMakes };
+      return { ...prev, makes: newMakes, models: newModels, styles: newStyles };
     });
   };
 
@@ -424,7 +448,7 @@ function YearFilter({ options, setAppliedFilters, setOrderedFilters }) {
         range={range}
         setRange={setRange}
         yearOptions={yearOptions}
-        // adjCounts={computedRange.counts}
+        adjCounts={computedRange.counts}
         leftPanel={true}
         yearFilter={true}
         handleUpdateRange={handleUpdateRange}

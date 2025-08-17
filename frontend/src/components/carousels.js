@@ -339,11 +339,7 @@ const Carousels = ({
 
   return (
     <div className="wrapper_box" style={{ ...style }}>
-      {props.carsPage && (
-        <p style={{ position: "absolute", top: "2rem", left: "1.75rem" }}>
-          Shop by type
-        </p>
-      )}
+      {props.carsPage && <p>Shop by type</p>}
       {canScrollLeft &&
         (modelData || showArrows) &&
         (modelData || props.carStyles ? (
@@ -357,7 +353,6 @@ const Carousels = ({
         ))}
       {/******** CAROUSEL CONTAINER ********/}
       <Box
-        // className="makes_carousel"
         ref={scrollContainerRef}
         sx={carouselStyles({
           canScrollLeft,
@@ -393,7 +388,7 @@ const Carousels = ({
                 {/* CAR ICON - CHILD 1 */}
                 <AspectRatio
                   sx={{
-                    width: props.carsPage ? 120 : 130,
+                    width: props.carsPage ? (!showArrows ? 105 : 120) : 130,
                   }}
                 >
                   {item.icon && (

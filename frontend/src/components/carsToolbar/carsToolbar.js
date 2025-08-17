@@ -12,7 +12,7 @@ const CarsToolbar = ({
   below820,
   above375,
   setShowMobileFilterPanel,
-  activeFilterCount,
+  orderedFilterCount,
   setActiveFilter,
   sortCats,
   appliedFilters,
@@ -170,8 +170,8 @@ const CarsToolbar = ({
             <BsSliders style={{ fontSize: "1.3rem", marginRight: ".5rem" }} />
           )}{" "}
           Filters
-          {activeFilterCount > 0 && (
-            <span className="filterBtnSpan">{activeFilterCount}</span>
+          {orderedFilterCount > 0 && (
+            <span className="filterBtnSpan">{orderedFilterCount}</span>
           )}
         </button>
       )}

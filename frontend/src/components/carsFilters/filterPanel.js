@@ -11,7 +11,7 @@ import ClearAllBtn from "./clearAllBtn.js";
 const FilterPanel = ({
   activeFiltersList,
   setOrderedFilters,
-  activeFilterCount,
+  orderedFilterCount,
   appliedFilters,
   setAppliedFilters,
   closePill,
@@ -75,7 +75,7 @@ const FilterPanel = ({
         >
           <LuListFilter style={{ transform: "scale(1.25)" }} /> Filter & Sort{" "}
           <span style={{ opacity: activeFiltersList.length > 0 ? 1 : 0 }}>
-            ({activeFilterCount})
+            ({orderedFilterCount})
           </span>
         </button>
       )}
@@ -111,6 +111,8 @@ const FilterPanel = ({
             activeFilter={activeFilter}
             setActiveFilter={setActiveFilter}
             closePill={closePill}
+            // setAppliedFilters = {setAppliedFilters}
+            // setOrderedFilters={setOrderedFilters}
           />
         )
       )}
