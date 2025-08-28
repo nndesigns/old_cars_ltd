@@ -1,5 +1,6 @@
 import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
+import { drop } from "lodash";
 
 const SearchInput = styled("input", {
   shouldForwardProp: (prop) =>
@@ -14,12 +15,14 @@ const SearchInput = styled("input", {
   fontFamily: "Lato, sans-serif",
   letterSpacing: "-.25px",
   paddingLeft: "1rem",
+
   height: "100%",
   width: "calc(100% - 57px)",
-  borderRadius: "8px 0 0 8px",
+  borderRadius: showDroplist ? "8px 0 0 0" : "8px 0 0 8px",
   color: "var(--primaryColor)",
   borderTop: "none",
   paddingTop: "none",
+
   verticalAlign: "middle",
   display: "inline-block",
 
@@ -31,7 +34,7 @@ const SearchInput = styled("input", {
 
 // export default SearchInput;
 
-// Input wrapper (outer container)
+// Input wrapper (wraps input & button)
 const InputWrapper = styled(Box, {
   shouldForwardProp: (prop) => prop !== "darkRoute",
 })(({ darkRoute }) => ({
@@ -43,9 +46,10 @@ const InputWrapper = styled(Box, {
   boxShadow: darkRoute ? "none" : "10px 10px 10px rgba(0,0,0,.2)",
   borderRadius: "8px",
   boxSizing: "border-box",
+  // border: "2px solid green",
 }));
 
-// Border layer
+// Border layer (abs -pos'd box wrapping the input)
 const InputWrapperBorder = styled(Box, {
   shouldForwardProp: (prop) =>
     prop !== "darkRoute" && prop !== "border" && prop !== "showDroplist",
@@ -62,11 +66,21 @@ const InputWrapperBorder = styled(Box, {
     ? "1px solid lightGrey"
     : "2px solid transparent",
   paddingTop: 0,
-  borderRadius: showDroplist ? "5px 5px 0 0 " : "5px",
+  borderRadius: darkRoute && showDroplist ? "5px 5px 0 0 " : "5px",
   display: "flex",
   // transition: "outline 0.5s ease-in-out",
   pointerEvents: "none",
 }));
+
+const droplistStyle = ({ darkRoute }) => ({
+  marginLeft: darkRoute ? "-2px" : "0px",
+  borderLeft: darkRoute ? "2px solid var(--invCardTitle)" : "",
+  borderTop: "none",
+  borderBottom: darkRoute ? "2px solid var(--invCardTitle)" : "",
+  borderRight: darkRoute ? "2px solid var(--invCardTitle)" : "",
+  borderRadius: "0 0 8px 8px",
+  width: darkRoute ? "calc(100% + 4px)" : "100%",
+});
 
 // Search button
 const SearchBtn = styled("button", {
@@ -83,12 +97,20 @@ const SearchBtn = styled("button", {
       ? "white"
       : "var(--tileBG)"
     : "white",
-  borderRadius: "0px 8px 8px 0px",
+  borderRadius: showDroplist ? "0px 8px 0px 0px" : "0px 8px 8px 0px",
   padding: "unset",
   "&:hover": {
     backgroundColor: "white",
   },
 }));
 
+// instead of outline on the  droplist, create a 'droplist corralary to the inputWrapperBorder
+
 // ✅ Named exports
-export { SearchInput, InputWrapper, InputWrapperBorder, SearchBtn };
+export {
+  SearchInput,
+  InputWrapper,
+  InputWrapperBorder,
+  SearchBtn,
+  droplistStyle,
+};

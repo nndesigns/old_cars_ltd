@@ -76,9 +76,11 @@ const InventoryGrid = ({ cars, below820 /* , isMobile */ }) => {
         return;
       }
 
+      // console.log("newKeysToFetch", newKeysToFetch);
+
       try {
         setLoadingImages(true);
-        const imagesMap = await getModelImageURLs(newKeysToFetch, !!cars);
+        const imagesMap = await getModelImageURLs(newKeysToFetch, !!cars, true);
         setInvImagesMap((prev) => ({
           ...prev,
           ...imagesMap,

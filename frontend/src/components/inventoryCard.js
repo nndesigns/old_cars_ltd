@@ -11,81 +11,77 @@ import ImgSlider from "./imgSlider";
 import Heart from "./heart.js";
 import { toggleHeart } from "../user/favoritesSlice";
 import { formatPrice } from "./utils.js";
+import "./invCard.css";
+
+// CONTAINER
+const StyledCard = styled(Card, {
+  shouldForwardProp: (prop) => prop !== "nearYou",
+})(({ theme, nearYou }) => ({
+  padding: "0px",
+  position: "relative",
+  display: "flex",
+  flexDirection: "column",
+  gap: "0",
+  minWidth: nearYou ? "245px" : "",
+  overflow: "hidden",
+  transition:
+    "border 0.3s ease-in, transform .12s ease-in, boxShadow .3s ease-in",
+
+  "&:hover": {
+    cursor: "pointer",
+    border: "1px solid var(--btnBG)",
+  },
+}));
+//3-DOT BTN
+const MoreButton = styled("button")(() => ({
+  position: "absolute",
+  right: "10px",
+  bottom: "10.25rem",
+  padding: ".5rem .65rem",
+  borderRadius: "50%",
+  backgroundColor: "white",
+  border: "1px solid var(--greyBorder)",
+  transition: "border .2s ease",
+  zIndex: 2,
+
+  "& >svg": {
+    transition: "fill .2s ease",
+    fill: "grey",
+    fontSize: "1.25rem",
+    fontWeight: "100",
+  },
+
+  "&:hover": {
+    cursor: "pointer",
+    border: "1px solid var(--btnBG)",
+
+    "& >svg": {
+      fill: "var(--btnBG)",
+    },
+  },
+}));
+// IN BOTTOM BOX
+//CONTAINER
+const BottomBox = styled(Box)(({ theme, ...props }) => ({
+  padding: "1rem",
+
+  "& > *:not(:last-child)": {
+    marginBottom: ".8rem",
+  },
+}));
 
 const InventoryCard = ({ carData, nearYou, favorites }) => {
   // const cardHoveredRef = useRef(false);
   const dispatch = useDispatch();
   const heartedCars = useSelector((state) => state.favorites.heartedCars);
   const isHearted = heartedCars.some((car) => car.id === carData.id); // or carData.stock
-
   const [isHovered, setIsHovered] = useState(false);
 
   const navigate = useNavigate();
 
-  // const priceFormatter = function (value) {
-  //   return value.toLocaleString("en-US");
-  // };
-
-  // CONTAINER
-  const StyledCard = styled(Card)(({ theme }) => ({
-    padding: "0px",
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
-    gap: "0",
-    minWidth: nearYou ? "245px" : "",
-    overflow: "hidden",
-    transition:
-      "border 0.3s ease-in, transform .12s ease-in, boxShadow .3s ease-in",
-
-    "&:hover": {
-      cursor: "pointer",
-      border: "1px solid var(--btnBG)",
-    },
-  }));
-
-  //3-DOT BTN
-  const MoreButton = styled("button")(() => ({
-    position: "absolute",
-    right: "10px",
-    bottom: "10.25rem",
-    padding: ".5rem .65rem",
-    borderRadius: "50%",
-    backgroundColor: "white",
-    border: "1px solid var(--greyBorder)",
-    transition: "border .2s ease",
-    zIndex: 2,
-
-    "& >svg": {
-      transition: "fill .2s ease",
-      fill: "grey",
-      fontSize: "1.25rem",
-      fontWeight: "100",
-    },
-
-    "&:hover": {
-      cursor: "pointer",
-      border: "1px solid var(--btnBG)",
-
-      "& >svg": {
-        fill: "var(--btnBG)",
-      },
-    },
-  }));
-
   const toggleHeartClick = () => {
     dispatch(toggleHeart(carData));
   };
-
-  // IN BOTTOM BOX
-  //CONTAINER
-  const BottomBox = styled(Box)(({ theme, ...props }) => ({
-    padding: "1rem",
-
-    "& > *:not(:last-child)": {
-      marginBottom: ".8rem",
-    },
-  }));
 
   const titleStyle = {
     color: "var(--invCardTitle)",
@@ -101,12 +97,12 @@ const InventoryCard = ({ carData, nearYou, favorites }) => {
     if (!carData?.imageArray || carData.imageArray.length === 0) {
       return [noImage_img];
     }
-
     return carData.imageArray.slice(0, 5);
   }, [carData?.imageArray]);
-  // console.log("memoizedUrls", memoizedUrls);
+
   return (
     <StyledCard
+      nearYou={nearYou}
       onMouseEnter={() =>
         /* (cardHoveredRef.current = true) */ setIsHovered(true)
       }
@@ -119,8 +115,10 @@ const InventoryCard = ({ carData, nearYou, favorites }) => {
         urls={memoizedUrls}
         // cardHoveredRef={cardHoveredRef}
         isHovered={isHovered}
-        setIsHovered={setIsHovered}
+        // visualIndex={visualIndex}
+        // setVisualIndex={setVisualIndex}
         favorites={favorites}
+        nearYou={nearYou}
       />
 
       <Heart hearted={isHearted} onClick={toggleHeartClick} />

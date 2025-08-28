@@ -108,7 +108,6 @@ function MakeFilter({
       let newMakes = [...prev.makes];
       let newModels = { ...prev.Models };
       let newStyles = [...prev.styles];
-      console.log("prev.styles", prev.styles);
       //if prev AF.makes already includes rec'd 'make'
       if (prev.makes.includes(make)) {
         //then clicking meant 'remove', filter it out, reassign filtered out

@@ -33,7 +33,6 @@ import FilterPanel from "../components/carsFilters/filterPanel.js";
 // import { saveFilter } from "../user/filtersSlice";
 import MobileFilterRow from "../components/carsFilters/mobileFilterRow.js";
 import ConcatH3 from "../components/concatH3.js";
-import { getUniqueStyles } from "../components/utils";
 
 import {
   sortInventoryByDistance,
@@ -81,45 +80,8 @@ const Cars = ({
         )
     );
 
-  //NOTE : TRY TO MAKE  ORDERED FILTERS A USEREF INSTEAD, SO RESETTING WON'T CASUSE FILTER TO RE-RENDER W/ ONLY SELECTED OPTIONS.
+  //NOTE : TRY TO MAKE  ORDERED FILTERS A USEREF INSTEAD, SO RESETTING WON'T CAUSE FILTER TO RE-RENDER W/ ONLY SELECTED OPTIONS.
   const [filterStageArrays, setFilterStageArrays] = useState({});
-  // const cleanedOrderedFilters = useMemo(() => {
-  //   return orderedFilters.filter((key) => {
-  //     const value = appliedFilters[key];
-  //     return !(
-  //       value === undefined ||
-  //       value === null ||
-  //       value === "" ||
-  //       (Array.isArray(value) && value.length === 0) ||
-  //       (typeof value === "object" &&
-  //         !Array.isArray(value) &&
-  //         Object.keys(value).length === 0)
-  //     );
-  //   });
-  // }, [orderedFilters, appliedFilters]);
-
-  // const pillCount = useMemo(() => {
-  //   return Object.entries(appliedFilters)
-  //     .filter(([key, value]) => {
-  //       if (key === "sort") return false;
-  //       if (
-  //         value === undefined ||
-  //         value === null ||
-  //         value === "" ||
-  //         (Array.isArray(value) && value.length === 0) ||
-  //         (typeof value === "object" &&
-  //           !Array.isArray(value) &&
-  //           Object.keys(value).length === 0)
-  //       )
-  //         return false;
-  //       return true;
-  //     })
-  //     .reduce(
-  //       (count, [_, value]) =>
-  //         Array.isArray(value) ? count + value.length : count + 1,
-  //       0
-  //     );
-  // }, [appliedFilters]);
 
   // CATEGORIES FOR SORT FILTER
   const sortCats = [
@@ -178,27 +140,6 @@ const Cars = ({
 
   ///////  USE EFFECT REACTION TO filterState CHANGES (RESET matchesArray)
   useEffect(() => {
-    // console.log("CARS received orderedFilters", orderedFilters);
-    ////// Remove empty appliedFilters keys from orderedFilters ///////
-    /*  const cleanedOrderedFilters = orderedFilters.filter((key) => {
-      const value = appliedFilters[key];
-      return !(
-        value === undefined ||
-        value === null ||
-        value === "" ||
-        (Array.isArray(value) && value.length === 0) ||
-        (typeof value === "object" &&
-          !Array.isArray(value) &&
-          Object.keys(value).length === 0)
-      );
-    });
-
-    console.log("cleanedOrderedFilters", cleanedOrderedFilters);
-    // If cleaned list is different, update it:
-    if (cleanedOrderedFilters.length !== orderedFilters.length) {
-      setOrderedFilters(cleanedOrderedFilters);
-    } */
-
     let filtered = [...inventory];
     const newFilterStageArrays = {};
     //MAP OVER ORDERED FILTERS
@@ -236,13 +177,25 @@ const Cars = ({
           break;
 
         case "styles": //Body Type
-          filtered = filtered.filter(
+          /* filtered = filtered.filter(
             (item) =>
               item.style &&
               item.style
                 .split(",")
                 .map((s) => s.trim())
                 .some((s) => appliedFilters.styles.includes(s))
+          ); */
+          filtered = filtered.filter(
+            (item) =>
+              item.style &&
+              item.style
+                .split(",")
+                .map((s) => s.trim().toLowerCase())
+                .some((s) =>
+                  appliedFilters.styles.some(
+                    (filterStyle) => filterStyle.toLowerCase() === s
+                  )
+                )
           );
           break;
 
@@ -295,187 +248,6 @@ const Cars = ({
     dispatch,
     userLocation,
   ]);
-
-  // Update orderedFilters only if needed
-  // useEffect(() => {
-  //   if (cleanedOrderedFilters.length !== orderedFilters.length) {
-  //     setOrderedFilters(cleanedOrderedFilters);
-  //   }
-  // }, [cleanedOrderedFilters, orderedFilters]);
-
-  // Filter and sort inventory
-  // const { filteredInventory, computedFilterStageArrays } = useMemo(() => {
-  //   let filtered = [...inventory];
-  //   const newFilterStageArrays = {};
-
-  //   orderedFilters.forEach((filterKey) => {
-  //     newFilterStageArrays[filterKey] = [...filtered];
-  //     const value = appliedFilters[filterKey];
-  //     if (
-  //       value == null ||
-  //       value === "" ||
-  //       (Array.isArray(value) && value.length === 0)
-  //     )
-  //       return;
-
-  //     switch (filterKey) {
-  //       case "makes":
-  //         filtered = filtered.filter((car) => value.includes(car.make));
-  //         break;
-  //       case "models":
-  //         filtered = filtered.filter((car) => {
-  //           const selectedModelsForMake = value[car.make];
-  //           return selectedModelsForMake?.length
-  //             ? selectedModelsForMake.includes(car.model)
-  //             : appliedFilters.makes.includes(car.make);
-  //         });
-  //         break;
-  //       case "styles":
-  //         filtered = filtered.filter((car) =>
-  //           car.style
-  //             ?.split(",")
-  //             .map((s) => s.trim())
-  //             .some((s) => appliedFilters.styles.includes(s))
-  //         );
-  //         break;
-  //       case "minPrice":
-  //         filtered = filtered.filter((car) => car.price >= value);
-  //         break;
-  //       case "maxPrice":
-  //         filtered = filtered.filter((car) => car.price <= value);
-  //         break;
-  //       case "yearFrom":
-  //         filtered = filtered.filter((car) => car.year >= value);
-  //         break;
-  //       case "yearTo":
-  //         filtered = filtered.filter((car) => car.year <= value);
-  //         break;
-  //       case "mileage":
-  //         filtered = filtered.filter((car) => car.mileage <= value);
-  //         break;
-  //     }
-  //   });
-
-  //   // Sorting
-  //   switch (appliedFilters.sort) {
-  //     case "Best match":
-  //       filtered = sortInventoryByBestMatch(filtered, userLocation);
-  //       break;
-  //     case "Nearest distance":
-  //       filtered = sortInventoryByDistance(filtered, userLocation);
-  //       break;
-  //     case "Lowest price":
-  //       filtered.sort((a, b) => a.price - b.price);
-  //       break;
-  //     case "Highest price":
-  //       filtered.sort((a, b) => b.price - a.price);
-  //       break;
-  //     case "Lowest mileage":
-  //       filtered.sort((a, b) => a.mileage - b.mileage);
-  //       break;
-  //     case "Highest mileage":
-  //       filtered.sort((a, b) => b.mileage - a.mileage);
-  //       break;
-  //     case "Newest year":
-  //       filtered.sort((a, b) => b.year - a.year);
-  //       break;
-  //     case "Oldest year":
-  //       filtered.sort((a, b) => a.year - b.year);
-  //       break;
-  //   }
-
-  //   return {
-  //     filteredInventory: filtered,
-  //     computedFilterStageArrays: newFilterStageArrays,
-  //   };
-  // }, [orderedFilters, appliedFilters, inventory, userLocation]);
-  // const { filteredInventory, computedFilterStageArrays } = useMemo(() => {
-  //   let filtered = [...inventory];
-  //   const newFilterStageArrays = {};
-
-  //   orderedFilters.forEach((filterKey) => {
-  //     newFilterStageArrays[filterKey] = [...filtered]; // snapshot before filtering
-  //     const value = appliedFilters[filterKey];
-  //     if (!value || (Array.isArray(value) && value.length === 0)) return;
-
-  //     // Filter logic by type
-  //     switch (filterKey) {
-  //       case "makes":
-  //         filtered = filtered.filter((car) => value.includes(car.make));
-  //         break;
-  //       case "models":
-  //         filtered = filtered.filter((car) => {
-  //           const selectedModelsForMake = value[car.make];
-  //           return selectedModelsForMake?.length
-  //             ? selectedModelsForMake.includes(car.model)
-  //             : appliedFilters.makes.includes(car.make);
-  //         });
-  //         break;
-  //       case "styles":
-  //         filtered = filtered.filter((car) =>
-  //           car.style
-  //             ?.split(",")
-  //             .map((s) => s.trim())
-  //             .some((s) => appliedFilters.styles.includes(s))
-  //         );
-  //         break;
-  //       // Numeric ranges
-  //       case "minPrice":
-  //         filtered = filtered.filter((car) => car.price >= value);
-  //         break;
-  //       case "maxPrice":
-  //         filtered = filtered.filter((car) => car.price <= value);
-  //         break;
-  //       case "yearFrom":
-  //         filtered = filtered.filter((car) => car.year >= value);
-  //         break;
-  //       case "yearTo":
-  //         filtered = filtered.filter((car) => car.year <= value);
-  //         break;
-  //       case "mileage":
-  //         filtered = filtered.filter((car) => car.mileage <= value);
-  //         break;
-  //     }
-  //   });
-
-  //   // Sorting
-  //   switch (appliedFilters.sort) {
-  //     case "Lowest price":
-  //       filtered.sort((a, b) => a.price - b.price);
-  //       break;
-  //     case "Highest price":
-  //       filtered.sort((a, b) => b.price - a.price);
-  //       break;
-  //     case "Lowest mileage":
-  //       filtered.sort((a, b) => a.mileage - b.mileage);
-  //       break;
-  //     case "Highest mileage":
-  //       filtered.sort((a, b) => b.mileage - a.mileage);
-  //       break;
-  //     case "Newest year":
-  //       filtered.sort((a, b) => b.year - a.year);
-  //       break;
-  //     case "Oldest year":
-  //       filtered.sort((a, b) => a.year - b.year);
-  //       break;
-  //     case "Best match":
-  //       filtered = sortInventoryByBestMatch(filtered, userLocation);
-  //       break;
-  //     case "Nearest distance":
-  //       filtered = sortInventoryByDistance(filtered, userLocation);
-  //       break;
-  //   }
-
-  //   return {
-  //     filteredInventory: filtered,
-  //     computedFilterStageArrays: newFilterStageArrays,
-  //   };
-  // }, [orderedFilters, appliedFilters, inventory, userLocation]);
-
-  // useEffect(() => {
-  //   setMatchesArray(filteredInventory);
-  //   setFilterStageArrays(computedFilterStageArrays);
-  // }, [filteredInventory, computedFilterStageArrays]);
 
   /////////       FILTER COMPONENTS MAP      //////////
   //pass 'matchesArray' into here
@@ -700,7 +472,6 @@ const Cars = ({
         // For scalar or object filters (like mileage, yearFrom, etc.)
         newFilters[key] = null;
       }
-      console.log("newFilters", newFilters);
       return newFilters;
     });
 
@@ -808,7 +579,7 @@ const Cars = ({
               <div
                 className="no_results"
                 style={{
-                  height: "calc(100% - 8rem)",
+                  height: "45%",
                 }}
               >
                 <ConcatH3 appliedFilters={appliedFilters} noResults={true} />

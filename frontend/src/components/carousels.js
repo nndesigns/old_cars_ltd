@@ -40,7 +40,7 @@ import {
 import InventoryCard from "./inventoryCard.js";
 
 const Carousels = ({
-  styleTypes,
+  // styleTypes,
   makeData,
   lifestyle,
   modelData,
@@ -208,10 +208,15 @@ const Carousels = ({
         ...new Set(sourceData.map((obj) => `${obj.images.model_imgs_key}`)),
       ];
 
+      if (modelData) {
+        console.log("allModelImgKeys", allModelImgKeys);
+      }
+
       try {
         const imagesMap = await getModelImageURLs(
           allModelImgKeys,
-          !!invData // shorthand for: invData ? true : false
+          !!invData, // "was there an 'invData' arg? If not (false) then this is for 'model' imgs (cruise collection /home)"
+          true
         );
 
         if (Array.isArray(invData) && invData.length > 0) {
@@ -310,9 +315,6 @@ const Carousels = ({
   }, [lifestyle]);
 
   const handleCardClick = ({ value, filterType }) => {
-    console.log("value", value);
-    console.log("filterType", filterType);
-
     // if (filterType === "style") {
     //   props.setAppliedFilters((prev) => ({
     //     ...prev,

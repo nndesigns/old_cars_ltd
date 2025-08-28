@@ -28,7 +28,7 @@ const FilterPanel = ({
   const handleClearFilters = (mobile) => {
     const { sort, ...filtersWithoutSort } = defaultFilterState;
     const newApplied = {
-      sort: appliedFilters.sort,
+      sort: appliedFilters.sort, //keep the sort filter
       ...filtersWithoutSort,
     };
     setAppliedFilters(newApplied);

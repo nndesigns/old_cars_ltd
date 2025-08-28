@@ -13,6 +13,7 @@ const getKeyFromUrl = (url) => {
   return decodeURIComponent(parsed.pathname.slice(1)); // removes initial "/" and decodes spaces etc.
 };
 
+//add arg here to conditionally
 const getSignedUrl = (key) => {
   return s3.getSignedUrl("getObject", {
     Bucket: "imgs-all",
@@ -43,9 +44,83 @@ module.exports = (app) => {
     Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
       arr.slice(i * size, i * size + size)
     );
-  // GET MODEL IMAGES ROUTE
+  /////////// GET MODEL IMAGES ROUTE
+  // app.post("/api/batch", async (req, res) => {
+  //   const { modelIds, inv } = req.body;
+
+  //   if (!Array.isArray(modelIds)) {
+  //     return res.status(400).json({ error: "modelIds must be an array" });
+  //   }
+
+  //   if (modelIds.length === 0) {
+  //     return res.status(400).json({ error: "No model IDs provided." });
+  //   }
+
+  //   const chunks = chunkArray(modelIds, 100); // split into batches of 100
+  //   const results = {};
+
+  //   try {
+  //     //assign each received 'modelId' array value to formatted obj (after chunking)
+  //     for (const chunk of chunks) {
+  //       const keys = chunk.map((modelId) => ({
+  //         model_id: { S: modelId },
+  //       }));
+
+  //       const params = {
+  //         RequestItems: {
+  //           model_images: {
+  //             Keys: keys,
+  //           },
+  //         },
+  //       };
+
+  //       //call 'model_images' dynamo to retrieve objs
+  //       const command = new BatchGetItemCommand(params);
+  //       const response = await client.send(command);
+
+  //       (response.Responses?.model_images || []).forEach((item) => {
+  //         // for each 'model_images' array obj rec'd in response, save its .model_id & .img_urls to variables
+  //         const model_id = item.model_id.S;
+  //         const imgArray = item.image_urls?.L;
+
+  //         if (imgArray && imgArray.length > 0) {
+  //           //////  IF INV IS TRUE
+  //           if (inv === true) {
+  //             const filteredImgs = imgArray // get 'inventory' imgs array
+  //               .filter((img) => !img.S.includes("model.webp")) // omit any 'model' image
+  //               .map((img) => getSignedUrl(getKeyFromUrl(img.S)));
+
+  //             //assign 'results'
+  //             results[model_id] = filteredImgs;
+  //             ///// IF INV IS FALSE
+  //           } else {
+  //             //get 'model' img only
+  //             const modelImgObj = imgArray.find((img) =>
+  //               img.S.includes("model.webp")
+  //             );
+  //             const fallbackImgObj = imgArray[0];
+  //             const chosenImg = modelImgObj || fallbackImgObj;
+
+  //             if (chosenImg) {
+  //               const objectKey = getKeyFromUrl(chosenImg.S);
+  //               const signedUrl = getSignedUrl(objectKey);
+  //               //assign 'results'
+  //               results[model_id] = signedUrl;
+  //             }
+  //           }
+  //         }
+  //       });
+  //     }
+
+  //     res.json(results);
+  //   } catch (error) {
+  //     console.error("DynamoDB error:", error);
+  //     res.status(500).json({ error: "Internal server error" });
+  //   }
+  // });
+
   app.post("/api/batch", async (req, res) => {
-    const { modelIds, inv } = req.body;
+    const { modelIds, inv, mobile } = req.body; // <-- add 'mobile' argument
 
     if (!Array.isArray(modelIds)) {
       return res.status(400).json({ error: "modelIds must be an array" });
@@ -55,13 +130,13 @@ module.exports = (app) => {
       return res.status(400).json({ error: "No model IDs provided." });
     }
 
-    const chunks = chunkArray(modelIds, 100); // split into batches of 100
+    const chunks = chunkArray(modelIds, 100);
     const results = {};
 
     try {
       for (const chunk of chunks) {
-        const keys = chunk.map((model_id) => ({
-          model_id: { S: model_id },
+        const keys = chunk.map((modelId) => ({
+          model_id: { S: modelId },
         }));
 
         const params = {
@@ -77,16 +152,22 @@ module.exports = (app) => {
 
         (response.Responses?.model_images || []).forEach((item) => {
           const model_id = item.model_id.S;
-          const imgArray = item.image_urls?.L;
+
+          // ✅ pick correct image list based on 'mobile' flag
+          const imgArray = mobile
+            ? item.image_urls_mobile?.L
+            : item.image_urls_large?.L;
 
           if (imgArray && imgArray.length > 0) {
             if (inv === true) {
+              // inventory view: all images except "model.webp"
               const filteredImgs = imgArray
                 .filter((img) => !img.S.includes("model.webp"))
                 .map((img) => getSignedUrl(getKeyFromUrl(img.S)));
 
               results[model_id] = filteredImgs;
             } else {
+              // single model image view
               const modelImgObj = imgArray.find((img) =>
                 img.S.includes("model.webp")
               );

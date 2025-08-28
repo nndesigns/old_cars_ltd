@@ -390,7 +390,8 @@
 background-image: url(../images/logoCar_lgOpac.png);
 background-repeat: no-repeat;
    background-position: center 55%;
-   background-size: contain;
+   /* background-size: contain; */
+   background-size: 80% auto;
    width: 100%;
    display: flex;
    justify-content: center;
@@ -398,7 +399,8 @@ background-repeat: no-repeat;
    align-items: center;  
   
    >h3{
-      /* text-shadow: 1px 1px 3px rgba(46, 46, 46, 0.3); */
-      text-shadow: 0 0 6px rgba(46, 46, 46, 0.25);
+    color: var(/* --btnBG */--primaryColor);
+    margin-top: -.5rem !important;
+      /* text-shadow: 0 0 6px rgba(46, 46, 46, 0.25); */
    }
 }

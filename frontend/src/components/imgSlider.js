@@ -123,72 +123,163 @@ const ViewMoreSlide = styled(Box)(({ theme }) => ({
   },
 }));
 
-const ImgSlider = ({
-  urls,
-  // cardHoveredRef,
-  favorites,
-  isHovered,
-}) => {
-  useEffect(() => {
-    console.log("ImgSlider mounted");
-  }, []);
+// const ImgSlider = ({
+//   urls,
+//   // cardHoveredRef,
+//   favorites,
+//   isHovered,
+// }) => {
+//   const trackRef = useRef(null);
+//   const [animating, setAnimating] = useState(false);
 
-  useEffect(() => {
-    console.log("ImgSlider props changed", { urls, isHovered });
-  }, [urls, isHovered]);
+//   const [visualIndex, setVisualIndex] = useState(0);
+//   const transformStyle = `translateX(-${visualIndex * 100}%)`;
+//   // const [isHovered, setIsHovered] = useState(cardHoveredRef.current);
+//   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
 
-  const trackRef = useRef(null);
-  const [animating, setAnimating] = useState(false);
+//   useEffect(() => {
+//     const handleResize = () => {
+//       setIsMobile(window.innerWidth < 640);
+//     };
 
+//     window.addEventListener("resize", handleResize);
+//     handleResize();
+
+//     return () => {
+//       window.removeEventListener("resize", handleResize);
+//     };
+//   }, []);
+
+//   const slides = urls.map((url) => ({ type: "image", content: url }));
+
+//   slides.push({ type: "viewMore" }); // add a special slide at the end
+
+//   const animateSlide = (dir) => {
+//     if (animating) return;
+//     setAnimating(true);
+//     const nextIndex =
+//       dir === "left"
+//         ? (visualIndex - 1 + slides.length) % slides.length
+//         : (visualIndex + 1) % slides.length;
+
+//     setVisualIndex(nextIndex); // visually slide first
+//     setTimeout(() => {
+//       // setVisualIndex(nextIndex);
+//       setAnimating(false);
+//     }, 500);
+//   };
+//   // when 22 InventoryCards are mapped in InventoryGrid, I get 22 'setInterval' handler took 115ms 'violations' , computer freezes
+//   // useEffect(() => {
+//   //   const id = setInterval(() => {
+//   //     setIsHovered(cardHoveredRef.current);
+//   //   }, 50); // poll every 50ms
+
+//   //   return () => clearInterval(id);
+//   // }, [cardHoveredRef]);
+
+//   // useEffect(() => {
+//   //   setIsHovered(cardHoveredRef.current);
+//   // }, [cardHoveredRef]);
+
+//   //// RETURN
+//   return (
+//     <ImgSliderWrapper
+//       isHovered={isHovered}
+//       favorites={favorites}
+//       isMobile={isMobile}
+//     >
+//       <div
+//         ref={trackRef}
+//         className="slider-track"
+//         style={{
+//           display: "flex",
+//           transform: transformStyle,
+//           transition: animating
+//             ? "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
+//             : "none",
+
+//           width: `${slides.length * 100}%`,
+//           // border: "1px solid green",
+//           height: "100%",
+//           flex: "1 0 100%",
+//         }}
+//       >
+//         {slides.map((slide, idx) => {
+//           if (slide.type === "image") {
+//             return (
+//               <img
+//                 key={idx}
+//                 src={slide.content}
+//                 alt="car_photo"
+//                 style={{
+//                   flexShrink: 0,
+//                   width: "100%",
+//                   objectFit: "cover",
+//                 }}
+//               />
+//             );
+//           } else if (slide.type === "viewMore") {
+//             return (
+//               <ViewMoreSlide key={idx}>
+//                 <Button text="VIEW MORE" />
+//               </ViewMoreSlide>
+//             );
+//           } else {
+//             return null;
+//           }
+//         })}
+//       </div>
+//       {isHovered && visualIndex > 0 && (
+//         <Arrow
+//           as={MdArrowBackIos}
+//           isLeft={true}
+//           show={isHovered && visualIndex > 0}
+//           onClick={(e) => {
+//             e.stopPropagation(); // 🛑 Stop event from reaching parent
+//             animateSlide("left");
+//           }}
+//         />
+//       )}
+
+//       {isHovered && visualIndex !== slides.length - 1 && (
+//         <Arrow
+//           as={MdArrowForwardIos}
+//           show={isHovered}
+//           onClick={(e) => {
+//             e.stopPropagation(); // 🛑
+//             animateSlide("right");
+//           }}
+//         />
+//       )}
+//     </ImgSliderWrapper>
+//   );
+// };
+
+const ImgSlider = ({ urls, favorites, isHovered }) => {
   const [visualIndex, setVisualIndex] = useState(0);
-  const transformStyle = `translateX(-${visualIndex * 100}%)`;
-  // const [isHovered, setIsHovered] = useState(cardHoveredRef.current);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 640);
     };
-
     window.addEventListener("resize", handleResize);
-    handleResize();
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Prepare slides
   const slides = urls.map((url) => ({ type: "image", content: url }));
-
   slides.push({ type: "viewMore" }); // add a special slide at the end
 
   const animateSlide = (dir) => {
-    if (animating) return;
-    setAnimating(true);
     const nextIndex =
       dir === "left"
         ? (visualIndex - 1 + slides.length) % slides.length
         : (visualIndex + 1) % slides.length;
-    setVisualIndex(nextIndex); // visually slide first
-    setTimeout(() => {
-      setVisualIndex(nextIndex);
-      setAnimating(false);
-    }, 500);
+
+    setVisualIndex(nextIndex);
   };
-  // when 22 InventoryCards are mapped in InventoryGrid, I get 22 'setInterval' handler took 115ms 'violations' , computer freezes
-  // useEffect(() => {
-  //   const id = setInterval(() => {
-  //     setIsHovered(cardHoveredRef.current);
-  //   }, 50); // poll every 50ms
 
-  //   return () => clearInterval(id);
-  // }, [cardHoveredRef]);
-
-  // useEffect(() => {
-  //   setIsHovered(cardHoveredRef.current);
-  // }, [cardHoveredRef]);
-
-  //// RETURN
   return (
     <ImgSliderWrapper
       isHovered={isHovered}
@@ -196,17 +287,12 @@ const ImgSlider = ({
       isMobile={isMobile}
     >
       <div
-        ref={trackRef}
         className="slider-track"
         style={{
           display: "flex",
-          transform: transformStyle,
-          transition: animating
-            ? "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
-            : "none",
-
+          transform: `translate3d(-${visualIndex * 100}%, 0, 0)`, // ✅ GPU accelerated
+          transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)", // ✅ pure CSS animation
           width: `${slides.length * 100}%`,
-          // border: "1px solid green",
           height: "100%",
           flex: "1 0 100%",
         }}
@@ -236,24 +322,27 @@ const ImgSlider = ({
           }
         })}
       </div>
+
+      {/* Left Arrow */}
       {isHovered && visualIndex > 0 && (
         <Arrow
           as={MdArrowBackIos}
           isLeft={true}
           show={isHovered && visualIndex > 0}
           onClick={(e) => {
-            e.stopPropagation(); // 🛑 Stop event from reaching parent
+            e.stopPropagation();
             animateSlide("left");
           }}
         />
       )}
 
+      {/* Right Arrow */}
       {isHovered && visualIndex !== slides.length - 1 && (
         <Arrow
           as={MdArrowForwardIos}
           show={isHovered}
           onClick={(e) => {
-            e.stopPropagation(); // 🛑
+            e.stopPropagation();
             animateSlide("right");
           }}
         />

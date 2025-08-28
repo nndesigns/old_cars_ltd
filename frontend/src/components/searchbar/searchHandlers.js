@@ -280,7 +280,8 @@ export const makeModelSearch = (
   key,
   item,
   inputRef,
-  setInvSearch
+  setInvSearch,
+  lastArg
 ) => {
   handleClearFilters();
   if (currentRoute !== "cars") {
@@ -300,10 +301,19 @@ export const makeModelSearch = (
     }));
     setOrderedFilters(["makes", "models"]);
   } else if (key === "Style") {
-    setAppliedFilters((prev) => ({
-      ...prev,
-      styles: [item.toLowerCase()],
-    }));
+    if (Array.isArray(item)) {
+      // in case 'see all CROSSOVERS' btn (3 styles at once)
+      setAppliedFilters((prev) => ({
+        ...prev,
+        styles: item.map((style) => style),
+      }));
+    } else {
+      // if item is just a string
+      setAppliedFilters((prev) => ({
+        ...prev,
+        styles: [item],
+      }));
+    }
     setOrderedFilters(["styles"]);
   } else if (key === "Year") {
     setAppliedFilters((prev) => ({
@@ -317,11 +327,18 @@ export const makeModelSearch = (
   }
 
   //change input text to reflect selected 'item'
-  setInvSearch(
-    key === "Model" ? item.display : key === "Year" ? item.display : item
-  );
-  inputRef.current.value =
-    key === "Model" ? item.display : key === "Year" ? item.display : item;
+  if (setInvSearch) {
+    setInvSearch(
+      key === "Model" ? item.display : key === "Year" ? item.display : item
+    );
+  }
+
+  if (inputRef?.current) {
+    inputRef.current.value =
+      key === "Model" ? item.display : key === "Year" ? item.display : item;
+  }
+
+  lastArg && console.log("lastArg", lastArg);
 };
 
 ///redux applied filters are not getting updated with this search

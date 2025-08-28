@@ -13,6 +13,8 @@ const Header = ({
   const bottomShadow = "0 8px 16px -4px rgba(0, 0, 0, 0.12)";
   const darkRoutes = ["favorites", "cars", "car"];
 
+  console.log("header rec's currentRoute", currentRoute);
+
   return (
     <Box
       sx={{

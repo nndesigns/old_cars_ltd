@@ -1,9 +1,10 @@
-// import React, { useState, useEffect, useRef, useMemo } from "react";
-
-// // import axios from "axios";
-
-// //fetch Inventory from DynamoDB
-// import { getInventory } from "./components/axiosCalls.js"; ////NEW INV API
+// import React, {
+//   useState,
+//   useEffect,
+//   useRef,
+//   useMemo,
+//   useCallback,
+// } from "react";
 // import {
 //   BrowserRouter as Router,
 //   Route,
@@ -11,6 +12,8 @@
 //   useLocation,
 // } from "react-router-dom";
 // import { useSelector, useDispatch } from "react-redux";
+// import _ from "lodash";
+// import { getInventory } from "./components/axiosCalls.js";
 // import { getLocationFromBrowser, setLocalInv } from "./user/locationSlice";
 // import { getOffers, ScrollToTop } from "./components/utils.js";
 // import Header from "./components/header.js";
@@ -20,13 +23,35 @@
 // import Favorites from "./pages/favorites.js";
 // import Cars from "./pages/cars.js";
 // import VehiclePage from "./pages/vehiclePage.js";
-// import _ from "lodash";
 // import Footer from "./components/footer.js";
 // import "./index.css";
 // import { saveFilter } from "./user/filtersSlice";
 
-// //PAGEWRAPPER
-// function PageWrapper({
+// // ----------------- CONSTANTS -----------------
+// const defaultFilterState = {
+//   sort: "Best match",
+//   minPrice: null,
+//   maxPrice: null,
+//   makes: [],
+//   models: {},
+//   styles: [],
+//   yearFrom: null,
+//   yearTo: null,
+//   mileage: null,
+//   fuelType: null,
+//   features: null,
+//   carSize: null,
+//   doors: null,
+//   exteriorColor: null,
+//   interiorColor: null,
+//   drivetrain: null,
+//   transmission: null,
+//   cylinders: null,
+//   MPGHwy: null,
+// };
+
+// // ----------------- PAGE WRAPPER -----------------
+// const PageWrapper = React.memo(function PageWrapper({
 //   children,
 //   inv,
 //   setValue,
@@ -41,20 +66,20 @@
 //   const bottomNavRef = useRef(null);
 //   const location = useLocation();
 
-//   const handleClearFilters = () => {
+//   const handleClearFilters = useCallback(() => {
 //     const { sort, ...filtersWithoutSort } = defaultFilterState;
-//     const newApplied = {
-//       sort: appliedFilters.sort,
-//       ...filtersWithoutSort,
-//     };
-//     setAppliedFilters(newApplied);
+//     setAppliedFilters({ sort: appliedFilters.sort, ...filtersWithoutSort });
 //     setOrderedFilters([]);
-//   };
+//   }, [
+//     appliedFilters.sort,
+//     defaultFilterState,
+//     setAppliedFilters,
+//     setOrderedFilters,
+//   ]);
 
 //   useEffect(() => {
 //     if (value != null) {
 //       const handleClickOutside = (event) => {
-//         console.log("handleClickOutside was triggered");
 //         if (
 //           thumbNavRef.current &&
 //           !thumbNavRef.current.contains(event.target) &&
@@ -70,7 +95,7 @@
 
 //   const currentRoute = useMemo(
 //     () => location.pathname.split("/")[1],
-//     [location]
+//     [location.pathname]
 //   );
 
 //   return (
@@ -92,114 +117,80 @@
 //       )}
 //     </div>
 //   );
-// }
+// });
 
-// const defaultFilterState = {
-//   sort: "Best match",
-//   minPrice: null,
-//   maxPrice: null,
-//   makes: [],
-//   models: {},
-//   styles: [],
-
-//   yearFrom: null,
-//   yearTo: null,
-//   mileage: null, //or less
-//   fuelType: null,
-//   features: null,
-//   carSize: null,
-//   doors: null,
-//   exteriorColor: null,
-//   interiorColor: null,
-//   drivetrain: null,
-//   transmission: null,
-//   cylinders: null,
-//   MPGHwy: null, //or more
-// };
-
+// // ----------------- MAIN APP -----------------
 // function App() {
 //   const dispatch = useDispatch();
-//   //REDUX STATES
-//   //REDUX SAVED FILTERS (SETTING APPLIED FILTERS)
-//   // DEFAULT FILTER STATE
 //   const reduxSavedFilters = useSelector(
 //     (state) => state.filters.appliedFilters || {}
 //   );
 
-//   //////// APPLIED FILTERS
-//   /*   const sanitizedReduxFilters = { ...reduxSavedFilters };
-//   delete sanitizedReduxFilters.bodyType; */
+//   const location = useSelector((state) => state.location);
+//   const heartedCars = useSelector((state) => state.favorites.heartedCars);
 
 //   const [appliedFilters, setAppliedFilters] = useState(
 //     Object.keys(reduxSavedFilters).length > 0
 //       ? reduxSavedFilters
 //       : defaultFilterState
 //   );
-//   ///////// ORDERED FILTERS USESTATE
-//   const [orderedFilters, setOrderedFilters] = useState([]);
+
+//   const [orderedFilters, setOrderedFilters] = useState(() => {
+//     const stored = localStorage.getItem("orderedFilters"); ///runs on mount only
+//     return stored ? JSON.parse(stored) : [];
+//   });
+//   const [value, setValue] = useState(null);
+//   const [showBottomNav, setShowBottomNav] = useState(window.innerWidth < 768);
+//   const [below820, setBelow820] = useState(window.innerWidth < 820);
+//   const [above375, setAbove375] = useState(window.innerWidth > 375);
+//   const [inventory, setInventory] = useState([]);
+
+//   // Save ordered filters to localStorage
 //   useEffect(() => {
-//     if (orderedFilters.length > 0) {
-//       localStorage.setItem("orderedFilters", JSON.stringify(orderedFilters));
-//     }
+//     // console.log("orderedFilter JUST MODIFIED");
+//     localStorage.setItem("orderedFilters", JSON.stringify(orderedFilters));
 //   }, [orderedFilters]);
 
-//   useEffect(() => {
-//     const stored = localStorage.getItem("orderedFilters");
-//     if (stored) {
-//       try {
-//         const parsed = JSON.parse(stored);
-//         // optionally validate it's an array of strings that are keys in appliedFilters
-//         setOrderedFilters(parsed);
-//       } catch (e) {
-//         console.error("Failed to parse orderedFilters:", e);
-//       }
-//     }
-//   }, []);
+//   // console.log("orderedFilters IN APP", orderedFilters);
 
-//   //SAVE CHANGES TO  APPLIED FILTERS TO REDUX STATE
+//   // Save applied filters to Redux
 //   useEffect(() => {
 //     dispatch(saveFilter(appliedFilters));
 //   }, [appliedFilters, dispatch]);
 
-//   const location = useSelector((state) => state.location);
-//   const heartedCars = useSelector((state) => state.favorites.heartedCars);
-
-//   const [value, setValue] = useState(null);
-//   const [showBottomNav, setShowBottomNav] = useState(window.innerWidth < 768);
-//   //For <CARS/> (.left_panel & <CarsToolbar/>)
-//   const [below820, setBelow820] = useState(window.innerWidth < 820);
-//   const [above375, setAbove375] = useState(window.innerWidth > 375);
-//   const [inventory, setInventory] = useState([]);
-//   // const entireState = useSelector((state) => state);
-
+//   // Throttled resize handler
 //   useEffect(() => {
+//     let timeout;
 //     const handleResize = () => {
-//       setShowBottomNav(window.innerWidth < 768);
-//       if (window.innerWidth > 768) setValue(null);
-//       setAbove375(window.innerWidth > 375);
-//       setBelow820(window.innerWidth < 820);
+//       clearTimeout(timeout);
+//       timeout = setTimeout(() => {
+//         setShowBottomNav(window.innerWidth < 768);
+//         if (window.innerWidth > 768) setValue(null);
+//         setAbove375(window.innerWidth > 375);
+//         setBelow820(window.innerWidth < 820);
+//       }, 150);
 //     };
 //     window.addEventListener("resize", handleResize);
-//     return () => window.removeEventListener("resize", handleResize);
+//     return () => {
+//       clearTimeout(timeout);
+//       window.removeEventListener("resize", handleResize);
+//     };
 //   }, []);
 
-//   //  FETCH INVENTORY  Only dispatch location fetch once on mount
+//   // Fetch inventory on mount
 //   useEffect(() => {
 //     if (inventory.length > 0) return;
-//     //if no invenotry
-//     async function fetchData() {
+//     (async () => {
 //       try {
 //         const fetchedInventory = await getInventory();
 //         setInventory(fetchedInventory);
 //       } catch (err) {
 //         console.error("Error loading inventory:", err);
 //       }
-//     }
+//     })();
+//   }, [inventory.length]);
 
-//     fetchData();
-//   }, []);
-
-//   //GET USER LOCATION, SAVE TO REDUX
+//   // Get user location
 //   useEffect(() => {
 //     const isLocationValid =
 //       location &&
@@ -208,31 +199,55 @@
 //       location.state &&
 //       location.latitude &&
 //       location.longitude;
-
 //     if (!isLocationValid) {
 //       dispatch(getLocationFromBrowser());
 //     }
 //   }, [dispatch, location]);
 
-//   //LISTEN FOR REDUX STATE.LOCATION,
-//   // SAVE ACTIVE INV W/IN 100mi OF LOC TO REDUX
+//   // Memoized filtered inventory
 //   const activeInv = useMemo(
 //     () => inventory.filter((car) => car.status),
 //     [inventory]
 //   );
-
 //   const localInventory = useMemo(() => {
 //     if (!location) return [];
 //     return getOffers(activeInv, location, 100, false);
 //   }, [activeInv, location]);
 
+//   // Update Redux with local inventory
 //   useEffect(() => {
 //     if (!location || inventory.length === 0) return;
-
 //     if (!_.isEqual(location.localInv, localInventory)) {
 //       dispatch(setLocalInv(localInventory));
 //     }
 //   }, [localInventory, location, inventory.length, dispatch]);
+
+//   // Memoized props for routes to prevent re-renders
+//   const carsProps = useMemo(
+//     () => ({
+//       inventory,
+//       below820,
+//       above375,
+//       defaultFilterState,
+//       appliedFilters,
+//       setAppliedFilters,
+//       orderedFilters,
+//       setOrderedFilters,
+//     }),
+//     [inventory, below820, above375, appliedFilters, orderedFilters]
+//   );
+
+//   const homeProps = useMemo(
+//     () => ({
+//       inventory,
+//       location,
+//       appliedFilters,
+//       handleClearFilters,
+//       setOrderedFilters,
+//       setAppliedFilters,
+//     }),
+//     [inventory, location, appliedFilters]
+//   );
 
 //   return (
 //     <Router>
@@ -248,37 +263,12 @@
 //       >
 //         <ScrollToTop />
 //         <Routes>
-//           <Route
-//             path="/*"
-//             element={
-//               <Home
-//                 inventory={inventory}
-//                 location={location}
-//                 appliedFilters={appliedFilters}
-//                 setOrderedFilters={setOrderedFilters}
-//                 setAppliedFilters={setAppliedFilters}
-//               />
-//             }
-//           />
+//           <Route path="/*" element={<Home {...homeProps} />} />
 //           <Route
 //             path="/favorites/*"
 //             element={<Favorites hearted_cars={heartedCars} />}
 //           />
-//           <Route
-//             path="/cars/*"
-//             element={
-//               <Cars
-//                 inventory={inventory}
-//                 below820={below820}
-//                 above375={above375}
-//                 defaultFilterState={defaultFilterState}
-//                 appliedFilters={appliedFilters}
-//                 setAppliedFilters={setAppliedFilters}
-//                 orderedFilters={orderedFilters}
-//                 setOrderedFilters={setOrderedFilters}
-//               />
-//             }
-//           />
+//           <Route path="/cars/*" element={<Cars {...carsProps} />} />
 //           <Route
 //             path="/car/:id"
 //             element={<VehiclePage inventory={inventory} />}
@@ -353,22 +343,11 @@ const PageWrapper = React.memo(function PageWrapper({
   appliedFilters,
   setAppliedFilters,
   setOrderedFilters,
-  defaultFilterState,
+  handleClearFilters,
 }) {
   const thumbNavRef = useRef(null);
   const bottomNavRef = useRef(null);
   const location = useLocation();
-
-  const handleClearFilters = useCallback(() => {
-    const { sort, ...filtersWithoutSort } = defaultFilterState;
-    setAppliedFilters({ sort: appliedFilters.sort, ...filtersWithoutSort });
-    setOrderedFilters([]);
-  }, [
-    appliedFilters.sort,
-    defaultFilterState,
-    setAppliedFilters,
-    setOrderedFilters,
-  ]);
 
   useEffect(() => {
     if (value != null) {
@@ -394,7 +373,7 @@ const PageWrapper = React.memo(function PageWrapper({
   return (
     <div className="app_root">
       <Header
-        currentRoute={currentRoute}
+        currentRoute={!currentRoute.length ? "home" : currentRoute}
         inv={inv}
         setAppliedFilters={setAppliedFilters}
         setOrderedFilters={setOrderedFilters}
@@ -438,13 +417,17 @@ function App() {
   const [above375, setAbove375] = useState(window.innerWidth > 375);
   const [inventory, setInventory] = useState([]);
 
+  // ✅ Moved handleClearFilters here so it can be shared
+  const handleClearFilters = useCallback(() => {
+    const { sort, ...filtersWithoutSort } = defaultFilterState;
+    setAppliedFilters({ sort: appliedFilters.sort, ...filtersWithoutSort });
+    setOrderedFilters([]);
+  }, [appliedFilters.sort, setAppliedFilters, setOrderedFilters]);
+
   // Save ordered filters to localStorage
   useEffect(() => {
-    // console.log("orderedFilter JUST MODIFIED");
     localStorage.setItem("orderedFilters", JSON.stringify(orderedFilters));
   }, [orderedFilters]);
-
-  // console.log("orderedFilters IN APP", orderedFilters);
 
   // Save applied filters to Redux
   useEffect(() => {
@@ -515,7 +498,7 @@ function App() {
     }
   }, [localInventory, location, inventory.length, dispatch]);
 
-  // Memoized props for routes to prevent re-renders
+  // Memoized props for routes
   const carsProps = useMemo(
     () => ({
       inventory,
@@ -535,10 +518,11 @@ function App() {
       inventory,
       location,
       appliedFilters,
+      handleClearFilters, // for makeModelSearch() Picker/Carousels
       setOrderedFilters,
       setAppliedFilters,
     }),
-    [inventory, location, appliedFilters]
+    [inventory, location, appliedFilters, handleClearFilters]
   );
 
   return (
@@ -551,11 +535,12 @@ function App() {
         appliedFilters={appliedFilters}
         setAppliedFilters={setAppliedFilters}
         setOrderedFilters={setOrderedFilters}
-        defaultFilterState={defaultFilterState}
+        handleClearFilters={handleClearFilters} // ✅ passed into Header
       >
         <ScrollToTop />
         <Routes>
-          <Route path="/*" element={<Home {...homeProps} />} />
+          <Route path="/*" element={<Home {...homeProps} />} />{" "}
+          {/* ✅ has access now */}
           <Route
             path="/favorites/*"
             element={<Favorites hearted_cars={heartedCars} />}

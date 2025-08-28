@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 
 # Define the car listing URL
-car_listing_url = "https://www.classicautomall.com/vehicles/6973/1987-buick-regal-grand-national"
+car_listing_url = "https://www.classicautomall.com/vehicles/2176/1969-amc-javelin-sst"
 
 # Set headers to mimic a real browser request
 headers = {"User-Agent": "Mozilla/5.0"}

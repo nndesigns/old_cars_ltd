@@ -8,6 +8,7 @@ import {
   InputWrapper,
   InputWrapperBorder,
   SearchBtn,
+  droplistStyle,
 } from "./searchInput.js";
 import {
   handleLocationSearch,
@@ -42,6 +43,8 @@ function Searchbar({
       ? locationValueRef.current //use if so
       : ""
   );
+
+  console.log("this is darkRoute", darkRoute);
 
   //Invenotry Search
   const [dropMatches, setDropMatches] = useState();
@@ -215,7 +218,15 @@ function Searchbar({
         />
       </SearchBtn>
       {showDroplist && (
-        <Box className="droplist">
+        <InputWrapperBorder
+          darkRoute={darkRoute}
+          border={border}
+          showDroplist={showDroplist}
+          dropList={true}
+        />
+      )}
+      {showDroplist && (
+        <Box className="droplist" style={droplistStyle({ darkRoute })}>
           <div className="droplist_item search_val">
             Search for: "{inputRef.current.value}"
           </div>

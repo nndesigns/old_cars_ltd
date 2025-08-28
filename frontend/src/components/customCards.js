@@ -152,7 +152,7 @@ const StyleCard = styled(Card, {
     ? ".5rem"
     : "0rem !important",
   fontSize: ".8rem",
-  border: forCarsPage ? "1px solid lightgrey" : "2px solid transparent",
+  border: forCarsPage ? "1px solid lightgrey" : "1px solid transparent",
   backgroundColor: "#f3f5f9",
 
   // Apply conditional styles based on forCarsPage
@@ -174,7 +174,7 @@ const StyleCard = styled(Card, {
   }),
   "&:hover": {
     cursor: "pointer",
-    border: forCarsPage ? "1px solid var(--btnBG)" : "2px solid var(--btnBG)",
+    border: forCarsPage ? "1px solid var(--btnBG)" : "1px solid var(--btnBG)",
 
     //<AspectRatio/>
     "& > .MuiAspectRatio-root": {
