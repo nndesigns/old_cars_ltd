@@ -1,6 +1,13 @@
 const AWS = require("aws-sdk");
 const { URL } = require("url");
-const { ScanCommand } = require("@aws-sdk/client-dynamodb");
+const {
+  DynamoDBClient,
+  ScanCommand,
+  BatchGetItemCommand,
+} = require("@aws-sdk/client-dynamodb");
+
+const { unmarshall } = require("@aws-sdk/util-dynamodb");
+const { publicDecrypt } = require("crypto");
 
 const s3 = new AWS.S3({
   region: "us-east-2",
@@ -22,11 +29,19 @@ const getSignedUrl = (key) => {
   });
 };
 
-const {
-  DynamoDBClient,
-  BatchGetItemCommand,
-} = require("@aws-sdk/client-dynamodb");
-const { publicDecrypt } = require("crypto");
+function dedupeByKey(arr, keyFn) {
+  const seen = new Set();
+  return arr.filter((item) => {
+    const key = keyFn(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function capitalizeWords(str) {
+  return str.replace(/\b\w/g, (l) => l.toUpperCase());
+}
 
 module.exports = (app) => {
   // CONNECT TO DYNAMO (holds all s3 image urls, mapped there by Mapto_model_images_dynamo.py)
@@ -210,6 +225,237 @@ module.exports = (app) => {
     } catch (err) {
       console.error("Error fetching inventory:", err);
       res.status(500).json({ error: "Failed to fetch inventory" });
+    }
+  });
+
+  /// INVENTORY SEARCH ROUTE
+  app.get("/api/inventory/search", async (req, res) => {
+    const { query } = req.query;
+    if (!query || query.trim() === "") {
+      return res.status(400).json({ error: "Missing search query" });
+    }
+
+    const lower = query.toLowerCase().trim();
+
+    try {
+      // DynamoDB doesn't support complex "contains any field" searches directly,
+      // so we scan (for simplicity) and filter in JS.
+      // For large datasets, you'd eventually use DynamoDB full-text search (via OpenSearch).
+
+      const command = new ScanCommand({
+        TableName: "Inventory_OldCarsLtd",
+        Limit: 1000, // safety limit, adjust if needed
+      });
+
+      const response = await client.send(command);
+      const items = response.Items.map(unmarshall);
+
+      // Filter locally — for now, this is still backend-side (not frontend)
+      const filtered = items.filter((car) => {
+        if (!car) return false;
+
+        const { year, make, model, style, vin } = car;
+        const lowerStyle = style?.toLowerCase();
+        const lowerMake = make?.toLowerCase();
+        const lowerModel = model?.toLowerCase();
+        const lowerVin = vin?.toLowerCase();
+
+        const isTruckAlias = lower === "truck" && lowerStyle === "pickup";
+
+        const styleMatch =
+          lowerStyle &&
+          (lowerStyle.includes(lower) ||
+            (lower === "truck" && lowerStyle.includes("pickup")));
+
+        const makeMatch = lowerMake && lowerMake.includes(lower);
+
+        let modelSearch = lower;
+        if (lowerMake && lower.startsWith(lowerMake + " ")) {
+          modelSearch = lower.replace(lowerMake + " ", "");
+        }
+        const modelMatch = lowerModel && lowerModel.includes(modelSearch);
+
+        const yearMatch = year && String(year).includes(lower);
+        const vinMatch = lowerVin && lowerVin.includes(lower);
+
+        return (
+          styleMatch ||
+          makeMatch ||
+          modelMatch ||
+          yearMatch ||
+          vinMatch ||
+          isTruckAlias
+        );
+      });
+
+      res.json(filtered);
+    } catch (err) {
+      console.error("Error searching inventory:", err);
+      res.status(500).json({ error: "Failed to search inventory" });
+    }
+  });
+
+  /// FOR INV SEARCH DROPDOWN OPTIONS
+  app.get("/api/inventory/smartsearch", async (req, res) => {
+    const { invSearch } = req.query;
+
+    if (!invSearch || invSearch.trim() === "") {
+      return res.status(400).json({ error: "Missing search query" });
+    }
+
+    const search = invSearch.toLowerCase().trim();
+
+    try {
+      // 1️⃣ Scan DynamoDB table
+      const command = new ScanCommand({
+        TableName: "Inventory_OldCarsLtd",
+        Limit: 1000, // safety cap
+      });
+
+      const response = await client.send(command);
+      const inv = response.Items.map(unmarshall);
+
+      // 2️⃣ Define styles + structure
+      const allStyles = [
+        "convertible",
+        "coupe",
+        "hatchback",
+        "luxury",
+        "muscle car",
+        "pickup",
+        "sedan",
+        "station wagon",
+        "SUV / 4x4",
+        "van",
+      ];
+
+      const invMatches = {
+        Make: [],
+        Model: [],
+        Style: [],
+        Year: [],
+        Vin: [],
+      };
+
+      // ----------- MAKE MATCHES -----------
+      let makeMatches = inv
+        .filter((item) => item.make && item.make.toLowerCase().includes(search))
+        .map((item) => item.make);
+      makeMatches = [...new Set(makeMatches)];
+      invMatches.Make = makeMatches;
+
+      const uniqueMakesLower = [
+        ...new Set(inv.map((item) => item.make?.toLowerCase()).filter(Boolean)),
+      ];
+      const isFullMakeWithSpace = uniqueMakesLower.some(
+        (make) => search === `${make} `
+      );
+
+      let makeFromSearch = null;
+      const isFullMakeWithExtra = uniqueMakesLower.some((make) => {
+        if (search.startsWith(`${make} `) && search.length > make.length + 1) {
+          makeFromSearch = make;
+          return true;
+        }
+        return false;
+      });
+
+      let dedupedMakeModelMatches;
+      if (isFullMakeWithSpace) {
+        const makeModelMatches = inv
+          .filter((item) => makeMatches.includes(item.make))
+          .map((item) => ({
+            display: `${item.make} ${item.model}`,
+            make: item.make,
+            model: item.model,
+          }));
+
+        dedupedMakeModelMatches = dedupeByKey(
+          makeModelMatches,
+          (item) => item.display
+        );
+      }
+
+      let modelMatches;
+      if (isFullMakeWithExtra && makeFromSearch) {
+        const modelSearchTerm = search.slice(makeFromSearch.length + 1);
+        modelMatches = inv
+          .filter(
+            (item) =>
+              item.make?.toLowerCase() === makeFromSearch &&
+              item.model &&
+              item.model.toLowerCase().includes(modelSearchTerm)
+          )
+          .map((item) => ({
+            display: `${item.make} ${item.model}`,
+            make: item.make,
+            model: item.model,
+          }));
+
+        invMatches.Make = [
+          ...new Set([...invMatches.Make, capitalizeWords(makeFromSearch)]),
+        ];
+      } else {
+        modelMatches = inv
+          .filter(
+            (item) => item.model && item.model.toLowerCase().includes(search)
+          )
+          .map((item) => ({
+            display: `${item.make} ${item.model}`,
+            make: item.make,
+            model: item.model,
+          }));
+      }
+
+      const dedupedModelMatches = dedupeByKey(
+        modelMatches,
+        (item) => item.display
+      );
+      invMatches.Model = dedupeByKey(
+        [...(dedupedMakeModelMatches || []), ...dedupedModelMatches],
+        (item) => item.display
+      );
+
+      // ----------- STYLE MATCHES -----------
+      const styleMatches = allStyles.filter((item) =>
+        item.toLowerCase().includes(search)
+      );
+      if (search.includes("truck") && !styleMatches.includes("pickup")) {
+        styleMatches.push("pickup");
+      }
+      invMatches.Style = styleMatches.map((match) => capitalizeWords(match));
+
+      // ----------- YEAR MATCHES -----------
+      const yearMatches = inv
+        .filter((item) => item.year && item.year.toString().includes(search))
+        .sort((a, b) => a.year - b.year)
+        .map((item) => ({
+          display: `${item.year} ${item.make} ${item.model}`,
+          make: item.make,
+          model: item.model,
+          year: item.year,
+        }));
+
+      invMatches.Year = dedupeByKey(yearMatches, (item) => item.display);
+
+      // ----------- VIN MATCHES -----------
+      const vinMatches = inv
+        .filter((item) => item.vin && item.vin.toLowerCase().includes(search))
+        .map((item) => ({
+          display: `${item.vin} (${item.year} ${item.make} ${item.model})`,
+          make: item.make,
+          model: item.model,
+          year: item.year,
+          vin: item.vin,
+        }));
+
+      invMatches.Vin = vinMatches;
+
+      // 3️⃣ Return structured object
+      res.json(invMatches);
+    } catch (err) {
+      console.error("Error running smart inventory search:", err);
+      res.status(500).json({ error: "Failed to perform smart search" });
     }
   });
 };

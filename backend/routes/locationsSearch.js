@@ -30,21 +30,18 @@ module.exports = function (app) {
       console.log("CSV file successfully processed");
     });
   /////// UTILITY FUNCTIONS
-  //sum pop values of all zips from same city.
-  /*   function sumCityPopulation(city, state, zipData) {
-    return zipData
-      .filter((item) => item.city === city && item.state === state)
-      .reduce((sum, item) => sum + parseInt(item.pop || "0", 10), 0);
-  } */
 
-  function getNearbyCities(match, zipData, radiusMiles) {
+  function getNearbyCities(match, zipData, radiusMiles, distFilter) {
     const matchLat = parseFloat(match.latitude);
     const matchLon = parseFloat(match.longitude);
     const seen = new Set();
 
     return zipData
       .filter((item) => {
-        if (item.city !== match.city && item.latitude && item.longitude) {
+        // allow same-city if distFilter is true
+        const allowSameCity = distFilter || item.city !== match.city;
+
+        if (allowSameCity && item.latitude && item.longitude) {
           const distance = getDistance(
             { latitude: matchLat, longitude: matchLon },
             {
@@ -71,25 +68,22 @@ module.exports = function (app) {
 
   /////// API Endpoint
   app.get("/api/locations/search", async (req, res) => {
-    const { zip, city } = req.query;
+    const { zip, city, distFilter } = req.query;
 
     let matches = [];
 
-    //if searched a zip, push single zipData obj into 'matches'
+    // existing zip / city matching logic...
     if (zip) {
       const match = zipData.find((item) => item.zip === zip);
       if (!match) {
         return res.status(404).json({ message: "No matching ZIP code found." });
       }
       matches.push(match);
-      //if searched city...
     } else if (city) {
       const seen = new Set();
       matches = zipData.filter((item) => {
-        //push into 'matches' all first instances of unique 'city + state' zipData obj  w/matching 'city'
         if (item.city.toLowerCase() === city.toLowerCase()) {
           const key = `${item.city.toLowerCase()}_${item.state}`;
-          //only adding unique city + state combos to matches
           if (!seen.has(key)) {
             seen.add(key);
             return true;
@@ -107,12 +101,14 @@ module.exports = function (app) {
         .json({ message: "Must provide a zip or city query." });
     }
 
-    // if > 1 match (aka not zip search & > 1 matching city + state), alphabetize matching zipData obj's by state
     if (matches.length > 1) {
       matches = matches.sort((a, b) => a.state.localeCompare(b.state));
     }
 
-    const radius = 30;
+    // 👇 distFilter influences radius + slicing
+    const isDistFilter = distFilter === "true"; // query params are always strings
+    const radius = isDistFilter ? 200 : 30;
+
     let finalResults;
 
     const command = new ScanCommand({
@@ -121,13 +117,8 @@ module.exports = function (app) {
     const response = await client.send(command);
     const inventory = response.Items.map(unmarshall);
 
-    // if >1 matches obj
     if (matches.length > 1) {
-      //check 'inventory' table for unique 'city + state' records, return map (city_state: # of inv rows)
-
       const matchOfferCounts = await offerCheckerBatch(matches, inventory);
-      //map offerCts to 'matches' (now 'enrichedMatches')
-      //sorted by .offerCt values (most first)
       const enrichedMatches = matches
         .map((loc) => ({
           ...loc,
@@ -136,31 +127,31 @@ module.exports = function (app) {
         .sort((a, b) => b.offerCt - a.offerCt);
 
       finalResults = enrichedMatches;
-    }
-    // if only 1 'matches' obj (aka a zip search)
-    else {
+    } else {
       const enrichedNearbyLists = await Promise.all(
         matches.map(async (match) => {
-          //use single 'matches' zipData obj's lat & long, to get all other zipData obj's (uniq city + state) w/in 'radius' (array)
-          const nearbyCities = getNearbyCities(match, zipData, radius);
-          //get map (city_state: # of inv rows) for nearbyCities
+          const nearbyCities = getNearbyCities(
+            match,
+            zipData,
+            radius,
+            isDistFilter
+          );
           const nearbyOfferCounts = await offerCheckerBatch(
             nearbyCities,
             inventory
           );
 
-          // console.log("nearbyOfferCounts", nearbyOfferCounts);
-
-          const enrichedNearby = nearbyCities
+          let enrichedNearby = nearbyCities
             .map((loc) => ({
               ...loc,
-              // pop: sumCityPopulation(loc.city, loc.state, zipData),//<--- not necessary just left over (was going to sort on pop(bigger pop w/in radius 1st), but still sorting according to offerCt)
               offerCt: nearbyOfferCounts[`${loc.city}_${loc.state}`] || 0,
             }))
-            .sort((a, b) => b.offerCt - a.offerCt)
-            .slice(0, 5);
+            .sort((a, b) => b.offerCt - a.offerCt);
 
-          // console.log("enrichedNearby", enrichedNearby);
+          // 👇 only slice if not distFilter
+          if (!isDistFilter) {
+            enrichedNearby = enrichedNearby.slice(0, 5);
+          }
 
           return [match, ...enrichedNearby];
         })
