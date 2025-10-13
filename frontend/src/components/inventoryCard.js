@@ -15,8 +15,8 @@ import "./invCard.css";
 
 // CONTAINER
 const StyledCard = styled(Card, {
-  shouldForwardProp: (prop) => prop !== "nearYou",
-})(({ theme, nearYou }) => ({
+  shouldForwardProp: (prop) => prop !== "nearYou" && prop !== "style",
+})(({ theme, nearYou, style }) => ({
   padding: "0px",
   position: "relative",
   display: "flex",
@@ -26,6 +26,7 @@ const StyledCard = styled(Card, {
   overflow: "hidden",
   transition:
     "border 0.3s ease-in, transform .12s ease-in, boxShadow .3s ease-in",
+  ...style,
 
   "&:hover": {
     cursor: "pointer",
@@ -70,7 +71,7 @@ const BottomBox = styled(Box)(({ theme, ...props }) => ({
   },
 }));
 
-const InventoryCard = ({ carData, nearYou, favorites }) => {
+const InventoryCard = ({ carData, nearYou, favorites, style }) => {
   // const cardHoveredRef = useRef(false);
   const dispatch = useDispatch();
   const heartedCars = useSelector((state) => state.favorites.heartedCars);
@@ -103,6 +104,7 @@ const InventoryCard = ({ carData, nearYou, favorites }) => {
   return (
     <StyledCard
       nearYou={nearYou}
+      style={style}
       onMouseEnter={() =>
         /* (cardHoveredRef.current = true) */ setIsHovered(true)
       }

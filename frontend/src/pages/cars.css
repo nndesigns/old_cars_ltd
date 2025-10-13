@@ -1,6 +1,3 @@
-
-
-
 .cars_content {
           width: max-content !important;
          padding-bottom: 2rem;
@@ -8,7 +5,7 @@
           display: flex;
           flex-direction: row;
           padding-inline: 0px !important;
-          border: 1px solid lightgrey;
+          border-block: 1px solid lightgrey;
         
    
           padding-right: 1rem;
@@ -16,15 +13,12 @@
             -ms-overflow-style: none;
          
             &::-webkit-scrollbar {
-               display: none;        }
-
-      
+               display: none;        }     
 }
 
 
 /*  LEFT PANEL */
 .left_panel{
-  
    display: flex;
    flex-direction: column;
    position:sticky;
@@ -81,7 +75,8 @@
           hr{
              border-color: lightgray;
              opacity: .4;
-             z-index:5
+             z-index:5;
+             border-top: 1px solid grey;
             
           }
           .saveSearch_box{
@@ -148,6 +143,13 @@
    >svg {
       font-size: 1.4em;
       fill: white;
+
+      &.loc_icon{
+         margin-left:-8px;
+         margin-right: -2px;
+         margin-block:-4px;
+         font-size: 1.8em;
+      }
    }
 
    >svg:hover {
@@ -181,8 +183,6 @@
    width: 100%;
   margin-bottom: 75px;
   scrollbar-width: auto;
-
- 
 
 /* FilterMenu */
    >.filterMenuStyle{ 
@@ -383,24 +383,21 @@
          }
       }
 
-                  
 }
 
-.no_results {
+/* .no_results {
 background-image: url(../images/logoCar_lgOpac.png);
 background-repeat: no-repeat;
    background-position: center 55%;
-   /* background-size: contain; */
    background-size: 80% auto;
    width: 100%;
+   height: 50vh;
    display: flex;
    justify-content: center;
-   /* color: white; */
    align-items: center;  
   
    >h3{
-    color: var(/* --btnBG */--primaryColor);
+    color: var(--primaryColor);
     margin-top: -.5rem !important;
-      /* text-shadow: 0 0 6px rgba(46, 46, 46, 0.25); */
    }
-}
+} */

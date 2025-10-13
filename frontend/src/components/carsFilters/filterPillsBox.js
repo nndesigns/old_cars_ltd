@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { IoCloseCircleSharp } from "react-icons/io5";
 import { HiMiniPlusCircle } from "react-icons/hi2";
 import { AiFillMinusCircle } from "react-icons/ai";
+import { TiLocation } from "react-icons/ti";
 
 const capitalizeWords = (str) =>
   str
@@ -13,7 +14,7 @@ const capitalizeWords = (str) =>
 const FilterPillsBox = ({ appliedFilters, closePill, mobile }) => {
   const [showAll, setShowAll] = useState(false);
 
-  // console.log("appliedFilters red' in FilterPillsBox", appliedFilters);
+  // console.log("appliedFilters rec'd (FilterPillsBox)", appliedFilters);
 
   ////////////// ADJUST 'CLOSE PILL'  TO ACCOUNT FOR CLOSING A MODEL PILL CORRECTLY
 
@@ -29,7 +30,18 @@ const FilterPillsBox = ({ appliedFilters, closePill, mobile }) => {
     } else if (key.includes("mileage")) {
       return `Under ${label / 1000}K Miles`;
     } else if (key.includes("models")) {
-      return label; // now just a single model name
+      const truncatedLabel =
+        label.length > 20 ? label.slice(0, 20) + "..." : label;
+
+      return truncatedLabel; // now just a single model name
+    } else if (key.includes("dist_radius")) {
+      return (
+        <>
+          <TiLocation className="loc_icon" /> {label} miles
+        </>
+      );
+    } else if (key.includes("veh_locations")) {
+      return label;
     } else {
       return capitalizeWords(label);
     }
@@ -81,6 +93,7 @@ const FilterPillsBox = ({ appliedFilters, closePill, mobile }) => {
 
     // Handle year range
     if (hasYearFrom && hasYearTo) {
+      //if they're the SAME year
       if (yearFrom === yearTo) {
         pills.push({
           key: `yearRange-${yearFrom}-${yearTo}`,
@@ -149,24 +162,31 @@ const FilterPillsBox = ({ appliedFilters, closePill, mobile }) => {
         });
         return; // models handled
       }
-      //MAKES
+      //MAKES, VEH_LOCATIONS
       if (Array.isArray(value)) {
         value.forEach((arrValue) => {
           pills.push({
             key: `${key}-${arrValue}`,
             label: arrValue,
-            onClick: () => closePill(key, arrValue),
+            onClick: () => {
+              // console.log(
+              //   "current appliedFilters (pre-closePill)",
+              //   appliedFilters
+              // );
+              closePill(key, arrValue);
+            },
           });
         });
       } else {
         pills.push({
           key: `${key}-${value}`,
           label: value,
-          onClick: () => closePill(key, value),
+          onClick: () => {
+            closePill(key, value);
+          },
         });
       }
     });
-
     return pills;
   }, [appliedFilters, closePill]);
 
@@ -177,6 +197,8 @@ const FilterPillsBox = ({ appliedFilters, closePill, mobile }) => {
     ? allPills
     : allPills.slice(0, 5);
   const hiddenCount = totalCount - 5;
+
+  // console.log("visiblePills", visiblePills);
 
   return (
     totalCount > 0 && (

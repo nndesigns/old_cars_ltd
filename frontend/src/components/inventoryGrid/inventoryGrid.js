@@ -4,50 +4,37 @@ import InventoryCard from "../inventoryCard";
 import "./invGrid.css";
 import Button from "../buttons/button.js";
 import { getModelImageURLs } from "../axiosCalls.js"; // adjust import
+import ConcatH3 from "../concatH3.js";
+import { LoadingWave } from "./loadingWave.js";
 
-const InventoryGrid = ({ cars, below820 /* , isMobile */ }) => {
+const InventoryGrid = ({ cars, below820, appliedFilters }) => {
   const [invImagesMap, setInvImagesMap] = useState({});
   const [visibleCars, setVisibleCars] = useState([]);
   const gridRef = useRef(null);
   const [loadingImages, setLoadingImages] = useState(true);
-
-  // GRID RESIZING
-  useEffect(() => {
-    const gridElement = gridRef.current;
-    if (!gridElement) return;
-
-    const updateColumns = (width) => {
-      let columns = 1;
-      if (width >= 1200) columns = 4;
-      else if (width >= 904) columns = 3;
-      else if (width >= 608) columns = 2;
-
-      requestAnimationFrame(() => {
-        gridElement.style.setProperty("--cars-listing-columns", columns);
-      });
-    };
-
-    const observer = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        const width = entry.contentRect.width;
-        updateColumns(width);
-      }
-    });
-
-    observer.observe(gridElement);
-    updateColumns(gridElement.offsetWidth);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
+  const [loadingCars, setLoadingCars] = useState(true);
+  const [allowNoResults, setAllowNoResults] = useState(false); // new flag
 
   // INITIALIZE visibleCars
   useEffect(() => {
-    if (Array.isArray(cars) && cars.length > 0) {
-      setVisibleCars(cars.slice(0, 22)); // first batch
-    } else {
-      setVisibleCars([]);
+    if (Array.isArray(cars)) {
+      setLoadingCars(false); // cars were fetched (even if empty)
+      if (cars.length > 0) {
+        setVisibleCars(cars.slice(0, 22));
+      } else {
+        setVisibleCars([]);
+      }
+    }
+  }, [cars]);
+
+  // Delay "no results" fallback
+  useEffect(() => {
+    setAllowNoResults(false); // reset whenever cars change
+    if (Array.isArray(cars) && cars.length === 0) {
+      const timer = setTimeout(() => {
+        setAllowNoResults(true);
+      }, 600); // adjust delay as you like
+      return () => clearTimeout(timer);
     }
   }, [cars]);
 
@@ -72,11 +59,9 @@ const InventoryGrid = ({ cars, below820 /* , isMobile */ }) => {
       );
 
       if (newKeysToFetch.length === 0) {
-        setLoadingImages(false);
+        if (loadingImages) setLoadingImages(false);
         return;
       }
-
-      // console.log("newKeysToFetch", newKeysToFetch);
 
       try {
         setLoadingImages(true);
@@ -93,15 +78,26 @@ const InventoryGrid = ({ cars, below820 /* , isMobile */ }) => {
     };
 
     fetchImages();
+
+    if (cars.length <= 22) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   }, [visibleCars, cars]);
 
-  // Add images to cars
+  // CARS WITH PICS Add images to cars
   const carsWithPics = useMemo(() => {
     return visibleCars.map((veh) => ({
       ...veh,
       imageArray: invImagesMap[veh.images.model_imgs_key] || [],
     }));
   }, [visibleCars, invImagesMap]);
+
+  //READY CARS
+  const readyCars = useMemo(() => {
+    return carsWithPics.filter(
+      (car) => Array.isArray(car.imageArray) && car.imageArray.length > 0
+    );
+  }, [carsWithPics]);
 
   // SHOW MORE
   const handleShowMore = () => {
@@ -120,43 +116,45 @@ const InventoryGrid = ({ cars, below820 /* , isMobile */ }) => {
       }}
     >
       {below820 && <div style={{ margin: "1rem" }}>{cars.length} Matches</div>}
-
-      <div className="grid_root" ref={gridRef}>
-        {loadingImages && visibleCars.length === 0 ? (
-          <div className="loading-message">
-            <h1 style={{ fontSize: "4rem" }}>Loading results...</h1>
-          </div>
-        ) : (
-          carsWithPics.map((car, index) => (
+      {loadingCars || (cars.length > 0 && readyCars.length === 0) ? (
+        <div className="loading-message">
+          <LoadingWave />
+        </div>
+      ) : cars.length === 0 && allowNoResults ? (
+        <div className="no_results">
+          <ConcatH3 appliedFilters={appliedFilters} noResults={true} />
+        </div>
+      ) : (
+        <div className="grid_root" ref={gridRef}>
+          {readyCars.map((car, index) => (
             <motion.div
-              key={car.id /* || index */}
-              initial={{ opacity: 0, y: 40 }}
+              key={car.id}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.05 }}
+              transition={{ duration: 0.3, delay: Math.min(index, 6) * 0.05 }}
             >
-              <InventoryCard
-                key={car.id}
-                carData={car}
-                /* isMobile={isMobile}  */ below820={below820}
-              />
+              <InventoryCard carData={car} below820={below820} />
             </motion.div>
-          ))
-        )}
-      </div>
-
-      {visibleCars.length < cars.length && (
-        <div className="showMoreWrapper">
-          <p>
-            Currently viewing {visibleCars.length} of {cars.length} matches
-          </p>
-          <Button
-            text="SEE MORE MATCHES"
-            outlineStyle2={true}
-            onClick={handleShowMore}
-            className="showMoreButton"
-          />
+          ))}
         </div>
       )}
+      {visibleCars.length < cars.length &&
+        visibleCars.length > 0 &&
+        readyCars.length !== 0 && (
+          <div className="showMoreWrapper">
+            {" "}
+            <p>
+              {" "}
+              Currently viewing {visibleCars.length} of {cars.length} matches{" "}
+            </p>{" "}
+            <Button
+              text="SEE MORE MATCHES"
+              outlineStyle2={true}
+              onClick={handleShowMore}
+              className="showMoreButton"
+            />{" "}
+          </div>
+        )}
     </div>
   );
 };

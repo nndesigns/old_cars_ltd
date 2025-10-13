@@ -1,12 +1,6 @@
 .droplist{
           position: relative;
-          /* border-left: 2px solid var(--invCardTitle);
-          border-bottom: 2px solid var(--invCardTitle);
-          border-right: 2px solid var(--invCardTitle); */
           background-color: white;
-          /* border-radius: 0 0 8px 8px; */
-          
-          /* margin-left:-2px; */
           z-index:6;
          box-shadow:  10px 10px 10px rgba(0, 0, 0, .2);
          max-height:55vh;
@@ -25,10 +19,6 @@
                     padding-block:15px;
                     border-top: 1px solid lightgrey; 
                     margin-top: 1rem;
-          
-          
-                    
-                             
           }
 
     &:nth-of-type(2)>h3{
@@ -66,4 +56,47 @@
                               border-radius: 0 0 5px 5px;
                     }
           }
+}
+
+.droplist_item.highlighted {
+      background-color: var(--tileBG);
+}
+
+.clearInputBtn {
+      all: unset;
+      position: absolute;
+      right: 3.5rem;
+      top: 20%;
+      display: flex;
+      color: var(--iconColor);
+
+      border: 1px solid var(--iconColor);
+      /* flex to center the icon */
+      align-items: center;
+      /* vertical center */
+      justify-content: center;
+      /* horizontal center */
+      width: 1.75rem;
+      /* equal width */
+      height: 1.75rem;
+      /* equal height */
+      border-radius: 50%;
+      /* makes it a circle */
+      font-size: 1rem;
+      /* size of the icon */
+      cursor: pointer;   
+      opacity: .4;
+      transition: opacity 0.2s ease-in-out;
+}
+
+.clearInputBtn:hover{
+      opacity: 1;
+      color: var(--btnBG);
+      
+            border: 1px solid var(--btnBG);
+}
+
+.highlighted-btn {
+      color: white !important;
+      background-color: var(--btnBG) !important;
 }

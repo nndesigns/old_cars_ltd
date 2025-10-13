@@ -208,10 +208,6 @@ const Carousels = ({
         ...new Set(sourceData.map((obj) => `${obj.images.model_imgs_key}`)),
       ];
 
-      if (modelData) {
-        console.log("allModelImgKeys", allModelImgKeys);
-      }
-
       try {
         const imagesMap = await getModelImageURLs(
           allModelImgKeys,

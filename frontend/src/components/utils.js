@@ -1,7 +1,7 @@
 import zipcodes from "zipcodes";
 import { getDistance } from "geolib";
 import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export function handleScroll(scrollContainerRef, direction, mobileRow) {
   const scrollContainer = scrollContainerRef.current;
@@ -35,6 +35,60 @@ export function handleScroll(scrollContainerRef, direction, mobileRow) {
     requestAnimationFrame(animateScroll);
   }
 }
+
+// stateToStateMap.js
+export const stateToStateMap = {
+  AL: "Alabama",
+  AK: "Alaska",
+  AZ: "Arizona",
+  AR: "Arkansas",
+  CA: "California",
+  CO: "Colorado",
+  CT: "Connecticut",
+  DE: "Delaware",
+  FL: "Florida",
+  GA: "Georgia",
+  HI: "Hawaii",
+  ID: "Idaho",
+  IL: "Illinois",
+  IN: "Indiana",
+  IA: "Iowa",
+  KS: "Kansas",
+  KY: "Kentucky",
+  LA: "Louisiana",
+  ME: "Maine",
+  MD: "Maryland",
+  MA: "Massachusetts",
+  MI: "Michigan",
+  MN: "Minnesota",
+  MS: "Mississippi",
+  MO: "Missouri",
+  MT: "Montana",
+  NE: "Nebraska",
+  NV: "Nevada",
+  NH: "New Hampshire",
+  NJ: "New Jersey",
+  NM: "New Mexico",
+  NY: "New York",
+  NC: "North Carolina",
+  ND: "North Dakota",
+  OH: "Ohio",
+  OK: "Oklahoma",
+  OR: "Oregon",
+  PA: "Pennsylvania",
+  RI: "Rhode Island",
+  SC: "South Carolina",
+  SD: "South Dakota",
+  TN: "Tennessee",
+  TX: "Texas",
+  UT: "Utah",
+  VT: "Vermont",
+  VA: "Virginia",
+  WA: "Washington",
+  WV: "West Virginia",
+  WI: "Wisconsin",
+  WY: "Wyoming",
+};
 
 const cityToZipMap = {
   "New Orleans, LA": "70124",
@@ -143,7 +197,7 @@ const cityToZipMap = {
 //uses provided 'radius', location.latitude & .longitude, to
 //// OFFER COUNT //
 //each 'location' is a matching us_zip.csv obj
-export function getOffers(inventory, location, radiusInMiles, countOnly) {
+export function getLocalOffers(inventory, location, radiusInMiles, countOnly) {
   //create array of uniq  city + state strings from inv
   const inv_cities = Array.from(
     new Set(inventory.map((item) => `${item.city}, ${item.state}`))
@@ -180,6 +234,7 @@ export function getOffers(inventory, location, radiusInMiles, countOnly) {
   return countOnly ? finalArray.length : finalArray;
 }
 
+// SORT INV BY DISTANCE
 export function sortInventoryByDistance(inventory, userLocation) {
   if (!userLocation || !userLocation.latitude || !userLocation.longitude) {
     return inventory; // return unsorted if no user location
@@ -210,7 +265,7 @@ export function sortInventoryByDistance(inventory, userLocation) {
     .sort((a, b) => a.distance - b.distance) // sort by proximity
     .map(({ distance, ...rest }) => rest); // remove distance before returning
 }
-
+// SORT INV BY BEST MATCH
 export function sortInventoryByBestMatch(inventory, userLocation) {
   if (!userLocation?.latitude || !userLocation?.longitude) return inventory;
 
@@ -247,7 +302,7 @@ export function sortInventoryByBestMatch(inventory, userLocation) {
 
   return enriched.map(({ _distance, ...rest }) => rest); // remove _distance after sorting
 }
-
+// SCROLL TO TOP
 export function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -257,7 +312,7 @@ export function ScrollToTop() {
 
   return null; // this component renders nothing
 }
-
+/// FORMAT PRICE
 export const formatPrice = (value) => {
   if (isNaN(value)) return null;
   const number = Math.floor(parseFloat(value));
@@ -268,7 +323,7 @@ export const formatPrice = (value) => {
     </>
   );
 };
-
+// GET UNIQUE STYLES
 export const getUniqueStyles = (vehArr) => {
   const uniqueStyles = [
     ...new Set(
@@ -277,3 +332,39 @@ export const getUniqueStyles = (vehArr) => {
   ];
   return uniqueStyles;
 };
+
+export function useClickOutside(ref, isActive, onClose) {
+  const mouseDownInside = useRef(false);
+
+  useEffect(() => {
+    if (!isActive) return;
+
+    const handleMouseDown = (e) => {
+      if (!ref.current.contains(e.target)) {
+        onClose(e);
+      } else {
+        mouseDownInside.current = true;
+      }
+    };
+
+    const handleClick = (e) => {
+      if (
+        isActive &&
+        ref.current &&
+        !ref.current.contains(e.target) &&
+        !mouseDownInside.current
+      ) {
+        onClose(e);
+      }
+    };
+
+    document.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("click", handleClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("click", handleClick);
+      mouseDownInside.current = false;
+    };
+  }, [ref, isActive, onClose]);
+}

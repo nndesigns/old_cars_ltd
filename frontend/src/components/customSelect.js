@@ -10,6 +10,7 @@ const CustomSelect = ({
   secondCS,
   leftPanel,
   above601,
+  selectStyle,
 }) => {
   const [clickedOn, setClickedOn] = useState(false);
   const selectRef = useRef(null);
@@ -56,7 +57,12 @@ const CustomSelect = ({
             : "0px",
       }}
     >
-      <label htmlFor={label}>{label}</label>
+      <label
+        style={{ fontSize: label === "Max Miles Away" ? ".9em" : "" }}
+        htmlFor={label}
+      >
+        {label}
+      </label>
       <br />
       <select
         name={label}
@@ -80,6 +86,7 @@ const CustomSelect = ({
           marginTop: ".4rem",
           color: prop ? "black" : "rgba(0,0,0, .6)",
           border: clickedOn ? "2px solid var(--btnBG)" : "",
+          ...selectStyle,
         }}
       >
         {label != "From" && (
@@ -99,7 +106,7 @@ const CustomSelect = ({
       <IoIosArrowDown
         style={{
           position: "absolute",
-          right: "1rem",
+          right: ".6rem",
           top: "50%",
           pointerEvents: "none",
           color: "rgb(25, 118, 210)",

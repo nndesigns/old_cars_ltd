@@ -5,6 +5,8 @@ import { MdOutlineSort } from "react-icons/md";
 import { PiLineVerticalLight } from "react-icons/pi";
 import { BsSliders } from "react-icons/bs";
 import { FiCheck } from "react-icons/fi";
+import { AnimatePresence } from "motion/react";
+import * as motion from "motion/react-client";
 import "./carsToolbar.css";
 
 const CarsToolbar = ({
@@ -89,6 +91,12 @@ const CarsToolbar = ({
   };
   // SORT DROPDOWN
 
+  const dropdownVariants = {
+    hidden: { opacity: 0, y: -10 },
+    visible: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: 10 }, // moves down when closing
+  };
+
   const SortDropdownBase = ({
     sortCats,
     appliedSort,
@@ -96,9 +104,17 @@ const CarsToolbar = ({
     className,
   }) => {
     return (
-      <div className={className} ref={dropdownRef}>
+      <motion.ul
+        variants={dropdownVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        transition={{ duration: 0.3 }}
+        className={className}
+        ref={dropdownRef}
+      >
         {sortCats.map((cat) => (
-          <div
+          <li
             key={cat}
             className="dropdownItem"
             onClick={() => {
@@ -107,16 +123,16 @@ const CarsToolbar = ({
                 sort: cat,
               }));
               // setShowSortDropdown(false);
-              setTimeout(() => setShowSortDropdown(false), 0);
+              setTimeout(() => setShowSortDropdown(false), 300);
             }}
           >
             <span className="checkmarkSpace">
               {appliedSort === cat && <FiCheck />}
             </span>
             {cat}
-          </div>
+          </li>
         ))}
-      </div>
+      </motion.ul>
     );
   };
 
@@ -124,6 +140,7 @@ const CarsToolbar = ({
     position: "absolute",
     top: 40,
     width: "max-content",
+
     right: 0,
     backgroundColor: "white",
     borderRadius: "4px",
@@ -188,13 +205,16 @@ const CarsToolbar = ({
         <MdOutlineSort style={{ fontSize: "1.7rem" }} />
         Sort
         {!below820 && <TiArrowSortedDown />}
-        {showSortDropdown && (
-          <SortDropdown
-            sortCats={sortCats}
-            appliedSort={appliedFilters.sort}
-            setAppliedFilters={setAppliedFilters}
-          />
-        )}
+        <AnimatePresence>
+          {showSortDropdown && (
+            <SortDropdown
+              key="sort-dropdown"
+              sortCats={sortCats}
+              appliedSort={appliedFilters.sort}
+              setAppliedFilters={setAppliedFilters}
+            />
+          )}
+        </AnimatePresence>
       </button>
 
       {/* COMPARE */}

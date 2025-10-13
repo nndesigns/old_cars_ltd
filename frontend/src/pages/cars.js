@@ -1,15 +1,17 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import "./cars.css";
 import Box from "@mui/joy/Box";
 import Carousels from "../components/carousels";
+import { Helmet } from "react-helmet-async";
+import { getLocalOffers } from "../components/utils";
 
 import CarsToolbar from "../components/carsToolbar/carsToolbar";
 import InventoryGrid from "../components/inventoryGrid/inventoryGrid";
-import { useSelector, useDispatch } from "react-redux";
+// import { useSelector, useDispatch } from "react-redux";
 import {
   FilterMenu,
   SortByFilter,
-  DistanceShippingFilter,
+  DistanceLocationFilter,
   MakeFilter,
   ModelFilter,
   BodyTypeFilter,
@@ -40,6 +42,7 @@ import {
 } from "../components/utils";
 
 const Cars = ({
+  location = { location }, //for dist_radius & veh_locations filters
   inventory,
   below820,
   above375,
@@ -49,39 +52,29 @@ const Cars = ({
   orderedFilters,
   setOrderedFilters, ////setter
 }) => {
-  const dispatch = useDispatch();
-
-  // console.log("CARS JUST RE-RENDERED");
-  const carsToolbarRef = useRef();
-  const h3Ref = useRef();
-  const mobileRowRef = useRef();
-  //// REDUX STATES
-  const userLocation = useSelector((state) => state.location);
-  //// USESTATES
-  const [matchesArray, setMatchesArray] = useState([]); ////setter
-
   //MOBILE FILTER PANEL
   const [showMobileFilterPanel, setShowMobileFilterPanel] = useState(false); ///setter
 
   //ACTIVE FILTER
   const [activeFilter, setActiveFilter] = useState(null); ///// setter
 
-  const hasAppliedFilters = Object.entries(appliedFilters)
-    .filter(([key]) => key !== "sort")
-    .some(
-      ([, value]) =>
-        value !== null &&
-        value !== "" &&
-        !(Array.isArray(value) && value.length === 0) &&
-        !(
-          typeof value === "object" &&
-          !Array.isArray(value) &&
-          Object.keys(value).length === 0
-        )
-    );
+  const hasAppliedFilters = useMemo(() => {
+    return Object.entries(appliedFilters)
+      .filter(([key]) => key !== "sort")
+      .some(
+        ([, value]) =>
+          value !== null &&
+          value !== "" &&
+          !(Array.isArray(value) && value.length === 0) &&
+          !(
+            typeof value === "object" &&
+            !Array.isArray(value) &&
+            Object.keys(value).length === 0
+          )
+      );
+  }, [appliedFilters]);
 
   //NOTE : TRY TO MAKE  ORDERED FILTERS A USEREF INSTEAD, SO RESETTING WON'T CAUSE FILTER TO RE-RENDER W/ ONLY SELECTED OPTIONS.
-  const [filterStageArrays, setFilterStageArrays] = useState({});
 
   // CATEGORIES FOR SORT FILTER
   const sortCats = [
@@ -96,34 +89,24 @@ const Cars = ({
     "New match",
   ];
 
-  const getCountsObj = (inv, ppty) => {
+  const getCountsObj = useCallback((inv, ppty) => {
     return inv.reduce((acc, item) => {
       let value = item[ppty];
-
       if (value) {
         if (ppty === "style") {
           value
             .split(",")
             .map((v) => v.trim())
             .forEach((v) => {
-              if (v) {
-                acc[v] = (acc[v] || 0) + 1;
-              }
+              if (v) acc[v] = (acc[v] || 0) + 1;
             });
         } else if (ppty === "model") {
           const make = item.make || "Unknown Make";
           const model = value;
-
-          // Ensure the make array exists
-          if (!acc[make]) {
-            acc[make] = [];
-          }
-
-          // Check if the model already exists under that make
+          if (!acc[make]) acc[make] = [];
           const existingModel = acc[make].find(
             (entry) => entry.model === model
           );
-
           if (existingModel) {
             existingModel.count += 1;
           } else {
@@ -133,20 +116,23 @@ const Cars = ({
           acc[value] = (acc[value] || 0) + 1;
         }
       }
-
       return acc;
     }, {});
-  };
+  }, []);
 
-  ///////  USE EFFECT REACTION TO filterState CHANGES (RESET matchesArray)
-  useEffect(() => {
+  //////// USE MEMO VERIONS OF APPLIED & ORDERED FILTERS  /////////////
+  const stableAppliedFilters = useMemo(() => appliedFilters, [appliedFilters]);
+  const stableOrderedFilters = useMemo(() => orderedFilters, [orderedFilters]);
+
+  //SETTING MATCHES ARRAY &
+  const { matchesArray, filterStageArrays } = useMemo(() => {
     let filtered = [...inventory];
     const newFilterStageArrays = {};
-    //MAP OVER ORDERED FILTERS
+
     orderedFilters.forEach((filterKey) => {
-      //ASSIGN KEYS INTO FILTER STAGE ARRAYS
-      newFilterStageArrays[filterKey] = [...filtered]; //for each string (key name) in 'orderedFilters' array, reassign
-      const value = appliedFilters[filterKey]; // ["AMC"]
+      newFilterStageArrays[filterKey] = [...filtered];
+      const value = appliedFilters[filterKey];
+
       if (
         value == null ||
         value === "" ||
@@ -154,37 +140,30 @@ const Cars = ({
       )
         return;
 
-      switch (
-        filterKey // "makes"
-      ) {
+      switch (filterKey) {
+        // // DISTANCE
+        case "dist_radius":
+          filtered = getLocalOffers(filtered, location, value, false);
+          break;
+        // // VEH_LOCATION
+        case "veh_locations":
+          filtered = filtered.filter((car) => value.includes(car.city));
+          break;
+
         case "makes":
           filtered = filtered.filter((car) => value.includes(car.make));
           break;
-
         case "models":
           filtered = filtered.filter((car) => {
             const makeKey = car.make;
             const selectedModelsForMake = value[makeKey];
-
             if (selectedModelsForMake && selectedModelsForMake.length > 0) {
-              // If this make has models selected, only include those models
               return selectedModelsForMake.includes(car.model);
             }
-
-            // If no models are selected for this make, include all models for it
             return appliedFilters.makes.includes(makeKey);
           });
           break;
-
-        case "styles": //Body Type
-          /* filtered = filtered.filter(
-            (item) =>
-              item.style &&
-              item.style
-                .split(",")
-                .map((s) => s.trim())
-                .some((s) => appliedFilters.styles.includes(s))
-          ); */
+        case "styles":
           filtered = filtered.filter(
             (item) =>
               item.style &&
@@ -198,7 +177,6 @@ const Cars = ({
                 )
           );
           break;
-
         case "minPrice":
           filtered = filtered.filter((car) => car.price >= value);
           break;
@@ -214,14 +192,19 @@ const Cars = ({
         case "mileage":
           filtered = filtered.filter((car) => car.mileage <= value);
           break;
-        // add others...
+        case "vin":
+          filtered = filtered.filter((car) => car.vin === value);
+          break;
+        default:
+          break;
       }
     });
-    /////// SORT (last) ///////
+
+    // Sorting
     if (appliedFilters.sort === "Best match") {
-      filtered = sortInventoryByBestMatch(filtered, userLocation);
+      filtered = sortInventoryByBestMatch(filtered, location);
     } else if (appliedFilters.sort === "Nearest distance") {
-      filtered = sortInventoryByDistance(filtered, userLocation);
+      filtered = sortInventoryByDistance(filtered, location);
     } else if (appliedFilters.sort === "Lowest price") {
       filtered.sort((a, b) => a.price - b.price);
     } else if (appliedFilters.sort === "Highest price") {
@@ -231,260 +214,255 @@ const Cars = ({
     } else if (appliedFilters.sort === "Highest mileage") {
       filtered.sort((a, b) => b.mileage - a.mileage);
     } else if (appliedFilters.sort === "Newest year") {
-      filtered.sort((a, b) => new Date(b.year) - new Date(a.year));
+      filtered.sort((a, b) => b.year - a.year);
     } else if (appliedFilters.sort === "Oldest year") {
-      filtered.sort((a, b) => new Date(a.year) - new Date(b.year));
-    } /* else if (filterState.sort === "New match") {
-      filtered.sort((a, b) => new Date(b.year) - new Date(a.year));
-    } */
+      filtered.sort((a, b) => a.year - b.year);
+    }
 
-    setMatchesArray(filtered);
-    setFilterStageArrays(newFilterStageArrays);
-  }, [
-    appliedFilters,
-    orderedFilters,
-    hasAppliedFilters,
-    inventory,
-    dispatch,
-    userLocation,
-  ]);
+    return {
+      matchesArray: filtered,
+      filterStageArrays: newFilterStageArrays,
+    };
+    // 👉 Stringify prevents re-run on reference-only changes
+  }, [stableAppliedFilters, stableOrderedFilters, inventory, location]);
 
   /////////       FILTER COMPONENTS MAP      //////////
-  //pass 'matchesArray' into here
-  const filterComponentsMap = {
-    "Filter Menu": () => {
-      const { ["Filter Menu"]: _, ...rest } = filterComponentsMap;
-      const filterNames = Object.keys(rest);
-      return (
-        <FilterMenu
-          setActiveFilter={setActiveFilter} //only invoked when used (not on initial mount)
-          filters={filterNames}
-          appliedFilters={appliedFilters}
+  const filterComponentsMap = useMemo(() => {
+    const staticComponents = {
+      "Sort by": () => (
+        <SortByFilter
+          sortCats={sortCats}
+          chosenSortCategory={appliedFilters.sort}
+          setAppliedFilters={setAppliedFilters}
         />
-      );
-    },
+      ),
 
-    "Sort by": () => (
-      <SortByFilter
-        sortCats={sortCats}
-        chosenSortCategory={appliedFilters.sort}
-        setAppliedFilters={setAppliedFilters}
-      />
-    ),
+      "Distance or Location": () => (
+        <DistanceLocationFilter
+          inv={inventory}
+          location={location}
+          currentVehLocations={appliedFilters.veh_locations}
+          appliedFilters={appliedFilters}
+          setAppliedFilters={setAppliedFilters}
+          orderedFilters={orderedFilters}
+          setOrderedFilters={setOrderedFilters}
+        />
+      ),
 
-    "Distance or Shipping": () => <DistanceShippingFilter />,
-    Price: () => (
-      <PriceFilter
-        options={[
-          ...(filterStageArrays["minPrice"]
-            ? filterStageArrays["minPrice"]
-            : orderedFilters.length > 0
-            ? matchesArray
-            : inventory),
-          ...(filterStageArrays["maxPrice"]
-            ? filterStageArrays["maxPrice"]
-            : orderedFilters.length > 0
-            ? matchesArray
-            : inventory),
-        ]}
-        setAppliedFilters={setAppliedFilters}
-        appliedFilters={appliedFilters}
-        leftPanel={true}
-        setOrderedFilters={setOrderedFilters}
-      />
-    ),
+      Price: () => (
+        <PriceFilter
+          options={inventory}
+          setAppliedFilters={setAppliedFilters}
+          appliedFilters={appliedFilters}
+          leftPanel={true}
+          setOrderedFilters={setOrderedFilters}
+        />
+      ),
 
-    Make: () => (
-      <MakeFilter
-        currentMakes={appliedFilters.makes}
-        setAppliedFilters={setAppliedFilters}
-        options={
-          filterStageArrays["makes"]
-            ? getCountsObj(filterStageArrays["makes"], "make")
-            : orderedFilters.length > 0
-            ? getCountsObj(matchesArray, "make")
-            : getCountsObj(inventory, "make")
-        }
-        orderedFilters={orderedFilters}
-        setOrderedFilters={setOrderedFilters}
-      />
-    ),
+      Make: () => (
+        <MakeFilter
+          currentMakes={appliedFilters.makes}
+          setAppliedFilters={setAppliedFilters}
+          options={
+            filterStageArrays["makes"]
+              ? getCountsObj(filterStageArrays["makes"], "make")
+              : orderedFilters.length > 0
+              ? getCountsObj(matchesArray, "make")
+              : getCountsObj(inventory, "make")
+          }
+          orderedFilters={orderedFilters}
+          setOrderedFilters={setOrderedFilters}
+        />
+      ),
 
-    Model: () => (
-      <ModelFilter
-        currentMakes={appliedFilters.makes}
-        currentModels={Object.values(appliedFilters.models || {}).flat()}
-        setAppliedFilters={setAppliedFilters}
-        options={
-          filterStageArrays["models"]
-            ? getCountsObj(filterStageArrays["models"], "model")
-            : orderedFilters.length > 0
-            ? getCountsObj(matchesArray, "model")
-            : getCountsObj(inventory, "model")
-        }
-        orderedFilters={orderedFilters}
-        setOrderedFilters={setOrderedFilters}
-      />
-    ),
+      Model: () => (
+        <ModelFilter
+          currentMakes={appliedFilters.makes}
+          currentModels={Object.values(appliedFilters.models || {}).flat()}
+          setAppliedFilters={setAppliedFilters}
+          options={
+            filterStageArrays["models"]
+              ? getCountsObj(filterStageArrays["models"], "model")
+              : orderedFilters.length > 0
+              ? getCountsObj(matchesArray, "model")
+              : getCountsObj(inventory, "model")
+          }
+          orderedFilters={orderedFilters}
+          setOrderedFilters={setOrderedFilters}
+        />
+      ),
 
-    "Body Type": () => (
-      <BodyTypeFilter
-        currentBodyTypes={appliedFilters.styles}
-        setAppliedFilters={setAppliedFilters}
-        options={
-          filterStageArrays["styles"]
-            ? getCountsObj(filterStageArrays["styles"], "style")
-            : orderedFilters.length > 0
-            ? getCountsObj(matchesArray, "style")
-            : getCountsObj(inventory, "style")
-        }
-        orderedFilters={orderedFilters}
-        setOrderedFilters={setOrderedFilters}
-      />
-    ),
-    Year: () => (
-      <YearFilter
-        options={[
-          ...(filterStageArrays["yearFrom"]
-            ? filterStageArrays["yearFrom"]
-            : orderedFilters.length > 0
-            ? matchesArray
-            : inventory),
-          ...(filterStageArrays["yearTo"]
-            ? filterStageArrays["yearTo"]
-            : orderedFilters.length > 0
-            ? matchesArray
-            : inventory),
-        ]}
-        setAppliedFilters={setAppliedFilters}
-        appliedFilters={appliedFilters}
-        setOrderedFilters={setOrderedFilters}
-      />
-    ),
-    Mileage: () => (
-      <MileageFilter
-        setAppliedFilters={setAppliedFilters}
-        appliedFilters={appliedFilters}
-        options={
-          filterStageArrays["mileage"]
-            ? filterStageArrays["mileage"]
-            : orderedFilters.length > 0
-            ? matchesArray
-            : inventory
-        }
-        // leftPanel =
-        setOrderedFilters={setOrderedFilters}
-      />
-    ),
-    "Fuel Type": () => <FuelTypeFilter setAppliedFilters={setAppliedFilters} />,
-    "Used EV Tax Credit": () => (
-      <TaxCreditFilter setAppliedFilters={setAppliedFilters} />
-    ),
-    Features: () => <FeaturesFilter setAppliedFilters={setAppliedFilters} />,
-    "Car Size": () => <CarSizeFilter setAppliedFilters={setAppliedFilters} />,
-    Doors: () => <DoorsFilter setAppliedFilters={setAppliedFilters} />,
-    "Exterior Color": () => (
-      <ExteriorColorFilter setAppliedFilters={setAppliedFilters} />
-    ),
-    "Interior Color": () => (
-      <InteriorColorFilter setAppliedFilters={setAppliedFilters} />
-    ),
-    Drivetrain: () => (
-      <DrivetrainFilter setAppliedFilters={setAppliedFilters} />
-    ),
-    Transmission: () => (
-      <TransmissionFilter setAppliedFilters={setAppliedFilters} />
-    ),
-    Cylinders: () => <CylindersFilter setAppliedFilters={setAppliedFilters} />,
-    "MPG Highway": () => <MPGFilter setAppliedFilters={setAppliedFilters} />,
-    "Advanced Search": () => (
-      <AdvancedSearchFilter setAppliedFilters={setAppliedFilters} />
-    ),
-  };
+      "Body Type": () => (
+        <BodyTypeFilter
+          currentBodyTypes={appliedFilters.styles}
+          setAppliedFilters={setAppliedFilters}
+          options={
+            filterStageArrays["styles"]
+              ? getCountsObj(filterStageArrays["styles"], "style")
+              : orderedFilters.length > 0
+              ? getCountsObj(matchesArray, "style")
+              : getCountsObj(inventory, "style")
+          }
+          orderedFilters={orderedFilters}
+          setOrderedFilters={setOrderedFilters}
+        />
+      ),
 
-  //add setOrderedFilters() to this and remove 'cleanOrderedFilters' from useEffect above
-  ///// CLOSE PILL
-  const closePill = (key, value) => {
-    setAppliedFilters((prev) => {
-      const newFilters = { ...prev };
+      Year: () => (
+        <YearFilter
+          options={[
+            ...(filterStageArrays["yearFrom"]
+              ? filterStageArrays["yearFrom"]
+              : orderedFilters.length > 0
+              ? matchesArray
+              : inventory),
+            ...(filterStageArrays["yearTo"]
+              ? filterStageArrays["yearTo"]
+              : orderedFilters.length > 0
+              ? matchesArray
+              : inventory),
+          ]}
+          setAppliedFilters={setAppliedFilters}
+          appliedFilters={appliedFilters}
+          setOrderedFilters={setOrderedFilters}
+        />
+      ),
 
-      // Handle array-based filters (like 'makes', 'styles', etc.)
-      if (Array.isArray(newFilters[key])) {
-        newFilters[key] = newFilters[key].filter((item) => item !== value);
-        if (newFilters[key].length === 0) {
-          setOrderedFilters((prevOrdered) =>
-            prevOrdered.filter((item) => item !== key)
-          );
-        }
-        // If MAKE pill was removed, remove all ASSOC'D MODELS (if present)
-        if (key === "makes" && prev.models.hasOwnProperty(value)) {
-          const { [value]: _, ...modelsWithoutValue } = prev.models;
-          //assign new entry-removed version of obj to newFilters[key]
-          newFilters["models"] = modelsWithoutValue;
-          //if no other keys exist in prev.models object (iow appliedFilters.models = empty obj)
-          if (Object.keys(modelsWithoutValue).length === 0) {
-            //take 'models' out of 'orderedFilters array
+      Mileage: () => (
+        <MileageFilter
+          setAppliedFilters={setAppliedFilters}
+          appliedFilters={appliedFilters}
+          options={
+            filterStageArrays["mileage"]
+              ? filterStageArrays["mileage"]
+              : orderedFilters.length > 0
+              ? matchesArray
+              : inventory
+          }
+          setOrderedFilters={setOrderedFilters}
+        />
+      ),
+
+      "Fuel Type": () => (
+        <FuelTypeFilter setAppliedFilters={setAppliedFilters} />
+      ),
+      "Used EV Tax Credit": () => (
+        <TaxCreditFilter setAppliedFilters={setAppliedFilters} />
+      ),
+      Features: () => <FeaturesFilter setAppliedFilters={setAppliedFilters} />,
+      "Car Size": () => <CarSizeFilter setAppliedFilters={setAppliedFilters} />,
+      Doors: () => <DoorsFilter setAppliedFilters={setAppliedFilters} />,
+      "Exterior Color": () => (
+        <ExteriorColorFilter setAppliedFilters={setAppliedFilters} />
+      ),
+      "Interior Color": () => (
+        <InteriorColorFilter setAppliedFilters={setAppliedFilters} />
+      ),
+      Drivetrain: () => (
+        <DrivetrainFilter setAppliedFilters={setAppliedFilters} />
+      ),
+      Transmission: () => (
+        <TransmissionFilter setAppliedFilters={setAppliedFilters} />
+      ),
+      Cylinders: () => (
+        <CylindersFilter setAppliedFilters={setAppliedFilters} />
+      ),
+      "MPG Highway": () => <MPGFilter setAppliedFilters={setAppliedFilters} />,
+      "Advanced Search": () => (
+        <AdvancedSearchFilter setAppliedFilters={setAppliedFilters} />
+      ),
+    };
+
+    // wrap everything, adding "Filter Menu" last
+    return {
+      "Filter Menu": () => {
+        const filterNames = Object.keys(staticComponents);
+        return (
+          <FilterMenu
+            setActiveFilter={setActiveFilter}
+            filters={filterNames}
+            appliedFilters={appliedFilters}
+          />
+        );
+      },
+      ...staticComponents,
+    };
+  }, [appliedFilters, orderedFilters, inventory, location]);
+
+  /// CLOSE PILL
+  const closePill = useCallback(
+    (key, value) => {
+      // console.log("received key & value", key, value);
+      // console.log("current appliedFilters", appliedFilters);
+      setAppliedFilters((prev) => {
+        const newFilters = { ...prev };
+
+        if (Array.isArray(newFilters[key])) {
+          newFilters[key] = newFilters[key].filter((item) => item !== value);
+          if (newFilters[key].length === 0) {
             setOrderedFilters((prevOrdered) =>
-              prevOrdered.filter((item) => item !== "models")
+              prevOrdered.filter((item) => item !== key)
+            );
+          }
+          if (key === "makes" && prev.models.hasOwnProperty(value)) {
+            const { [value]: _, ...modelsWithoutValue } = prev.models;
+            console.log("modelsWithoutValue", modelsWithoutValue);
+            newFilters["models"] = modelsWithoutValue;
+            if (Object.keys(modelsWithoutValue).length === 0) {
+              setOrderedFilters((prevOrdered) =>
+                prevOrdered.filter((item) => item !== "models")
+              );
+            }
+          }
+        } else {
+          if (key === "models") {
+            const make = Object.keys(value)[0]; // e.g. "Pontiac"
+            const modelToRemove = value[make][0]; // e.g. "Streamliner 8 Silver Streak Woody Wagon"
+
+            if (newFilters.models?.[make]) {
+              // Filter out the model
+              const updatedModels = newFilters.models[make].filter(
+                (m) => m !== modelToRemove
+              );
+
+              if (updatedModels.length > 0) {
+                // Replace with updated array
+                newFilters.models = {
+                  ...newFilters.models,
+                  [make]: updatedModels,
+                };
+              } else {
+                // Remove the make entirely if no models left
+                const { [make]: _, ...remainingModels } = newFilters.models;
+                newFilters.models = remainingModels;
+              }
+
+              // If no makes remain, clean up the orderedFilters too
+              if (Object.keys(newFilters.models).length === 0) {
+                setOrderedFilters((prevOrdered) =>
+                  prevOrdered.filter((item) => item !== "models")
+                );
+              }
+            }
+          } else {
+            newFilters[key] = null;
+            setOrderedFilters((prevOrdered) =>
+              prevOrdered.filter((item) => item !== key)
             );
           }
         }
-      } else if (
-        // if prev[key] is an object
-        typeof newFilters[key] === "object" &&
-        newFilters[key] !== null &&
-        !Array.isArray(newFilters[key])
+        return newFilters;
+      });
+      if (
+        appliedFilters.makes.length === 1 &&
+        key === "makes" &&
+        activeFilter === "Model"
       ) {
-        //get 'key' from 'value' arg (also object)
-        const objKey = Object.keys(value)[0];
-        // if received 'value' object's value is an array (ex; {AMC:["Gremlin"]} )
-        if (Array.isArray(Object.values(value)[0])) {
-          //get  'value' obj's array's item (ex; "Gremlin") [there will only be 1]
-          const arrayItemToRemove = Object.values(value)[0][0];
-          //filter it our of the array value
-          const updatedArray = prev[key][objKey].filter(
-            (item) => item !== arrayItemToRemove
-          );
-          //if value obj's array value becomes empty from filter (ex; {AMC:[]} )
-          if (updatedArray.length === 0) {
-            //remove entire key entry from value obj (ex: {} )
-            const { [objKey]: _, ...objWithoutKey } = prev[key];
-            //assign new entry-removed version of obj to newFilters[key]
-            newFilters[key] = objWithoutKey;
-            // if removing that key entry was last key entry and value obj is now empty
-            if (Object.keys(objWithoutKey).length === 0) {
-              //// remove key from 'orderedFilters' array
-              setOrderedFilters((prevOrdered) =>
-                prevOrdered.filter((item) => item !== key)
-              );
-            }
-          } else {
-            //if val obj's filtered array (updatedArray) not empty, assign them
-            newFilters[key] = {
-              ...prev[key], // clone nested object
-              [objKey]: updatedArray, // replace key's array
-            };
-          }
-        } else {
-          //if received 'value' object's value is a string or a number (ex; {} )
-        }
-      } else {
-        // For scalar or object filters (like mileage, yearFrom, etc.)
-        newFilters[key] = null;
+        setActiveFilter(null);
       }
-      return newFilters;
-    });
-
-    // Close ModelFilter UI if no makes are left
-    if (
-      appliedFilters.makes.length === 1 &&
-      key === "makes" &&
-      activeFilter === "Model"
-    ) {
-      console.log("this was triggered");
-      setActiveFilter(null);
-    }
-  };
+    },
+    [setAppliedFilters, setOrderedFilters, appliedFilters.makes, activeFilter]
+  );
 
   useEffect(() => {
     if (below820 === false) {
@@ -494,101 +472,101 @@ const Cars = ({
   }, [below820]);
 
   return (
-    <div className="page_container cars_container">
-      {/* FULL PAGE FILTER PANEL (from .mobileFilterRow btn click) */}
-      {showMobileFilterPanel && below820 && (
-        <FilterPanel
-          activeFiltersList={orderedFilters}
-          setOrderedFilters={setOrderedFilters}
-          orderedFilterCount={orderedFilters.length}
-          appliedFilters={appliedFilters}
-          setAppliedFilters={setAppliedFilters}
-          closePill={closePill}
-          defaultFilterState={defaultFilterState}
-          activeFilter={activeFilter}
-          setActiveFilter={setActiveFilter}
-          filterComponentsMap={filterComponentsMap}
-          //EXTRA MOBILE ARGS
-          mobile={true}
-          setShowMobileFilterPanel={setShowMobileFilterPanel}
-          matchesTotal={matchesArray.length}
-        />
-      )}
-      <Box className="center_box">
-        {" "}
-        {/* flex row (index.css) for centering .middle_content*/}
-        <div className="middle_content cars_content">
-          {/********* LEFT PANEL **********/}
+    <>
+      <Helmet>
+        <title>Inventory | Old Cars Ltd</title>
+        <meta name="description" content="Welcome to Inventory" />
+      </Helmet>
+      <div className="page_container cars_container">
+        {/* FULL PAGE FILTER PANEL (from .mobileFilterRow btn click) */}
+        {showMobileFilterPanel && below820 && (
+          <FilterPanel
+            activeFiltersList={orderedFilters}
+            setOrderedFilters={setOrderedFilters}
+            orderedFilterCount={orderedFilters.length}
+            appliedFilters={appliedFilters}
+            setAppliedFilters={setAppliedFilters}
+            closePill={closePill}
+            defaultFilterState={defaultFilterState}
+            activeFilter={activeFilter}
+            setActiveFilter={setActiveFilter}
+            filterComponentsMap={filterComponentsMap}
+            //EXTRA MOBILE ARGS
+            mobile={true}
+            setShowMobileFilterPanel={setShowMobileFilterPanel}
+            matchesTotal={matchesArray.length}
+          />
+        )}
+        <Box className="center_box">
+          {" "}
+          {/* flex row (index.css) for centering .middle_content*/}
+          <div className="middle_content cars_content">
+            {/********* LEFT PANEL **********/}
 
-          {!below820 && (
-            //container to hold 'sticky' (left_panel) to  top of page (just like .right_panel holds child section (sticky) to its top)
+            {!below820 && (
+              //container to hold 'sticky' (left_panel) to  top of page (just like .right_panel holds child section (sticky) to its top)
 
-            <FilterPanel
-              activeFiltersList={orderedFilters}
-              setOrderedFilters={setOrderedFilters}
-              orderedFilterCount={orderedFilters.length}
-              appliedFilters={appliedFilters}
-              setAppliedFilters={setAppliedFilters}
-              closePill={closePill}
-              defaultFilterState={defaultFilterState}
-              activeFilter={activeFilter}
-              setActiveFilter={setActiveFilter}
-              filterComponentsMap={filterComponentsMap}
-            />
-          )}
-          {/***************RIGHT PANEL *************/}
-
-          <div
-            className="right_panel"
-            style={hasAppliedFilters ? { width: "1600px" } : undefined}
-          >
-            {below820 && orderedFilters.length > 0 && (
-              <MobileFilterRow
-                appliedFilters={appliedFilters}
-                closePill={closePill}
-                setActiveFilter={setActiveFilter}
-                setShowMobileFilterPanel={setShowMobileFilterPanel}
+              <FilterPanel
                 activeFiltersList={orderedFilters}
-              />
-            )}
-            {/* <h3>Used cars near me for sale</h3> */}
-            <ConcatH3 appliedFilters={appliedFilters} />
-            {!hasAppliedFilters && (
-              <Carousels
-                carStyles={true}
-                carsPage={true}
-                setAppliedFilters={setAppliedFilters}
                 setOrderedFilters={setOrderedFilters}
+                orderedFilterCount={orderedFilters.length}
+                appliedFilters={appliedFilters}
+                setAppliedFilters={setAppliedFilters}
+                closePill={closePill}
+                defaultFilterState={defaultFilterState}
+                activeFilter={activeFilter}
+                setActiveFilter={setActiveFilter}
+                filterComponentsMap={filterComponentsMap}
               />
             )}
-            <CarsToolbar
-              matchesTotal={matchesArray.length}
-              below820={below820}
-              above375={above375}
-              setShowMobileFilterPanel={setShowMobileFilterPanel}
-              orderedFilterCount={orderedFilters.length}
-              setActiveFilter={setActiveFilter}
-              sortCats={sortCats}
-              appliedFilters={appliedFilters}
-              setAppliedFilters={setAppliedFilters}
-            />
+            {/***************RIGHT PANEL *************/}
 
-            {matchesArray.length > 0 ? (
-              <InventoryGrid cars={matchesArray} below820={below820} />
-            ) : (
-              <div
-                className="no_results"
-                style={{
-                  height: "45%",
-                }}
-              >
-                <ConcatH3 appliedFilters={appliedFilters} noResults={true} />
-              </div>
-            )}
+            <div
+              className="right_panel"
+              style={
+                /* hasAppliedFilters ? */ { width: "1600px" } /* : undefined */
+              }
+            >
+              {below820 && orderedFilters.length > 0 && (
+                <MobileFilterRow
+                  appliedFilters={appliedFilters}
+                  closePill={closePill}
+                  setActiveFilter={setActiveFilter}
+                  setShowMobileFilterPanel={setShowMobileFilterPanel}
+                  activeFiltersList={orderedFilters}
+                />
+              )}
+              <ConcatH3 appliedFilters={appliedFilters} />
+              {!hasAppliedFilters && (
+                <Carousels
+                  carStyles={true}
+                  carsPage={true}
+                  setAppliedFilters={setAppliedFilters}
+                  setOrderedFilters={setOrderedFilters}
+                />
+              )}
+              <CarsToolbar
+                matchesTotal={matchesArray.length}
+                below820={below820}
+                above375={above375}
+                setShowMobileFilterPanel={setShowMobileFilterPanel}
+                orderedFilterCount={orderedFilters.length}
+                setActiveFilter={setActiveFilter}
+                sortCats={sortCats}
+                appliedFilters={appliedFilters}
+                setAppliedFilters={setAppliedFilters}
+              />
+
+              <InventoryGrid
+                cars={matchesArray}
+                below820={below820}
+                appliedFilters={appliedFilters}
+              />
+            </div>
           </div>
-        </div>
-      </Box>
-    </div>
+        </Box>
+      </div>
+    </>
   );
 };
 

@@ -1,6 +1,6 @@
 import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
-import { drop } from "lodash";
+// import { drop } from "lodash";
 
 const SearchInput = styled("input", {
   shouldForwardProp: (prop) =>
@@ -36,17 +36,19 @@ const SearchInput = styled("input", {
 
 // Input wrapper (wraps input & button)
 const InputWrapper = styled(Box, {
-  shouldForwardProp: (prop) => prop !== "darkRoute",
-})(({ darkRoute }) => ({
+  shouldForwardProp: (prop) => prop !== "darkRoute" && prop !== "distLocFilter",
+})(({ darkRoute, distLocFilter }) => ({
   position: "relative",
   border: "none",
   height: "48px",
-  width: "100%",
+  width: distLocFilter ? "98%" : "100%",
   padding: 0,
   boxShadow: darkRoute ? "none" : "10px 10px 10px rgba(0,0,0,.2)",
   borderRadius: "8px",
   boxSizing: "border-box",
-  // border: "2px solid green",
+  // border: distLocFilter ? "1px solid green" : "",
+  marginBlock: distLocFilter ? ".5rem .75rem" : "",
+  marginInline: distLocFilter ? "auto" : "",
 }));
 
 // Border layer (abs -pos'd box wrapping the input)
@@ -99,6 +101,7 @@ const SearchBtn = styled("button", {
     : "white",
   borderRadius: showDroplist ? "0px 8px 0px 0px" : "0px 8px 8px 0px",
   padding: "unset",
+
   "&:hover": {
     backgroundColor: "white",
   },
@@ -114,3 +117,7 @@ export {
   SearchBtn,
   droplistStyle,
 };
+
+/// trying to keep the LocationModal's Searchbar keep its focus (locationFocusRef.current = true) when the Searchbar's  .clearInputBtn <button/> is clicked,
+
+//the Searchbar's 'handleOnBlur' (77) is being triggered by clicking the .clearInputBtn in addition to the inline 'onClick' handler of the <button/>

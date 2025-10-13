@@ -5,16 +5,6 @@ import MenuLines from "../icons/Menu_lines.svg";
 import RangeSelect from "./rangeSelect";
 import Button from "./buttons/button";
 
-const StyledBar = styled("div")(
-  ({ barKey, height, activeRange, leftPanel }) => ({
-    flex: "1",
-    height: leftPanel ? `${height * 4}px` : `${height * 10.5}px`,
-    backgroundColor: "var(--btnBG)",
-    opacity: barKey >= activeRange[0] && barKey <= activeRange[1] ? "1" : ".3",
-    "&:hover": { opacity: ".3" },
-  })
-);
-
 const PriceSlider = ({
   inventory,
   appliedFilters,
@@ -25,7 +15,18 @@ const PriceSlider = ({
   const [range, setRange] = useState([]);
   const [grabbing, setGrabbing] = useState(false);
 
-  // Compute bucketed price counts and min/max price
+  const StyledBar = styled("div")(
+    ({ barKey, height, activeRange, leftPanel }) => ({
+      flex: "1",
+      height: leftPanel ? `${height * 6}px` : `${height * 10.5}px`,
+      backgroundColor: "var(--btnBG)",
+      opacity:
+        barKey >= activeRange[0] && barKey <= activeRange[1] ? "1" : ".3",
+      "&:hover": { opacity: ".3" },
+    })
+  );
+
+  //  COMPUTED RANGE : Compute bucketed price counts and min/max price
   const computedRange = useMemo(() => {
     if (!inventory || inventory.length === 0) return null;
 
@@ -69,32 +70,56 @@ const PriceSlider = ({
     ]);
   }, [computedRange, appliedFilters.minPrice, appliedFilters.maxPrice]);
 
+  // CLAMP VALUE
   const clampValue = (value, min, max) => Math.max(min, Math.min(value, max));
 
-  const updateFilters = (newRange, changedKey) => {
+  // UPDATE FILTERS
+  const updateFilters = (newRange, changedKey, clear) => {
+    if (clear) {
+      // clear both filters
+
+      setAppliedFilters((prev) => ({
+        ...prev,
+        minPrice: null,
+        maxPrice: null,
+      }));
+      setOrderedFilters((prev) =>
+        prev.filter((key) => key !== "minPrice" && key !== "maxPrice")
+      );
+      return; // 👈 stop here
+    }
+
+    // otherwise, normal update
     setAppliedFilters((prev) => ({
       ...prev,
       ...(changedKey === "minPrice" ? { minPrice: newRange[0] } : {}),
       ...(changedKey === "maxPrice" ? { maxPrice: newRange[1] } : {}),
     }));
+
     setOrderedFilters((prev) =>
       prev.includes(changedKey) ? prev : [...prev, changedKey]
     );
   };
 
+  // HANDLE UPDATE RANGE
   const handleUpdateRange = (event, newValue, activeThumb, activeSelect) => {
     if (!computedRange) return;
 
     const minPrice = computedRange.min;
     const maxPrice = computedRange.max;
 
+    const isFullRange =
+      newValue.length === 2 &&
+      newValue[0] === minPrice &&
+      newValue[1] === maxPrice;
+
     if (activeThumb !== null) {
-      const clampedRange = [
-        clampValue(newValue[0], minPrice, maxPrice),
-        clampValue(newValue[1], minPrice, maxPrice),
-      ];
-      setRange(clampedRange);
-      updateFilters(clampedRange, activeThumb === 0 ? "minPrice" : "maxPrice");
+      setRange(newValue);
+      updateFilters(
+        newValue,
+        activeThumb === 0 ? "minPrice" : "maxPrice",
+        isFullRange
+      );
     } else if (activeSelect) {
       setRange((prev) => {
         const updated =
@@ -129,8 +154,8 @@ const PriceSlider = ({
       style={{
         display: "flex",
         flexDirection: "column",
+        maxWidth: "100%",
       }}
-      onMouseLeave={() => grabbing && setGrabbing(false)}
     >
       {leftPanel && (
         <RangeSelect
@@ -144,7 +169,7 @@ const PriceSlider = ({
 
       <div
         style={{
-          overflow: "hidden",
+          // overflow: "hidden",
           marginTop: leftPanel ? "1rem" : "",
           display: "flex",
           alignItems: "flex-end",
@@ -154,6 +179,7 @@ const PriceSlider = ({
           gap: ".25%",
         }}
       >
+        {/* MAPPED BARS */}
         {computedRange.counts.map((c) => (
           <StyledBar
             key={c.name}
@@ -164,7 +190,7 @@ const PriceSlider = ({
           />
         ))}
       </div>
-
+      {/* MUI SLIDER */}
       <Slider
         value={range}
         min={computedRange.min}
@@ -175,22 +201,37 @@ const PriceSlider = ({
         valueLabelFormat={(v) => `$${v / 1000}k`}
         sx={{
           height: "2px",
+          width: "98%",
           alignSelf: "center",
           // transform: "translateY(-12px)",
           transform: `${
             leftPanel ? "translateY(-20px) " : "translateY(-13px) "
           }${leftPanel ? "scale(0.95)" : ""}`,
           color: "var(--disabledBtn)",
+
           "& .MuiSlider-thumb": {
             backgroundImage: `url(${MenuLines})`,
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
             backgroundSize: "10px",
+            height: "10px",
+            width: "10px",
+            margin: "none",
             backgroundColor: "white",
             border: "1px solid var(--disabledBtn)",
             padding: "15px",
             cursor: grabbing ? "grabbing" : "grab",
             outline: "0px",
+            "&::before, &::after": {
+              content: '""',
+              position: "absolute",
+              width: "100%", // ✅ match parent width
+              height: "100%", // ✅ match parent height
+              // top: 0,
+              // left: 0,
+              pointerEvents: "none", // keeps them non-interactive
+              boxSizing: "border-box",
+            },
           },
           "& .MuiSlider-valueLabel": {
             backgroundColor: "teal",
@@ -201,6 +242,7 @@ const PriceSlider = ({
             transform: grabbing ? "translateY(-110%) scale(1.1)" : "",
           },
         }}
+        onMouseLeave={() => grabbing && setGrabbing(false)}
         onMouseDown={() => setGrabbing(true)}
         onMouseUp={() => setGrabbing(false)}
         onTouchStart={() => setGrabbing(true)}
@@ -224,6 +266,12 @@ const PriceSlider = ({
           disabled={!appliedFilters.minPrice && !appliedFilters.maxPrice}
           text="RESET PRICE RANGE"
           onClick={handleClear}
+          style={{
+            width: "250px",
+
+            padding: ".5rem",
+            marginInline: "auto",
+          }}
         />
       )}
     </div>

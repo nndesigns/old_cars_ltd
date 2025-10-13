@@ -1,12 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Box from "@mui/material/Box";
 import { styled } from "@mui/material/styles";
+import { motion } from "framer-motion";
 import InventoryCard from "../components/inventoryCard";
 import { getModelImageURLs } from "../components/axiosCalls";
+import { useSearchParams } from "react-router-dom";
+import { LoadingWave } from "../components/inventoryGrid/loadingWave";
+import "../components/inventoryGrid/invGrid.css";
 
-const Favorites = ({ hearted_cars }) => {
+const Favorites = ({ hearted_cars, location }) => {
+  const [searchParams] = useSearchParams();
+  const fromLocModal = searchParams.get("fromLocModal") === "true";
   const [favoritesImagesMap, setFavoritesImagesMap] = useState({});
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+  const [loadingCars, setLoadingCars] = useState(true);
 
   useEffect(() => {
     const handleResize = () => {
@@ -49,31 +56,64 @@ const Favorites = ({ hearted_cars }) => {
     imageArray: favoritesImagesMap[veh.images.model_imgs_key] || null,
   }));
 
-  //   console.log("data", data);
+  const readyCars = useMemo(() => {
+    return data.filter(
+      (car) => Array.isArray(car.imageArray) && car.imageArray.length > 0
+    );
+  }, [data]);
 
-  const FavoritesGrid = styled(Box)(({ theme }) => ({
-    display: "grid",
-    gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, 268px)",
-    gap: "2%, 10%",
-    columnGap: "1.3rem",
-    rowGap: "1.3rem",
-  }));
+  useEffect(() => {
+    if (readyCars.length) {
+      setLoadingCars(false);
+    }
+  }, [readyCars]);
+
+  const getsLocShadow = (city) => {
+    if (location.city === city) {
+      return true;
+    } else {
+      return false;
+    }
+  };
 
   return (
     <div className="page_container favorites_container">
       <Box className="center_box">
         <div className="middle_content">
           <h2 className="favorites_h2">Your Favorites</h2>
-          <FavoritesGrid>
-            {data.map((veh, index) => (
-              <InventoryCard
-                key={index}
-                carData={veh}
-                nearYou={true}
-                favorites={true}
-              /> //nearYou takes off last 5 imgs, causes slider to also display a custom 'ViewMoreSlide'
-            ))}
-          </FavoritesGrid>
+
+          {loadingCars ? (
+            <div className="loading-message">
+              <LoadingWave />
+            </div>
+          ) : (
+            <div className="grid_root">
+              {readyCars.map((car, index) => (
+                <motion.div
+                  key={car.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: Math.min(index, 6) * 0.05,
+                  }}
+                >
+                  <InventoryCard
+                    carData={car}
+                    // favorites={true}
+                    nearYou={true}
+                    style={{
+                      boxShadow: fromLocModal
+                        ? getsLocShadow(car.city)
+                          ? "var(--allAroundBtnBGShadow)"
+                          : ""
+                        : "",
+                    }}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </Box>
     </div>

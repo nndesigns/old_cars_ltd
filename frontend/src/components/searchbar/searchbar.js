@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import "./searchbar.css";
 import { useNavigate } from "react-router-dom";
-
+import { TfiClose } from "react-icons/tfi";
 import { CiSearch } from "react-icons/ci";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   SearchInput,
   InputWrapper,
@@ -12,199 +13,1146 @@ import {
 } from "./searchInput.js";
 import {
   handleLocationSearch,
-  handleInvSearch,
   invStringSearch,
   makeModelSearch,
 } from "./searchHandlers.js";
+import { smartSearch } from "../axiosCalls.js";
 import { Box } from "@mui/material";
 import Button from "../buttons/button.js";
+
+// function Searchbar({
+//   currentRoute,
+//   darkRoute,
+//   mode,
+//   inv,
+//   locationInputValue,
+//   setLocationInputValue,
+//   shopByValue,
+//   setShopByValue,
+//   inputRef,
+//   setAppliedFilters,
+//   setOrderedFilters,
+//   handleClearFilters,
+//   ...props
+// }) {
+//   const [border, setBorder] = useState(false);
+//   const [isActive, setIsActive] = useState(
+//     mode === "location" || mode === "locationChange"
+//       ? locationInputValue.length > 0
+//       : false
+//   );
+
+//   const [invSearch, setInvSearch] = useState("");
+//   const [isFocused, setIsFocused] = useState(
+//     inputRef.current === document.activeElement
+//   );
+//   const [dropMatches, setDropMatches] = useState();
+//   const [showDroplist, setShowDroplist] = useState(false);
+//   const [expandedKeys, setExpandedKeys] = useState({});
+//   const navigate = useNavigate();
+
+//   console.log("dropMatches", dropMatches);
+
+//   // Style changes
+//   const handleHover = () => setBorder(true);
+
+//   const handleMouseLeave = () => {
+//     if (!isFocused) setBorder(false);
+//   };
+
+//   const handleOnBlur = (e) => {
+//     if (e.relatedTarget && e.relatedTarget.closest(".droplist")) return;
+//     setBorder(false);
+//     setIsFocused(false);
+//     setShowDroplist(false);
+//   };
+
+//   const handleFocus = (e) => {
+//     setIsFocused(true);
+//     if (!border) setBorder(true);
+//     if (mode === "inventory" && inputRef.current.value.length > 0) {
+//       handleSubmit(e);
+//       // setShowDroplist(true);
+//     }
+//   };
+
+//   const toggleExpand = (e, key) => {
+//     setExpandedKeys((prev) => ({
+//       ...prev,
+//       [key]: !prev[key],
+//     }));
+//   };
+
+//   const handleChange = (e) => {
+//     if (inputRef.current.value.length && !isActive) {
+//       setIsActive(true);
+//     } else if (!inputRef.current.value.length && isActive) {
+//       setIsActive(false);
+//     }
+
+//     if (mode === "location" || mode === "locationChange") {
+//       setLocationInputValue(e.target.value);
+//     } else if (mode === "distLocFilter") {
+//       setShopByValue(e.target.value);
+//     } else if (mode === "inventory") {
+//       setInvSearch(e.target.value);
+//       if (inputRef.current.value.length === 0) {
+//         setShowDroplist(false);
+//       }
+//     }
+//   };
+
+//   const handleSubmit = useCallback(
+//     async (e) => {
+//       const key = e.key;
+
+//       if (mode === "location" || mode === "locationChange") {
+//         if (!inputRef.current.value) {
+//           setLocationInputValue("");
+//           return;
+//         } else {
+//           setLocationInputValue(inputRef.current.value);
+//           const results = await handleLocationSearch(inputRef.current.value);
+//           props.setLocObjs(results);
+//         }
+//       } else {
+//         if (key === "Enter") {
+//           handleOnBlur(e);
+//           const searchValue = inputRef.current.value;
+//           invStringSearch(
+//             navigate,
+//             currentRoute,
+//             setAppliedFilters,
+//             setOrderedFilters,
+//             handleClearFilters,
+//             searchValue
+//           );
+//         } else {
+//           if (inputRef.current.value.length) {
+//             const matches = await smartSearch(invSearch);
+//             setDropMatches(matches);
+//             setShowDroplist(true);
+//           } else {
+//             setShowDroplist(false);
+//           }
+//         }
+//       }
+//     },
+//     [mode, invSearch, inv, inputRef, props]
+//   );
+
+//   //  while(showDroplist && Object.keys(dropMatches).length)
+
+//   useEffect(() => {
+//     if (isFocused && inputRef.current) {
+//       inputRef.current.focus();
+//       if (mode === "inventory" && inputRef.current.value.length === 0) {
+//         setShowDroplist(false);
+//       }
+//     } else if (!isFocused && inputRef.current === document.activeElement) {
+//       inputRef.current.blur();
+//     }
+//   }, [isFocused, invSearch, locationInputValue]);
+
+//   return (
+//     <InputWrapper
+//       onMouseEnter={handleHover}
+//       onMouseLeave={handleMouseLeave}
+//       darkRoute={darkRoute}
+//       distLocFilter={mode === "distLocFilter"}
+//     >
+//       <InputWrapperBorder
+//         darkRoute={darkRoute}
+//         border={border}
+//         showDroplist={showDroplist}
+//       />
+
+//       <SearchInput
+//         darkRoute={darkRoute}
+//         border={border}
+//         ref={inputRef}
+//         onChange={handleChange}
+//         value={mode === "inventory" ? invSearch : locationInputValue}
+//         onFocus={handleFocus}
+//         onBlur={handleOnBlur}
+//         placeholder={
+//           mode === "location" || mode === "locationChange"
+//             ? "Search City or Zip"
+//             : mode === "distLocFilter"
+//             ? "Search by City or State"
+//             : "Search by make, model, or keyword"
+//         }
+//         onKeyUp={(e) => {
+//           if (mode === "location" || mode === "locationChange") {
+//             if (e.key === "Enter") handleSubmit(e);
+//           } else if (mode === "inventory") {
+//             handleSubmit(e); /// detects key (Enter vs not Enter) and either sets dropMatches or runs invStringSearch()
+//           }
+//         }}
+//         showDroplist={showDroplist}
+//       />
+
+//       {isActive && (
+//         <button
+//           className="clearInputBtn"
+//           onClick={(e) => {
+//             e.stopPropagation();
+//             inputRef.current.value = null;
+
+//             if (mode === "locationChange" || mode === "location") {
+//               setLocationInputValue("");
+//               if (mode === "locationChange") props.setLocObjs([]);
+//             } else if (mode === "inventory") {
+//               setInvSearch("");
+//             } else if (mode === "distLocFilter") {
+//               setShopByValue("");
+//             }
+
+//             setIsActive(false);
+//             inputRef.current.focus();
+//           }}
+//         >
+//           <TfiClose />
+//         </button>
+//       )}
+
+//       <SearchBtn
+//         onClick={handleSubmit}
+//         darkRoute={darkRoute}
+//         showDroplist={showDroplist}
+//       >
+//         <CiSearch
+//           style={{
+//             transform: "scale(1.6)",
+//             fill: border ? "var(--offBlue)" : "var(--iconColor)",
+//           }}
+//         />
+//       </SearchBtn>
+
+//       {showDroplist && (
+//         <Box className="droplist" style={droplistStyle({ darkRoute })}>
+//           <div className="droplist_item search_val">
+//             Search for: "{inputRef.current.value}"
+//           </div>
+
+//           {Object.entries(dropMatches)
+//             .filter(([key]) => key.toLowerCase() !== "vin")
+//             .map(
+//               ([key, values]) =>
+//                 values.length > 0 && (
+//                   <div className="droplist_section" key={key}>
+//                     <h3>{key}</h3>
+//                     <ul>
+//                       {values.slice(0, 7).map((item, index) => (
+//                         <li
+//                           className="droplist_item"
+//                           key={index}
+//                           onMouseDown={(e) => {
+//                             makeModelSearch(
+//                               navigate,
+//                               currentRoute,
+//                               setAppliedFilters,
+//                               setOrderedFilters,
+//                               handleClearFilters,
+//                               key,
+//                               item,
+//                               inputRef,
+//                               setInvSearch
+//                             );
+//                             handleOnBlur(e);
+//                           }}
+//                         >
+//                           {key === "Model" || key === "Year"
+//                             ? item.display
+//                             : item}
+//                         </li>
+//                       ))}
+//                     </ul>
+
+//                     <AnimatePresence initial={false}>
+//                       {expandedKeys[key] && (
+//                         <motion.ul
+//                           key={`${key}-expanded`}
+//                           initial={{ height: 0, opacity: 0 }}
+//                           animate={{ height: "auto", opacity: 1 }}
+//                           exit={{ height: 0, opacity: 0 }}
+//                           transition={{ duration: 0.35, ease: "easeInOut" }}
+//                           style={{ overflow: "hidden" }}
+//                         >
+//                           {values.slice(7).map((item, index) => (
+//                             <li
+//                               className="droplist_item"
+//                               key={index + 7}
+//                               onMouseDown={(e) => {
+//                                 makeModelSearch(
+//                                   navigate,
+//                                   currentRoute,
+//                                   setAppliedFilters,
+//                                   setOrderedFilters,
+//                                   handleClearFilters,
+//                                   key,
+//                                   item,
+//                                   inputRef,
+//                                   setInvSearch
+//                                 );
+//                                 handleOnBlur(e);
+//                               }}
+//                             >
+//                               {key === "Model" || key === "Year"
+//                                 ? item.display
+//                                 : item}
+//                             </li>
+//                           ))}
+//                         </motion.ul>
+//                       )}
+//                     </AnimatePresence>
+
+//                     {values.length > 7 && (
+//                       <Button
+//                         onClick={(e) => toggleExpand(e, key)}
+//                         text={
+//                           expandedKeys[key]
+//                             ? "Show less"
+//                             : `View ${values.length - 7} more..`
+//                         }
+//                         outlineStyle2={true}
+//                         style={{
+//                           marginLeft: ".25rem",
+//                           marginTop: ".5rem",
+//                           transform: "scale(.85)",
+//                         }}
+//                       />
+//                     )}
+//                   </div>
+//                 )
+//             )}
+//         </Box>
+//       )}
+//     </InputWrapper>
+//   );
+// }
+
+// function Searchbar({
+//   currentRoute,
+//   darkRoute,
+//   mode,
+//   inv,
+//   locationInputValue,
+//   setLocationInputValue,
+//   shopByValue,
+//   setShopByValue,
+//   inputRef,
+//   setAppliedFilters,
+//   setOrderedFilters,
+//   handleClearFilters,
+//   ...props
+// }) {
+//   const [border, setBorder] = useState(false);
+//   const [isActive, setIsActive] = useState(
+//     mode === "location" || mode === "locationChange"
+//       ? locationInputValue.length > 0
+//       : false
+//   );
+
+//   const [invSearch, setInvSearch] = useState("");
+//   const [isFocused, setIsFocused] = useState(
+//     inputRef.current === document.activeElement
+//   );
+//   const [dropMatches, setDropMatches] = useState();
+//   const [showDroplist, setShowDroplist] = useState(false);
+//   const [expandedKeys, setExpandedKeys] = useState({});
+//   const [flatMatches, setFlatMatches] = useState([]);
+//   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+//   const [typedValue, setTypedValue] = useState("");
+//   const navigate = useNavigate();
+
+//   // hover border styling
+//   const handleHover = () => setBorder(true);
+//   const handleMouseLeave = () => {
+//     if (!isFocused) setBorder(false);
+//   };
+
+//   const handleOnBlur = (e) => {
+//     if (e.relatedTarget && e.relatedTarget.closest(".droplist")) return;
+//     setBorder(false);
+//     setIsFocused(false);
+//     setShowDroplist(false);
+//     setHighlightedIndex(-1);
+//   };
+
+//   const handleFocus = (e) => {
+//     setIsFocused(true);
+//     if (!border) setBorder(true);
+//     if (mode === "inventory" && inputRef.current.value.length > 0) {
+//       handleSubmit(e);
+//     }
+//   };
+
+//   const toggleExpand = (e, key) => {
+//     setExpandedKeys((prev) => ({
+//       ...prev,
+//       [key]: !prev[key],
+//     }));
+//   };
+
+//   const handleChange = (e) => {
+//     if (inputRef.current.value.length && !isActive) {
+//       setIsActive(true);
+//     } else if (!inputRef.current.value.length && isActive) {
+//       setIsActive(false);
+//     }
+
+//     if (mode === "location" || mode === "locationChange") {
+//       setLocationInputValue(e.target.value);
+//     } else if (mode === "distLocFilter") {
+//       setShopByValue(e.target.value);
+//     } else if (mode === "inventory") {
+//       setInvSearch(e.target.value);
+//       if (inputRef.current.value.length === 0) {
+//         setShowDroplist(false);
+//       }
+//     }
+//   };
+
+//   // useEffect(() => {
+//   //   console.log(
+//   //     "isActive changed, also inputRef latest",
+//   //     isActive,
+//   //     inputRef.current.value
+//   //   );
+//   // }, [isActive]);
+
+//   useEffect(() => {
+//     if (mode === "inventory" && invSearch.length > 0) {
+//       const fetchMatches = async () => {
+//         const matches = await smartSearch(invSearch);
+//         setDropMatches(matches);
+//         setShowDroplist(true);
+//       };
+//       fetchMatches();
+//     } else {
+//       setShowDroplist(false);
+//     }
+//   }, [invSearch, mode]);
+
+//   /// HANDLE SUBMIT
+//   const handleSubmit = useCallback(
+//     async (e) => {
+//       const key = e.key;
+//       const searchValue = e.value ?? inputRef.current.value ?? "";
+
+//       console.log("handleSubmit searchValue", searchValue);
+
+//       if (mode === "location" || mode === "locationChange") {
+//         if (/* !inputRef.current.value */ !searchValue) {
+//           setLocationInputValue("");
+//           return;
+//         } else {
+//           setLocationInputValue(/* inputRef.current.value */ searchValue);
+//           const results = await handleLocationSearch(
+//             /* inputRef.current.value */ searchValue
+//           );
+//           props.setLocObjs(results);
+//         }
+//       } else {
+//         if (key === "Enter") {
+//           handleOnBlur(e);
+//           // const searchValue = inputRef.current.value;
+//           invStringSearch(
+//             navigate,
+//             currentRoute,
+//             setAppliedFilters,
+//             setOrderedFilters,
+//             handleClearFilters,
+//             searchValue
+//           );
+//         } else {
+//           if (searchValue.length) {
+//             const matches = await smartSearch(/* invSearch */ searchValue);
+
+//             setDropMatches(matches);
+//             setShowDroplist(true);
+//           } else {
+//             setShowDroplist(false);
+//           }
+//         }
+//       }
+//     },
+//     [mode, invSearch, inv, inputRef, props]
+//   );
+
+//   // Flatten matches for arrow navigation
+//   useEffect(() => {
+//     if (dropMatches && Object.keys(dropMatches).length) {
+//       const flattened = Object.entries(dropMatches)
+//         .filter(([key]) => key.toLowerCase() !== "vin")
+//         .flatMap(([key, values]) =>
+//           values.map((item) => ({
+//             key,
+//             value: key === "Model" || key === "Year" ? item.display : item,
+//             raw: item,
+//           }))
+//         );
+//       setFlatMatches(flattened);
+//     } else {
+//       setFlatMatches([]);
+//       setHighlightedIndex(-1);
+//     }
+//   }, [dropMatches]);
+
+//   // useEffect(() => {
+//   //   console.log("flatMatches update, latest showDroplist", showDroplist);
+//   // }, [flatMatches, showDroplist]);
+
+//   // focus/blur management
+//   useEffect(() => {
+//     if (isFocused && inputRef.current) {
+//       inputRef.current.focus();
+//       if (mode === "inventory" && inputRef.current.value.length === 0) {
+//         setShowDroplist(false);
+//       }
+//     } else if (!isFocused && inputRef.current === document.activeElement) {
+//       inputRef.current.blur();
+//     }
+//   }, [isFocused, invSearch, locationInputValue]);
+
+//   return (
+//     <InputWrapper
+//       onMouseEnter={handleHover}
+//       onMouseLeave={handleMouseLeave}
+//       darkRoute={darkRoute}
+//       distLocFilter={mode === "distLocFilter"}
+//     >
+//       <InputWrapperBorder
+//         darkRoute={darkRoute}
+//         border={border}
+//         showDroplist={showDroplist}
+//       />
+
+//       <SearchInput
+//         darkRoute={darkRoute}
+//         border={border}
+//         ref={inputRef}
+//         onChange={handleChange}
+//         value={mode === "inventory" ? invSearch : locationInputValue}
+//         onFocus={handleFocus}
+//         onBlur={handleOnBlur}
+//         placeholder={
+//           mode === "location" || mode === "locationChange"
+//             ? "Search City or Zip"
+//             : mode === "distLocFilter"
+//             ? "Search by City or State"
+//             : "Search by make, model, or keyword"
+//         }
+//         onKeyDown={(e) => {
+//           if (mode === "inventory" && showDroplist && flatMatches.length > 0) {
+//             ///where do 'flatMatches
+//             if (e.key === "ArrowDown") {
+//               e.preventDefault();
+//               if (highlightedIndex === -1)
+//                 setTypedValue(inputRef.current.value);
+//               setHighlightedIndex((prev) =>
+//                 prev < flatMatches.length - 1 ? prev + 1 : prev
+//               );
+//               const next = flatMatches[highlightedIndex + 1];
+//               if (next) inputRef.current.value = next.value;
+//             } else if (e.key === "ArrowUp") {
+//               e.preventDefault();
+//               if (highlightedIndex > 0) {
+//                 const prevItem = flatMatches[highlightedIndex - 1];
+//                 setHighlightedIndex((prevIndex) => prevIndex - 1);
+//                 if (prevItem) inputRef.current.value = prevItem.value;
+//               } else if (highlightedIndex === 0) {
+//                 setHighlightedIndex(-1);
+//                 inputRef.current.value = typedValue;
+//               }
+//             } else if (e.key === "Enter") {
+//               e.preventDefault();
+//               if (highlightedIndex >= 0) {
+//                 const { key, raw } = flatMatches[highlightedIndex];
+//                 makeModelSearch(
+//                   navigate,
+//                   currentRoute,
+//                   setAppliedFilters,
+//                   setOrderedFilters,
+//                   handleClearFilters,
+//                   key,
+//                   raw,
+//                   inputRef,
+//                   setInvSearch
+//                 );
+//                 handleOnBlur(e);
+//               } else {
+//                 handleSubmit(e);
+//               }
+//             }
+//           } else if (
+//             mode === "location" ||
+//             mode === "locationChange" ||
+//             mode === "distLocFilter"
+//           ) {
+//             if (e.key === "Enter") handleSubmit(e);
+//           } else if (mode === "inventory") {
+//             console.log("you actually only THIS FAR");
+//             console.log(
+//               "inputRef.current.value so far",
+//               inputRef.current.value
+//             );
+//             // handleSubmit(e);
+//             handleSubmit({ ...e, value: invSearch });
+//           }
+//         }}
+//         showDroplist={showDroplist}
+//       />
+
+//       {isActive && (
+//         <button
+//           className="clearInputBtn"
+//           onClick={(e) => {
+//             e.stopPropagation();
+//             inputRef.current.value = null;
+
+//             if (mode === "locationChange" || mode === "location") {
+//               setLocationInputValue("");
+//               if (mode === "locationChange") props.setLocObjs([]);
+//             } else if (mode === "inventory") {
+//               setInvSearch("");
+//             } else if (mode === "distLocFilter") {
+//               setShopByValue("");
+//             }
+
+//             setIsActive(false);
+//             inputRef.current.focus();
+//           }}
+//         >
+//           <TfiClose />
+//         </button>
+//       )}
+
+//       <SearchBtn
+//         onClick={handleSubmit}
+//         darkRoute={darkRoute}
+//         showDroplist={showDroplist}
+//       >
+//         <CiSearch
+//           style={{
+//             transform: "scale(1.6)",
+//             fill: border ? "var(--offBlue)" : "var(--iconColor)",
+//           }}
+//         />
+//       </SearchBtn>
+
+//       {showDroplist && (
+//         <Box className="droplist" style={droplistStyle({ darkRoute })}>
+//           <div className="droplist_item search_val">
+//             Search for: "{inputRef.current.value}"
+//           </div>
+
+//           {Object.entries(dropMatches)
+//             .filter(([key]) => key.toLowerCase() !== "vin")
+//             .map(
+//               ([key, values]) =>
+//                 values.length > 0 && (
+//                   <div className="droplist_section" key={key}>
+//                     <h3>{key}</h3>
+//                     <ul>
+//                       {values.slice(0, 7).map((item, index) => {
+//                         const flatIndex = flatMatches.findIndex(
+//                           (m) =>
+//                             m.key === key &&
+//                             m.value ===
+//                               (key === "Model" || key === "Year"
+//                                 ? item.display
+//                                 : item)
+//                         );
+//                         return (
+//                           <li
+//                             className={`droplist_item ${
+//                               flatIndex === highlightedIndex
+//                                 ? "highlighted"
+//                                 : ""
+//                             }`}
+//                             key={index}
+//                             onMouseDown={(e) => {
+//                               makeModelSearch(
+//                                 navigate,
+//                                 currentRoute,
+//                                 setAppliedFilters,
+//                                 setOrderedFilters,
+//                                 handleClearFilters,
+//                                 key,
+//                                 item,
+//                                 inputRef,
+//                                 setInvSearch
+//                               );
+//                               handleOnBlur(e);
+//                             }}
+//                           >
+//                             {key === "Model" || key === "Year"
+//                               ? item.display
+//                               : item}
+//                           </li>
+//                         );
+//                       })}
+//                     </ul>
+
+//                     <AnimatePresence initial={false}>
+//                       {expandedKeys[key] && (
+//                         <motion.ul
+//                           key={`${key}-expanded`}
+//                           initial={{ height: 0, opacity: 0 }}
+//                           animate={{ height: "auto", opacity: 1 }}
+//                           exit={{ height: 0, opacity: 0 }}
+//                           transition={{ duration: 0.35, ease: "easeInOut" }}
+//                           style={{ overflow: "hidden" }}
+//                         >
+//                           {values.slice(7).map((item, index) => {
+//                             const flatIndex = flatMatches.findIndex(
+//                               (m) =>
+//                                 m.key === key &&
+//                                 m.value ===
+//                                   (key === "Model" || key === "Year"
+//                                     ? item.display
+//                                     : item)
+//                             );
+//                             return (
+//                               <li
+//                                 className={`droplist_item ${
+//                                   flatIndex === highlightedIndex
+//                                     ? "highlighted"
+//                                     : ""
+//                                 }`}
+//                                 key={index + 7}
+//                                 onMouseDown={(e) => {
+//                                   makeModelSearch(
+//                                     navigate,
+//                                     currentRoute,
+//                                     setAppliedFilters,
+//                                     setOrderedFilters,
+//                                     handleClearFilters,
+//                                     key,
+//                                     item,
+//                                     inputRef,
+//                                     setInvSearch
+//                                   );
+//                                   handleOnBlur(e);
+//                                 }}
+//                               >
+//                                 {key === "Model" || key === "Year"
+//                                   ? item.display
+//                                   : item}
+//                               </li>
+//                             );
+//                           })}
+//                         </motion.ul>
+//                       )}
+//                     </AnimatePresence>
+
+//                     {values.length > 7 && (
+//                       <Button
+//                         onClick={(e) => toggleExpand(e, key)}
+//                         text={
+//                           expandedKeys[key]
+//                             ? "Show less"
+//                             : `View ${values.length - 7} more..`
+//                         }
+//                         outlineStyle2={true}
+//                         style={{
+//                           marginLeft: ".25rem",
+//                           marginTop: ".5rem",
+//                           transform: "scale(.85)",
+//                         }}
+//                       />
+//                     )}
+//                   </div>
+//                 )
+//             )}
+//         </Box>
+//       )}
+//     </InputWrapper>
+//   );
+// }
 
 function Searchbar({
   currentRoute,
   darkRoute,
   mode,
   inv,
-  locationFocusRef,
-  locationValueRef,
+  locationInputValue,
+  setLocationInputValue,
+  shopByValue,
+  setShopByValue,
+  inputRef,
   setAppliedFilters,
   setOrderedFilters,
   handleClearFilters,
-  ...props //setLocaObjs
+  ...props
 }) {
   const [border, setBorder] = useState(false);
-  const isFocused = useRef(false);
-  const inputRef = useRef(null); // element ref
-  // const listItemRef = useRef(null)
-  const [invSearch, setInvSearch] = useState("");
-  const [locationSearch, setLocationSearch] = useState(
-    props.searchedValue //search from LCM?
-      ? props.searchedValue.current //use if so
-      : locationValueRef //search from LocationModal?
-      ? locationValueRef.current //use if so
-      : ""
+  const [isActive, setIsActive] = useState(
+    mode === "location" || mode === "locationChange"
+      ? locationInputValue.length > 0
+      : false
   );
 
-  console.log("this is darkRoute", darkRoute);
-
-  //Invenotry Search
-  const [dropMatches, setDropMatches] = useState();
+  const [invSearch, setInvSearch] = useState("");
+  const [isFocused, setIsFocused] = useState(
+    inputRef.current === document.activeElement
+  );
+  const [dropMatches, setDropMatches] = useState({});
   const [showDroplist, setShowDroplist] = useState(false);
-
+  const [expandedKeys, setExpandedKeys] = useState({});
+  const [flatMatches, setFlatMatches] = useState([]);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [typedValue, setTypedValue] = useState("");
   const navigate = useNavigate();
 
-  const activeSearch =
-    mode === "location" || mode === "locationChange"
-      ? locationSearch
-      : invSearch;
+  //prevent  'searchInv'-triggered useEffect from resetting 'showDroplist' to true after "enter" onKeyDown functions run (eg; handleOnBlur setting it to false) & after 'onMouseDown' clicking an option.
+  // 'onKeyDown': MMS (setInvSearch), HOB (setShowDroplist), invSearch-triggered useEffect
+  const suppressDroplistRef = useRef(false);
 
-  const setActiveSearch =
-    // if it's either location modal, set 'locationSearch' useState
-    mode === "location" || mode === "locationChange"
-      ? setLocationSearch
-      : setInvSearch;
-  // STYLE CHANGES
-  const handleHover = () => {
-    setBorder(true); // Or any action you want to take on hover
-  };
+  //auto-scrolling w/ ArrowDown & ArrowUp
+  const droplistRef = useRef(null);
+  const itemRefs = useRef([]);
+
+  // Hover border styling
+  const handleHover = () => setBorder(true);
   const handleMouseLeave = () => {
-    if (isFocused.current) {
-      return; //leave the border present
-    } else {
-      setBorder(false); // Reset or handle mouse leave
-    }
+    if (!isFocused) setBorder(false);
   };
 
-  ///////// HANDLE ON BLUR (LocationModal Searchbar)
   const handleOnBlur = (e) => {
+    if (e.relatedTarget && e.relatedTarget.closest(".droplist")) return;
     setBorder(false);
-    isFocused.current = false;
-    inputRef.current.blur();
+    setIsFocused(false);
     setShowDroplist(false);
-    if (locationFocusRef && locationFocusRef.current) {
-      locationFocusRef.current = false;
-    }
-  };
-  ///////// HANDLE FOCUS
-  const handleFocus = (e) => {
-    if (locationFocusRef) {
-      //if focus ref was passed into SB as itself (NB > LM > SB)
-      locationFocusRef.current = true; // set NB ref state to true
-    }
-    isFocused.current = true; //local comp focus Ref
-    if (!border) {
-      setBorder(true);
-    }
-    if (mode === "inventory" && inputRef.current.value.length > 0) {
-      handleSubmit(e.key);
-      setShowDroplist(true);
-    }
-  };
-  ///////// HANDLE CHANGE
-  const handleChange = (e) => {
-    if (inputRef.current.value.length == 0) {
-      if (mode === "inventory") {
-        setShowDroplist(false);
-      }
-    }
-    setActiveSearch(e.target.value);
+    setHighlightedIndex(-1);
   };
 
-  ///////// HANDLE SUBMIT /////////////
+  const handleFocus = (e) => {
+    setIsFocused(true);
+    if (!border) setBorder(true);
+  };
+
+  const toggleExpand = (e, key) => {
+    setExpandedKeys((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+    setHighlightedIndex(-1);
+  };
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+
+    if (value.length && !isActive) setIsActive(true);
+    if (!value.length && isActive) setIsActive(false);
+
+    if (mode === "location" || mode === "locationChange") {
+      setLocationInputValue(value);
+    } else if (mode === "distLocFilter") {
+      setShopByValue(value);
+    } else if (mode === "inventory") {
+      setInvSearch(value); // triggers droplist useEffect
+    }
+  };
+
+  // HANDLE SUBMIT
   const handleSubmit = useCallback(
-    async (key) => {
-      if (mode === "location") {
-        //before setting the props.setShowLocationChangeModal useState to true,
-        if (locationSearch.length === 0) {
-          locationValueRef.current = ""; //reflect that in the Navbar useState
-        } else {
-          props.setShowLocationChangeModal(true); //update Navbar modal useState
-          locationValueRef.current = locationSearch; //assign curr search value to Navbar useRef (to shared  to LCM)
-          //RUN API  TO RETRIEVE LOC OBJS (from us_zips.csv)
-          const results = await handleLocationSearch(locationSearch);
-          // console.log("results", results);
-          props.setLocObjs(results); //<-- assigns to locObjs Navbar useState
+    async (e) => {
+      const key = e.key;
+      const searchValue = e.value ?? inputRef.current.value ?? "";
+
+      if (mode === "location" || mode === "locationChange") {
+        console.log("this was triggered LOCATION");
+        if (!searchValue) {
+          setLocationInputValue("");
+          return;
         }
-      } else if (mode === "locationChange") {
-        locationValueRef.current = locationSearch;
-        //RUN API  TO RETRIEVE LOC OBJS
-        const results = await handleLocationSearch(locationSearch);
-        // console.log("results", results);
-        props.setLocObjs(results); //<-- parent Navbar useState update
+        setLocationInputValue(searchValue);
+        const results = await handleLocationSearch(searchValue);
+        props.setLocObjs(results);
       } else {
         if (key === "Enter") {
-          handleOnBlur();
-          if (inputRef.current.value.length) {
-            // invStringSearch(
-            //   navigate,
-            //   currentRoute,
-            //   setAppliedFilters,
-            //   setOrderedFilters,
-            //   handleClearFilters,
-            //   dropMatches,
-            //   inputRef.current.value
-            // );
-          }
-        } else {
-          // if key is not enter (ex; letter or backspace)
-          if (inputRef.current.value.length) {
-            const matches = handleInvSearch(invSearch, inv);
-            setDropMatches(matches);
-            setShowDroplist(true);
-          } else {
-            setShowDroplist(false);
-          }
+          handleOnBlur(e);
+          invStringSearch(
+            navigate,
+            currentRoute,
+            setAppliedFilters,
+            setOrderedFilters,
+            handleClearFilters,
+            invSearch
+          );
         }
       }
     },
-    [mode, locationSearch, invSearch, inv, locationValueRef, props]
+    [
+      mode,
+      invSearch,
+      navigate,
+      currentRoute,
+      setAppliedFilters,
+      setOrderedFilters,
+      handleClearFilters,
+      props,
+    ]
   );
 
-  useEffect(() => {
-    //local focus ref is true & input rendered
-    if (isFocused.current && inputRef.current) {
-      inputRef.current.focus(); // keeps the input focused despite comp re-render ( w/ setActiveSearch() <-- search value change)
-      if (inputRef.current.value.length == 0) {
-        setShowDroplist(false);
-      }
+  // AUTO SCROLLING
+  const scrollHighlightedIntoView = (index) => {
+    const container = droplistRef.current;
+    const item = itemRefs.current[index];
+    if (!container || !item) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const itemRect = item.getBoundingClientRect();
+
+    const isAbove = itemRect.top < containerRect.top;
+    const isBelow = itemRect.bottom > containerRect.bottom;
+
+    if (isAbove) {
+      // scroll up just enough
+      container.scrollTop -= containerRect.top - itemRect.top + 4; // small padding
+    } else if (isBelow) {
+      // scroll down just enough
+      // container.scrollTop += itemRect.bottom - containerRect.bottom + 4;
+      container.scrollTo({
+        top: container.scrollTop + (itemRect.bottom - containerRect.bottom + 4),
+        behavior: "smooth",
+      });
     }
-  }, [isFocused, activeSearch]); // Runs when isFocused state updates
+  };
+
+  // Flatten matches for arrow navigation
+  // useEffect(() => {
+  //   if (dropMatches && Object.keys(dropMatches).length) {
+  //     const flattened = Object.entries(dropMatches)
+  //       .filter(([key]) => key.toLowerCase() !== "vin")
+  //       .flatMap(([key, values]) => {
+  //         // 🟢 Only show up to 7 items unless expanded
+  //         const visibleValues = expandedKeys[key] ? values : values.slice(0, 7);
+
+  //         const baseItems = visibleValues.map((item) => ({
+  //           type: "item",
+  //           key,
+  //           value: key === "Model" || key === "Year" ? item.display : item,
+  //           raw: item,
+  //         }));
+
+  //         // 🟢 Add expand/collapse "button" entry if needed
+  //         if (values.length > 7) {
+  //           baseItems.push({
+  //             type: "button",
+  //             key,
+  //             value: expandedKeys[key]
+  //               ? "Show less"
+  //               : `View ${values.length - 7} more..`,
+  //           });
+  //         }
+
+  //         return baseItems;
+  //       });
+
+  //     setFlatMatches(flattened);
+  //   } else {
+  //     setFlatMatches([]);
+  //     setHighlightedIndex(-1);
+  //   }
+  // }, [dropMatches, expandedKeys]);
+
+  useEffect(() => {
+    if (dropMatches && Object.keys(dropMatches).length) {
+      const flattened = [
+        { type: "search_val", key: "search_val", value: invSearch },
+        ...Object.entries(dropMatches)
+          .filter(([key]) => key.toLowerCase() !== "vin")
+          .flatMap(([key, values]) => {
+            const visibleValues = expandedKeys[key]
+              ? values
+              : values.slice(0, 7);
+
+            const baseItems = visibleValues.map((item) => ({
+              type: "item",
+              key,
+              value: key === "Model" || key === "Year" ? item.display : item,
+              raw: item,
+            }));
+
+            if (values.length > 7) {
+              baseItems.push({
+                type: "button",
+                key,
+                value: expandedKeys[key]
+                  ? "Show less"
+                  : `View ${values.length - 7} more..`,
+              });
+            }
+
+            return baseItems;
+          }),
+      ];
+
+      setFlatMatches(flattened);
+    } else {
+      setFlatMatches([]);
+      setHighlightedIndex(-1);
+    }
+  }, [dropMatches, expandedKeys, invSearch]);
+
+  useEffect(() => {
+    if (
+      mode === "inventory" &&
+      invSearch.length > 0 &&
+      !suppressDroplistRef.current
+    ) {
+      const fetchMatches = async () => {
+        const matches = await smartSearch(invSearch);
+        setDropMatches(matches);
+        setShowDroplist(true);
+      };
+      fetchMatches();
+    } else {
+      setShowDroplist(false);
+    }
+    // Reset the suppression after the effect runs once
+    console.log("this was reached here");
+    suppressDroplistRef.current = false;
+  }, [invSearch, mode]);
+
+  // Focus/blur management
+  useEffect(() => {
+    if (isFocused && inputRef.current) {
+      inputRef.current.focus();
+    } else if (!isFocused && inputRef.current === document.activeElement) {
+      inputRef.current.blur();
+    }
+  }, [isFocused]);
+  console.log("dropMatches", dropMatches);
+  console.log("invSearch", invSearch);
 
   return (
     <InputWrapper
       onMouseEnter={handleHover}
       onMouseLeave={handleMouseLeave}
       darkRoute={darkRoute}
+      distLocFilter={mode === "distLocFilter"}
     >
       <InputWrapperBorder
         darkRoute={darkRoute}
         border={border}
         showDroplist={showDroplist}
       />
+
       <SearchInput
         darkRoute={darkRoute}
         border={border}
         ref={inputRef}
         onChange={handleChange}
-        value={activeSearch}
+        value={mode === "inventory" ? invSearch : locationInputValue}
         onFocus={handleFocus}
         onBlur={handleOnBlur}
         placeholder={
           mode === "location" || mode === "locationChange"
             ? "Search City or Zip"
+            : mode === "distLocFilter"
+            ? "Search by City or State"
             : "Search by make, model, or keyword"
         }
-        onKeyUp={(e) => {
-          if (mode === "location" || mode === "locationChange") {
-            if (e.key === "Enter") {
-              handleSubmit();
+        onKeyDown={(e) => {
+          if (mode === "inventory" && showDroplist && flatMatches.length > 0) {
+            if (e.key === "ArrowDown") {
+              ///// ARROW DOWN
+              e.preventDefault();
+              if (highlightedIndex === -1) setTypedValue(invSearch);
+
+              setHighlightedIndex((prev) => {
+                const nextIndex =
+                  prev < flatMatches.length - 1 ? prev + 1 : prev;
+                scrollHighlightedIntoView(nextIndex); // ✅ auto-scroll
+                return nextIndex;
+              });
+
+              const next = flatMatches[highlightedIndex + 1];
+              if (next) inputRef.current.value = next.value;
+            } else if (e.key === "ArrowUp") {
+              //// ARROW UP
+              e.preventDefault();
+              if (highlightedIndex > 0) {
+                const prevIndex = highlightedIndex - 1;
+                setHighlightedIndex(prevIndex);
+                scrollHighlightedIntoView(prevIndex); // ✅ auto-scroll
+                const prevItem = flatMatches[prevIndex];
+                if (prevItem) inputRef.current.value = prevItem.value;
+              } else if (highlightedIndex === 0) {
+                setHighlightedIndex(-1);
+                inputRef.current.value = typedValue;
+              }
+            } else if (e.key === "Enter") {
+              //// ENTER
+              e.preventDefault();
+              if (highlightedIndex >= 0) {
+                const selected = flatMatches[highlightedIndex];
+
+                if (selected.type === "button") {
+                  // 🔘 Trigger expand/collapse
+                  toggleExpand(e, selected.key);
+                  // Optionally keep droplist open (don’t blur)
+                } else if (selected.type === "item") {
+                  // 🔹 Normal item behavior
+                  suppressDroplistRef.current = true;
+                  const { key, raw } = selected;
+                  makeModelSearch(
+                    navigate,
+                    currentRoute,
+                    setAppliedFilters,
+                    setOrderedFilters,
+                    handleClearFilters,
+                    key,
+                    raw,
+                    inputRef,
+                    setInvSearch
+                  );
+                  handleOnBlur(e);
+                }
+              } else {
+                handleSubmit(e);
+              }
             }
-          } else {
-            handleSubmit(e.key);
+          } else if (
+            mode === "location" ||
+            mode === "locationChange" ||
+            mode === "distLocFilter"
+          ) {
+            if (e.key === "Enter") handleSubmit(e);
           }
         }}
         showDroplist={showDroplist}
       />
-      {/* SEARCH BTN */}
+
+      {isActive && (
+        <button
+          className="clearInputBtn"
+          onClick={(e) => {
+            e.stopPropagation();
+            inputRef.current.value = null;
+
+            if (mode === "locationChange" || mode === "location") {
+              setLocationInputValue("");
+              if (mode === "locationChange") props.setLocObjs([]);
+            } else if (mode === "inventory") {
+              setInvSearch("");
+            } else if (mode === "distLocFilter") {
+              setShopByValue("");
+            }
+
+            setIsActive(false);
+            inputRef.current.focus();
+          }}
+        >
+          <TfiClose />
+        </button>
+      )}
+
       <SearchBtn
         onClick={handleSubmit}
         darkRoute={darkRoute}
@@ -217,69 +1165,205 @@ function Searchbar({
           }}
         />
       </SearchBtn>
+
       {showDroplist && (
-        <InputWrapperBorder
-          darkRoute={darkRoute}
-          border={border}
-          showDroplist={showDroplist}
-          dropList={true}
-        />
-      )}
-      {showDroplist && (
-        <Box className="droplist" style={droplistStyle({ darkRoute })}>
-          <div className="droplist_item search_val">
-            Search for: "{inputRef.current.value}"
+        <Box
+          ref={droplistRef} // auto-scrolling
+          className="droplist"
+          style={droplistStyle({ darkRoute })}
+        >
+          <div
+            ref={(el) => (itemRefs.current[0] = el)}
+            className="droplist_item search_val"
+          >
+            Search for: "{/* invSearch */ inputRef.current.value}"
           </div>
-          {Object.entries(dropMatches).map(
-            ([key, values]) =>
-              values.length > 0 && (
-                <div className="droplist_section" key={key}>
-                  <h3>{key}</h3>
-                  <ul>
-                    {values.slice(0, 7).map((item, index) => (
-                      <li
-                        className="droplist_item"
-                        key={index}
-                        onMouseDown={() => {
-                          makeModelSearch(
-                            navigate,
-                            currentRoute,
-                            setAppliedFilters,
-                            setOrderedFilters,
-                            handleClearFilters,
-                            key,
-                            item,
-                            inputRef,
-                            setInvSearch
+
+          {Object.entries(dropMatches)
+            .filter(([key]) => key.toLowerCase() !== "vin")
+            .map(
+              ([key, values]) =>
+                values.length > 0 && (
+                  <div className="droplist_section" key={key}>
+                    <h3>{key}</h3>
+                    <ul>
+                      {values.slice(0, 7).map((item, index) => {
+                        const flatIndex = flatMatches.findIndex(
+                          (m) =>
+                            m.key === key &&
+                            m.value ===
+                              (key === "Model" || key === "Year"
+                                ? item.display
+                                : item)
+                        );
+                        return (
+                          <li
+                            ref={(el) => (itemRefs.current[flatIndex] = el)} //auto scrolling
+                            className={`droplist_item ${
+                              flatIndex === highlightedIndex
+                                ? "highlighted"
+                                : ""
+                            }`}
+                            key={index}
+                            onMouseDown={(e) => {
+                              makeModelSearch(
+                                navigate,
+                                currentRoute,
+                                setAppliedFilters,
+                                setOrderedFilters,
+                                handleClearFilters,
+                                key,
+                                item,
+                                inputRef,
+                                setInvSearch
+                              );
+                              suppressDroplistRef.current = true;
+                              handleOnBlur(e);
+                            }}
+                          >
+                            {key === "Model" || key === "Year"
+                              ? item.display
+                              : item}
+                          </li>
+                        );
+                      })}
+                    </ul>
+
+                    <AnimatePresence initial={false}>
+                      {expandedKeys[key] && (
+                        <motion.ul
+                          key={`${key}-expanded`}
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.35, ease: "easeInOut" }}
+                          style={{ overflow: "hidden" }}
+                        >
+                          {values.slice(7).map((item, index) => {
+                            const flatIndex = flatMatches.findIndex(
+                              (m) =>
+                                m.key === key &&
+                                m.value ===
+                                  (key === "Model" || key === "Year"
+                                    ? item.display
+                                    : item)
+                            );
+                            return (
+                              <li
+                                ref={(el) => (itemRefs.current[flatIndex] = el)} //auto scrolling
+                                className={`droplist_item ${
+                                  flatIndex === highlightedIndex
+                                    ? "highlighted"
+                                    : ""
+                                }`}
+                                key={index + 7}
+                                onMouseDown={(e) => {
+                                  makeModelSearch(
+                                    navigate,
+                                    currentRoute,
+                                    setAppliedFilters,
+                                    setOrderedFilters,
+                                    handleClearFilters,
+                                    key,
+                                    item,
+                                    inputRef,
+                                    setInvSearch
+                                  );
+                                  handleOnBlur(e);
+                                }}
+                              >
+                                {key === "Model" || key === "Year"
+                                  ? item.display
+                                  : item}
+                              </li>
+                            );
+                          })}
+                        </motion.ul>
+                      )}
+                    </AnimatePresence>
+
+                    {values.length > 7 && (
+                      // <Button
+                      //   ref={(el) => {
+                      //     const buttonIndex = flatMatches.findIndex(
+                      //       (m) => m.type === "button" && m.key === key
+                      //     );
+                      //     if (buttonIndex !== -1)
+                      //       itemRefs.current[buttonIndex] = el;
+                      //   }}
+                      //   onClick={(e) => toggleExpand(e, key)}
+                      //   text={
+                      //     expandedKeys[key]
+                      //       ? "Show less"
+                      //       : `View ${values.length - 7} more..`
+                      //   }
+                      //   outlineStyle2={true}
+                      //   style={{
+                      //     marginLeft: ".25rem",
+                      //     marginTop: ".5rem",
+                      //     transform: "scale(.85)",
+                      //     color:
+                      //       flatMatches.findIndex(
+                      //         (m) => m.type === "button" && m.key === key
+                      //       ) === highlightedIndex
+                      //         ? "white" // 🔘 highlight color
+                      //         : "var(--btnBG)",
+                      //     backgroundColor:
+                      //       flatMatches.findIndex(
+                      //         (m) => m.type === "button" && m.key === key
+                      //       ) === highlightedIndex
+                      //         ? "var(--btnBG)" // 🔘 highlight color
+                      //         : "transparent",
+                      //   }}
+                      // />
+                      <Button
+                        ref={(el) => {
+                          const buttonIndex = flatMatches.findIndex(
+                            (m) => m.type === "button" && m.key === key
                           );
-                          handleOnBlur();
+                          if (buttonIndex !== -1)
+                            itemRefs.current[buttonIndex] = el;
                         }}
-                      >
-                        {key === "Model"
-                          ? item.display
-                          : key === "Year"
-                          ? item.display
-                          : item}
-                      </li>
-                    ))}
-                  </ul>
-                  {values.length > 7 && (
-                    <Button
-                      text={`View ${values.length - 7} more..`}
-                      outlineStyle2={true}
-                      style={{
-                        marginLeft: ".25rem",
-                        marginTop: ".5rem",
-                        transform: "scale(.85)",
-                      }}
-                    />
-                  )}
-                </div>
-              )
-          )}
+                        onClick={(e) => toggleExpand(e, key)}
+                        text={
+                          expandedKeys[key]
+                            ? "Show less"
+                            : `View ${values.length - 7} more..`
+                        }
+                        outlineStyle2={true}
+                        // className={
+                        //   flatMatches.findIndex(
+                        //     (m) => m.type === "button" && m.key === key
+                        //   ) === highlightedIndex
+                        //     ? "highlighted-btn"
+                        //     : ""
+                        // }
+                        style={{
+                          marginLeft: ".25rem",
+                          marginTop: ".5rem",
+                          transform: "scale(.85)",
+                          color:
+                            flatMatches.findIndex(
+                              (m) => m.type === "button" && m.key === key
+                            ) === highlightedIndex
+                              ? "white" // 🔘 highlight color
+                              : "var(--btnBG)",
+                          backgroundColor:
+                            flatMatches.findIndex(
+                              (m) => m.type === "button" && m.key === key
+                            ) === highlightedIndex
+                              ? "var(--btnBG)" // 🔘 highlight color
+                              : "transparent",
+                        }}
+                      />
+                    )}
+                  </div>
+                )
+            )}
         </Box>
       )}
     </InputWrapper>
   );
 }
+
 export default Searchbar;

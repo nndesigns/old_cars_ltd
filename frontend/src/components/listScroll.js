@@ -4,9 +4,9 @@ import Box from "@mui/material/Box";
 import Card from "@mui/joy/Card";
 import Button from "./buttons/button";
 import { IoCheckmarkDoneCircle } from "react-icons/io5";
-import { getOffers } from "./utils";
+// import { getOffers } from "./utils";
 import { getDistance } from "geolib";
-import { useSelector, useDispatch } from "react-redux";
+import { /* useSelector,  */ useDispatch } from "react-redux";
 import { setManualLocation } from "../user/locationSlice";
 
 // Styled component (defined outside render)
@@ -32,9 +32,7 @@ const boxStyle = {
   flexDirection: "column",
   overflow: "scroll",
   gap: "1rem",
-  padding: "1rem",
-  paddingLeft: "0",
-  // border: "1px solid green",
+  paddingTop: "1rem",
   height: "31rem",
 };
 
@@ -60,10 +58,11 @@ const LocationCard = styled(Card)(({ theme, style }) => ({
 
 //////////////// LIST SCROLL /////////////////
 const ListScroll = ({
+  hasSearchVal,
   locObjs,
+  setLocObjs,
   userLocationObj,
   inv,
-  setShowLocationChangeModal,
 }) => {
   //Redux update (LocationChangeModal)
   // LOCATION UPDATE
@@ -72,9 +71,10 @@ const ListScroll = ({
     //Update 'location' redux to new location
     //NOTE: this is listened for in App.js (to setLocalInv in location redux state)
     dispatch(setManualLocation(loc_obj));
-    //set LCM useState to false
-    setShowLocationChangeModal(false);
+    setLocObjs(null);
   };
+
+  // console.log("rec'd locObjs ListScroll", locObjs);
 
   function getMiles(location) {
     const distInMeters = getDistance(
@@ -212,9 +212,13 @@ const ListScroll = ({
 
       {locObjs?.length > 0 ? (
         <>{locObjs.map((loc_obj) => renderLocationCard(loc_obj, false))}</>
-      ) : (
+      ) : hasSearchVal && locObjs.length !== 0 ? (
         <h3 style={{ textAlign: "center", marginTop: "3rem" }}>
           Location Not Found
+        </h3>
+      ) : (
+        <h3 style={{ textAlign: "center", marginTop: "3rem" }}>
+          Find cars wherever you are...
         </h3>
       )}
     </Box>

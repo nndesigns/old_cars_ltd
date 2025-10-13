@@ -6,13 +6,20 @@ import {
   RightScrollBtnLarge,
 } from "./buttons/scrollBtns.js";
 import { handleScroll } from "./utils.js";
+import ImagePreviewer from "./ImagePreviewer/imgPreviewer.js";
+import { LoadingWave } from "../components/inventoryGrid/loadingWave.js";
 
 const ImgScrollGallery = ({ model_imgs_key, below900 }) => {
   const scrollContainerRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-
   const [invImagesMap, setInvImagesMap] = useState({});
+
+  //IMAGE PREVIEWER
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // SCROLL CONTAINER
   useEffect(() => {
     const fetchImages = async () => {
       try {
@@ -74,55 +81,84 @@ const ImgScrollGallery = ({ model_imgs_key, below900 }) => {
     };
   }, [invImagesMap[model_imgs_key]]);
 
+  ///IMAGE PREVIEWER
+  const handleImageClick = (index) => {
+    setCurrentImageIndex(index);
+    setIsPreviewOpen(true);
+  };
+
+  const allImages = invImagesMap[model_imgs_key] || [];
+
   return (
-    <div className="gallery_wrapper">
-      <div className="gallery_root" ref={scrollContainerRef}>
-        {!below900 && canScrollLeft && (
-          <LeftScrollBtnLarge
-            onClick={() => handleScroll(scrollContainerRef, -1)}
-            customStyle={{
-              position: "absolute",
-              top: "50%",
-              left: "-5px",
-              paddingInline: "20px",
-              transform: "translateY(-50%)",
-              zIndex: 10,
-            }}
-          />
-        )}
-        <div className="first_img_container">
-          <img
-            src={invImagesMap[model_imgs_key]?.[0]}
-            alt={`car_image_1`}
-            className="first_image"
-          />
-        </div>
-        <div className="image_grid">
-          {invImagesMap[model_imgs_key]?.slice(1).map((url, index) => (
-            <div className="grid_item" key={index}>
+    <>
+      <div className="gallery_wrapper">
+        {Object.keys(invImagesMap).length === 0 && <LoadingWave />}
+        {Object.keys(invImagesMap).length > 0 && (
+          <div className="gallery_root" ref={scrollContainerRef}>
+            {!below900 && canScrollLeft && (
+              <LeftScrollBtnLarge
+                onClick={() => handleScroll(scrollContainerRef, -1)}
+                customStyle={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "-5px",
+                  paddingInline: "20px",
+                  transform: "translateY(-50%)",
+                  zIndex: 10,
+                }}
+              />
+            )}
+            <div
+              className="first_img_container"
+              onClick={() => handleImageClick(0)}
+            >
               <img
-                className="grid_img"
-                key={index}
-                src={url}
-                alt={`car_image_${index + 2}`}
+                src={invImagesMap[model_imgs_key]?.[0]}
+                alt={`car_image_1`}
+                className="first_image car_img"
               />
             </div>
-          ))}
-        </div>
-        {!below900 && canScrollRight && (
-          <RightScrollBtnLarge
-            onClick={() => handleScroll(scrollContainerRef, 1)}
-            customStyle={{
-              position: "absolute",
-              top: "50%",
-              paddingInline: "20px",
-              transform: "translateY(-50%)",
-              zIndex: 10,
-            }}
-          />
+            <div className="image_grid">
+              {invImagesMap[model_imgs_key]?.slice(1).map((url, index) => (
+                <div
+                  className="grid_item"
+                  key={index}
+                  onClick={() => handleImageClick(index + 1)}
+                >
+                  <img
+                    className="grid_img car_img"
+                    key={index}
+                    src={url}
+                    alt={`car_image_${index + 2}`}
+                  />
+                </div>
+              ))}
+            </div>
+            {!below900 && canScrollRight && (
+              <RightScrollBtnLarge
+                onClick={() => handleScroll(scrollContainerRef, 1)}
+                customStyle={{
+                  position: "absolute",
+                  top: "50%",
+                  paddingInline: "20px",
+                  transform: "translateY(-50%)",
+                  zIndex: 10,
+                }}
+              />
+            )}
+          </div>
         )}
       </div>
-    </div>
+      {isPreviewOpen && (
+        <ImagePreviewer
+          images={allImages}
+          currentIndex={currentImageIndex}
+          onClose={() => setIsPreviewOpen(false)}
+          setCurrentIndex={setCurrentImageIndex}
+          isOpen={isPreviewOpen}
+        />
+      )}
+    </>
   );
 };
 

@@ -111,6 +111,7 @@ const FilterPanel = ({
             activeFilter={activeFilter}
             setActiveFilter={setActiveFilter}
             closePill={closePill}
+
             // setAppliedFilters = {setAppliedFilters}
             // setOrderedFilters={setOrderedFilters}
           />
@@ -182,6 +183,7 @@ const FilterPanel = ({
                 />
               )}
           </span>
+
           <div className="scrollBox_filter">
             {" "}
             {/******* ACTIVE FILTER  CALL********/}
@@ -189,7 +191,14 @@ const FilterPanel = ({
           </div>
         </>
       ) : (
-        <div className="scrollBox_filterMenu">
+        <div
+          className="scrollBox_filterMenu"
+          style={{
+            overflowY: mobile ? "hidden" : "auto", // control scroll behavior
+            scrollbarWidth: mobile ? "none" : "auto", // Firefox
+            msOverflowStyle: mobile ? "none" : "auto", // IE/Edge legacy
+          }}
+        >
           {filterComponentsMap["Filter Menu"]()}
         </div>
       )}
@@ -206,4 +215,5 @@ const FilterPanel = ({
   );
 };
 
-export default FilterPanel;
+// export default FilterPanel;
+export default React.memo(FilterPanel);

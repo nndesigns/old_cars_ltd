@@ -1,16 +1,9 @@
 import React, { useEffect, useState, Suspense } from "react";
 import Box from "@mui/material/Box";
 import { styled } from "@mui/material/styles";
-
-/* import MakesSelect from "../components/makesSelect";
-import Carousels from "../components/carousels";
-import PriceCarousel from "../components/price_carousel";
-import PriceSlider from "../components/price_slider";
-import PickerGrid from "../components/pickerGrid";
-import LearnMoreBox from "../components/learnMoreBox"; */
-
+import { Helmet } from "react-helmet-async";
 import Button from "../components/buttons/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 // import NewJSON from "../king_data_NEW.json";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -35,6 +28,7 @@ const Home = ({
   // const [priceCountsObj, setPriceCountsObj] = useState();
   const [mobile, setMobile] = useState(window.innerWidth < 767);
   const navigate = useNavigate();
+  const locationRef = useLocation();
 
   //RESIZE EVENT LISTENER
   useEffect(() => {
@@ -183,340 +177,238 @@ const Home = ({
     },
   }));
 
+  const handleShopLocal = () => {
+    setAppliedFilters((prev) => ({
+      ...prev,
+      dist_radius: 25,
+    }));
+
+    // update orderedFilters
+    setOrderedFilters((prev) => {
+      // only add "dist_radius" if it’s not already in the array
+      if (!prev.includes("dist_radius")) {
+        return [...prev, "dist_radius"];
+      }
+      return prev;
+    });
+
+    if (locationRef.pathname !== `/cars`) {
+      navigate(`/cars`);
+    }
+  };
+
   return (
-    <div className="page_container home_container">
-      <Suspense fallback={<p>Loading header</p>}>
-        <Box
-          sx={{
-            backgroundImage: `url(${require("../images/home_bg_grad.jpg")})`,
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "cover",
-            position: "relative",
-            backgroundPosition: "center center",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "stretch",
-            justifyContent: "center",
-            marginBottom: "100px",
-            width: "100%",
-            color: "white",
-            overflow: "hidden",
-            [`@media (max-height: 820px)`]: {
-              height: "100vh",
-            },
-            height: "70vh",
-            maxHeight: "955px",
-          }}
-        >
-          <PromptBox>
-            <h1 style={{ marginBottom: "1rem", letterSpacing: "-1px" }}>
-              Find your classic!
-              <br />
-              Explore over 50,000 vintage vehicles!
-            </h1>
-            <ShopNowBtn onClick={() => navigate("/cars")}>SHOP NOW</ShopNowBtn>
-          </PromptBox>
-        </Box>
-      </Suspense>
-
-      {/* <Box className="center_box">
-        <div className="middle_content styles_content">
-          <h2>Shop by style</h2>
-          <Carousels
-            carStyles={true}
-            setAppliedFilters={setAppliedFilters}
-            setOrderedFilters={setOrderedFilters}
-          />
-        </div>
-      </Box>
-
-      <Box className="center_box">
-        <div className="middle_content make_content">
-          <h2 className="makes_h2">Shop by make</h2>
-          {
-            <Carousels
-              makeData={activeMakeCounts}
-              setAppliedFilters={setAppliedFilters}
-              setOrderedFilters={setOrderedFilters}
-            />
-          }
-          <MakesSelect
-            makes={makes}
-            setAppliedFilters={setAppliedFilters}
-            setOrderedFilters={setOrderedFilters}
-          />
-        </div>
-      </Box>
-
-      <Box className="center_box">
-        <div className="middle_content">
-          <h2 className="price_h2">Shop by price</h2>
-          <PriceCarousel
-            setAppliedFilters={setAppliedFilters}
-            setOrderedFilters={setOrderedFilters}
-          />
-          <PriceSlider
-            inventory={inventory.filter((car) => car.status)}
-            setAppliedFilters={setAppliedFilters}
-            setOrderedFilters={setOrderedFilters}
-            appliedFilters={appliedFilters}
-            leftPanel={false}
-          />
-        </div>
-      </Box>
-
-      <Box className="center_box">
-        <div className="middle_content lifestyle_content">
-          <h2 className="lifestyle_h2">Shop by life pattern</h2>
-          <Carousels lifestyle={true} />
-        </div>
-      </Box>
-
-      <Box className="center_box">
-        <div className="middle_content collection_content">
-          <h2 className="popular_h2">Cruise the collection</h2>
-          {makesModelsStyles && Object.keys(makesModelsStyles).length > 0 ? (
-            mobile ? (
-              <>
-                <h3 className="style_h3" style={{ marginBottom: "-.3rem" }}>
-                  SUVs
-                </h3>
-                <Carousels
-                  style={{ marginBottom: "1rem" }}
-                  modelData={makesModelsStyles.SUVS}
-                  styleType="SUV"
-                />
-                <h3 className="style_h3" style={{ marginBottom: "-.25rem" }}>
-                  Trucks
-                </h3>
-                <Carousels
-                  style={{ marginBottom: "1rem" }}
-                  modelData={makesModelsStyles.TRUCKS}
-                  styleType="Truck"
-                />
-                <h3 className="style_h3" style={{ marginBottom: "-.25rem" }}>
-                  Crossovers
-                </h3>
-                <Carousels
-                  style={{ marginBottom: "1rem" }}
-                  modelData={makesModelsStyles.CROSSOVERS}
-                  styleType="Crossover"
-                />
-                <h3 className="style_h3" style={{ marginBottom: "-.25rem" }}>
-                  Sedans
-                </h3>
-                <Carousels
-                  style={{ marginBottom: "1rem" }}
-                  modelData={makesModelsStyles.SEDANS}
-                  styleType="Sedan"
-                />
-              </>
-            ) : (
-              <PickerGrid models={makesModelsStyles} />
-            )
-          ) : (
-            <p>not ready yet</p>
-          )}
-        </div>
-      </Box>
-
-      <Box className="center_box">
-        <div className="middle_content">
-          <LearnMoreBox />
-        </div>
-      </Box>
-   
-      <Box className="center_box">
-        <div className="middle_content nearYou_content">
-          <h2 className="nearYou_h2" style={{ textAlign: "center" }}>
-            Precious pieces near you
-          </h2>
-
-          <Carousels
-            style={{ marginBottom: "1.4rem" }}
-            nearYou={true}
-            invData={location.localInv}
-          />
-
-          <Button
-            style={{
-              position: "absolute",
-              left: "50%",
-              transform: "translateX(-50%)",
-              padding: "0px 40px",
-              height: "2.5rem",
+    <>
+      <Helmet>
+        <title>Home | Old Cars Ltd</title>
+        <meta name="description" content="Welcome to Old Cars Ltd" />
+      </Helmet>
+      <div className="page_container home_container">
+        <Suspense fallback={<p>Loading header</p>}>
+          <Box
+            sx={{
+              backgroundImage: `url(${require("../images/home_bg_grad.jpg")})`,
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "cover",
+              position: "relative",
+              backgroundPosition: "center center",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "stretch",
+              justifyContent: "center",
+              marginBottom: "100px",
+              width: "100%",
+              color: "white",
+              overflow: "hidden",
+              [`@media (max-height: 820px)`]: {
+                height: "100vh",
+              },
+              height: "70vh",
+              maxHeight: "955px",
             }}
-            text="SHOP LOCAL"
-          />
-        </div>
-      </Box> */}
-
-      {/* SHOP BY STYLE */}
-      <ErrorBoundary fallback={<p>Style carousel failed to load.</p>}>
-        <Suspense fallback={<p>Loading styles…</p>}>
-          <Box className="center_box">
-            <div className="middle_content styles_content">
-              <h2>Shop by style</h2>
-              <Carousels
-                carStyles
-                setAppliedFilters={setAppliedFilters}
-                setOrderedFilters={setOrderedFilters}
-              />
-            </div>
+          >
+            <PromptBox>
+              <h1 style={{ marginBottom: "1rem", letterSpacing: "-1px" }}>
+                Find your classic!
+                <br />
+                Explore over 50,000 vintage vehicles!
+              </h1>
+              <ShopNowBtn onClick={() => navigate("/cars")}>
+                SHOP NOW
+              </ShopNowBtn>
+            </PromptBox>
           </Box>
         </Suspense>
-      </ErrorBoundary>
 
-      {/* SHOP BY MAKE */}
-      <ErrorBoundary fallback={<p>Makes carousel failed.</p>}>
-        <Suspense fallback={<p>Loading makes…</p>}>
-          <Box className="center_box">
-            <div className="middle_content make_content">
-              <h2 className="makes_h2">Shop by make</h2>
-              <Carousels
-                makeData={activeMakeCounts}
-                setAppliedFilters={setAppliedFilters}
-                setOrderedFilters={setOrderedFilters}
-              />
-              <MakesSelect
-                makes={makes}
-                setAppliedFilters={setAppliedFilters}
-                setOrderedFilters={setOrderedFilters}
-              />
-            </div>
-          </Box>
-        </Suspense>
-      </ErrorBoundary>
+        {/* SHOP BY STYLE */}
+        <ErrorBoundary fallback={<p>Style carousel failed to load.</p>}>
+          <Suspense fallback={<p>Loading styles…</p>}>
+            <Box className="center_box">
+              <div className="middle_content styles_content">
+                <h2>Shop by style</h2>
+                <Carousels
+                  carStyles
+                  setAppliedFilters={setAppliedFilters}
+                  setOrderedFilters={setOrderedFilters}
+                />
+              </div>
+            </Box>
+          </Suspense>
+        </ErrorBoundary>
 
-      {/* SHOP BY PRICE */}
-      <ErrorBoundary fallback={<p>Price filters failed.</p>}>
-        <Suspense fallback={<p>Loading price filters…</p>}>
-          <Box className="center_box">
-            <div className="middle_content">
-              <h2 className="price_h2">Shop by price</h2>
-              <PriceCarousel
-                setAppliedFilters={setAppliedFilters}
-                setOrderedFilters={setOrderedFilters}
-              />
-              <PriceSlider
-                inventory={inventory.filter((car) => car.status)}
-                setAppliedFilters={setAppliedFilters}
-                setOrderedFilters={setOrderedFilters}
-                appliedFilters={appliedFilters}
-                leftPanel={false}
-              />
-            </div>
-          </Box>
-        </Suspense>
-      </ErrorBoundary>
+        {/* SHOP BY MAKE */}
+        <ErrorBoundary fallback={<p>Makes carousel failed.</p>}>
+          <Suspense fallback={<p>Loading makes…</p>}>
+            <Box className="center_box">
+              <div className="middle_content make_content">
+                <h2 className="makes_h2">Shop by make</h2>
+                <Carousels
+                  makeData={activeMakeCounts}
+                  setAppliedFilters={setAppliedFilters}
+                  setOrderedFilters={setOrderedFilters}
+                />
+                <MakesSelect
+                  makes={makes}
+                  setAppliedFilters={setAppliedFilters}
+                  setOrderedFilters={setOrderedFilters}
+                />
+              </div>
+            </Box>
+          </Suspense>
+        </ErrorBoundary>
 
-      {/* COLLECTION PICKER */}
-      <ErrorBoundary fallback={<p>Collection picker failed.</p>}>
-        <Suspense fallback={<p>Loading collection…</p>}>
-          <Box className="center_box">
-            <div className="middle_content collection_content">
-              <h2 className="popular_h2">Cruise the collection</h2>
-              {makesModelsStyles &&
-              Object.keys(makesModelsStyles).length > 0 ? (
-                mobile ? (
-                  <>
-                    <h3 className="style_h3" style={{ marginBottom: "-.3rem" }}>
-                      SUVs
-                    </h3>
-                    <Carousels
-                      style={{ marginBottom: "1rem" }}
-                      modelData={makesModelsStyles.SUVS}
-                      styleType="SUV"
+        {/* SHOP BY PRICE */}
+        <ErrorBoundary fallback={<p>Price filters failed.</p>}>
+          <Suspense fallback={<p>Loading price filters…</p>}>
+            <Box className="center_box">
+              <div className="middle_content">
+                <h2 className="price_h2">Shop by price</h2>
+                <PriceCarousel
+                  setAppliedFilters={setAppliedFilters}
+                  setOrderedFilters={setOrderedFilters}
+                />
+                <PriceSlider
+                  inventory={inventory.filter((car) => car.status)}
+                  setAppliedFilters={setAppliedFilters}
+                  setOrderedFilters={setOrderedFilters}
+                  appliedFilters={appliedFilters}
+                  leftPanel={false}
+                />
+              </div>
+            </Box>
+          </Suspense>
+        </ErrorBoundary>
+
+        {/* COLLECTION PICKER */}
+        <ErrorBoundary fallback={<p>Collection picker failed.</p>}>
+          <Suspense fallback={<p>Loading collection…</p>}>
+            <Box className="center_box">
+              <div className="middle_content collection_content">
+                <h2 className="popular_h2">Cruise the collection</h2>
+                {makesModelsStyles &&
+                Object.keys(makesModelsStyles).length > 0 ? (
+                  mobile ? (
+                    <>
+                      <h3
+                        className="style_h3"
+                        style={{ marginBottom: "-.3rem" }}
+                      >
+                        SUVs
+                      </h3>
+                      <Carousels
+                        style={{ marginBottom: "1rem" }}
+                        modelData={makesModelsStyles.SUVS}
+                        styleType="SUV"
+                      />
+                      <h3
+                        className="style_h3"
+                        style={{ marginBottom: "-.25rem" }}
+                      >
+                        Trucks
+                      </h3>
+                      <Carousels
+                        style={{ marginBottom: "1rem" }}
+                        modelData={makesModelsStyles.TRUCKS}
+                        styleType="Truck"
+                      />
+                      <h3
+                        className="style_h3"
+                        style={{ marginBottom: "-.25rem" }}
+                      >
+                        Crossovers
+                      </h3>
+                      <Carousels
+                        style={{ marginBottom: "1rem" }}
+                        modelData={makesModelsStyles.CROSSOVERS}
+                        styleType="Crossover"
+                      />
+                      <h3
+                        className="style_h3"
+                        style={{ marginBottom: "-.25rem" }}
+                      >
+                        Sedans
+                      </h3>
+                      <Carousels
+                        style={{ marginBottom: "1rem" }}
+                        modelData={makesModelsStyles.SEDANS}
+                        styleType="Sedan"
+                      />
+                    </>
+                  ) : (
+                    <PickerGrid
+                      models={makesModelsStyles}
+                      setAppliedFilters={setAppliedFilters}
+                      setOrderedFilters={setOrderedFilters}
+                      handleClearFilters={handleClearFilters}
                     />
-                    <h3
-                      className="style_h3"
-                      style={{ marginBottom: "-.25rem" }}
-                    >
-                      Trucks
-                    </h3>
-                    <Carousels
-                      style={{ marginBottom: "1rem" }}
-                      modelData={makesModelsStyles.TRUCKS}
-                      styleType="Truck"
-                    />
-                    <h3
-                      className="style_h3"
-                      style={{ marginBottom: "-.25rem" }}
-                    >
-                      Crossovers
-                    </h3>
-                    <Carousels
-                      style={{ marginBottom: "1rem" }}
-                      modelData={makesModelsStyles.CROSSOVERS}
-                      styleType="Crossover"
-                    />
-                    <h3
-                      className="style_h3"
-                      style={{ marginBottom: "-.25rem" }}
-                    >
-                      Sedans
-                    </h3>
-                    <Carousels
-                      style={{ marginBottom: "1rem" }}
-                      modelData={makesModelsStyles.SEDANS}
-                      styleType="Sedan"
-                    />
-                  </>
+                  )
                 ) : (
-                  <PickerGrid
-                    models={makesModelsStyles}
-                    setAppliedFilters={setAppliedFilters}
-                    setOrderedFilters={setOrderedFilters}
-                    handleClearFilters={handleClearFilters}
-                  />
-                )
-              ) : (
-                <p>not ready yet</p>
-              )}
-            </div>
-          </Box>
-        </Suspense>
-      </ErrorBoundary>
+                  <p>not ready yet</p>
+                )}
+              </div>
+            </Box>
+          </Suspense>
+        </ErrorBoundary>
 
-      {/* LEARN MORE */}
-      <ErrorBoundary fallback={<p>Learn more box failed.</p>}>
-        <Suspense fallback={<p>Loading info…</p>}>
-          <Box className="center_box">
-            <div className="middle_content">
-              <LearnMoreBox />
-            </div>
-          </Box>
-        </Suspense>
-      </ErrorBoundary>
+        {/* LEARN MORE */}
+        <ErrorBoundary fallback={<p>Learn more box failed.</p>}>
+          <Suspense fallback={<p>Loading info…</p>}>
+            <Box className="center_box">
+              <div className="middle_content">
+                <LearnMoreBox />
+              </div>
+            </Box>
+          </Suspense>
+        </ErrorBoundary>
 
-      {/* NEAR YOU */}
-      <ErrorBoundary fallback={<p>Near you carousel failed.</p>}>
-        <Suspense fallback={<p>Loading local cars…</p>}>
-          <Box className="center_box">
-            <div className="middle_content nearYou_content">
-              <h2 className="nearYou_h2" style={{ textAlign: "center" }}>
-                Precious pieces near you
-              </h2>
-              <Carousels
-                style={{ marginBottom: "1.4rem" }}
-                nearYou
-                invData={location.localInv}
-              />
-              <Button
-                style={{
-                  position: "absolute",
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  padding: "0px 40px",
-                  height: "2.5rem",
-                }}
-                text="SHOP LOCAL"
-              />
-            </div>
-          </Box>
-        </Suspense>
-      </ErrorBoundary>
-    </div>
+        {/* NEAR YOU */}
+        <ErrorBoundary fallback={<p>Near you carousel failed.</p>}>
+          <Suspense fallback={<p>Loading local cars…</p>}>
+            <Box className="center_box">
+              <div className="middle_content nearYou_content">
+                <h2 className="nearYou_h2">Precious pieces near you</h2>
+                <Carousels
+                  style={{ marginBottom: "1.4rem" }}
+                  nearYou
+                  invData={location.localInv} //set in App.js
+                />
+                <Button
+                  style={{
+                    position: "absolute",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    padding: "0px 40px",
+                    height: "2.5rem",
+                  }}
+                  text="SHOP LOCAL"
+                  onClick={handleShopLocal}
+                />
+              </div>
+            </Box>
+          </Suspense>
+        </ErrorBoundary>
+      </div>
+    </>
   );
 };
 

@@ -13,7 +13,7 @@
   --iconColor: #415658;
   --offBlue: rgb(83, 105, 117);
   --disabledBtn: #dadbde;
-  --btnBG: #f95841 /* coral */;
+  --btnBG: rgb(249, 88, 65); /* coral */;
   --inviteGreen: rgb(103, 208, 207);
   --inviteYellow: rgb(252, 255, 197);
   --greyBorder: rgba(83, 105, 117, .3);
@@ -22,6 +22,10 @@
   --moneyGreen: #008800;
   /* BOX SHADOWS */
   --allAroundBoxShadow: 0 4px 12px 4px rgba(0, 0, 0, 0.25), 0 -2px 6px 2px rgba(0, 0, 0, 0.15);
+  --allAroundBtnBGShadow: 0 4px 12px 4px rgba(249,
+    88,
+    65, 0.5),
+    0 -2px 6px 2px rgba(0, 0, 0, 0.15);
   --boxShadow2: 0px 5px 5px -3px rgba(0, 0, 0, 0.2),
     0px 8px 10px 1px rgba(0, 0, 0, 0.14),
     0px 3px 14px 2px rgba(0, 0, 0, 0.12);
@@ -69,8 +73,52 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--iconColor);
+}
 
-  
+
+/* UTILITY CLASS */
+.flexCenter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* SCROLL TO TOP BUTTON */
+.scrollToTopBtn{
+  position: fixed;
+    bottom: 20px;
+    z-index: 5;
+    right: 20px;
+    padding: 10px 5px;
+    background-color: var(--btnBG);
+    color: white;
+    font-weight: 700;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    opacity:.6;
+    transition: background-color 0.3s, opacity 0.2s, transform 0.2s ease-in;
+    display: flex; 
+    align-items: center;;
+    gap: 3px;
+    outline: 1px solid transparent;
+
+    > svg{
+      font-weight: 900;
+      font-size: 1.5em;
+      margin-inline: 0;
+    }
+}
+
+.scrollToTopBtn:hover{
+  opacity: 1;
+  outline: 1px solid white;
+  box-shadow: 0 10px 16px -10px rgba(42, 52, 61, .4);
+  transform: scale(1.12);
+}
+
+.scrollToTopBtn:active{
+  transform: scale(1);
 }
 
 
@@ -87,6 +135,7 @@ code {
     &::-webkit-scrollbar {
       display: none !important;
     }
+    /* overflow: hidden; */
 }
 
 .center_box{
@@ -99,6 +148,7 @@ code {
         padding-inline: 24px;
         width:1200px;
         max-width:100%;
+        /* border: 1px solid red; */
 
        
       >h2 {
@@ -167,6 +217,15 @@ p{
       text-align: center;
       margin-left:0;
     }
+    .center_box{
+        .middle_content {
+            padding-inline: 15px;
+          }
+        .collection_content{
+          padding-inline: 0;
+        }
+    }
+    
 }
 
 @media(max-width: 765px) {

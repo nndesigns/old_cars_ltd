@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import Navbar from "./navbar.js";
 import Searchbar from "./searchbar/searchbar.js";
 import Box from "@mui/material/Box";
@@ -9,12 +9,11 @@ const Header = ({
   setAppliedFilters,
   setOrderedFilters,
   handleClearFilters,
+  // setStringMatchesArr,
 }) => {
   const bottomShadow = "0 8px 16px -4px rgba(0, 0, 0, 0.12)";
   const darkRoutes = ["favorites", "cars", "car"];
-
-  console.log("header rec's currentRoute", currentRoute);
-
+  const inventoryRef = useRef(""); ////////// CHECK THIS
   return (
     <Box
       sx={{
@@ -44,15 +43,22 @@ const Header = ({
           maxWidth: darkRoutes.includes(currentRoute) ? "100%" : "inherit",
         }}
       >
-        <Navbar darkRoute={darkRoutes.includes(currentRoute)} inv={inv} />
+        <Navbar
+          darkRoute={darkRoutes.includes(currentRoute)}
+          inv={inv}
+          setAppliedFilters={setAppliedFilters}
+          setOrderedFilters={setOrderedFilters}
+        />
         <Searchbar
           currentRoute={currentRoute}
           darkRoute={darkRoutes.includes(currentRoute)}
           mode="inventory"
+          inputRef={inventoryRef} ////////// CHECK THIS
           inv={inv}
           setAppliedFilters={setAppliedFilters}
           setOrderedFilters={setOrderedFilters}
           handleClearFilters={handleClearFilters}
+          // setStringMatchesArr={setStringMatchesArr}
         />
       </Box>
     </Box>

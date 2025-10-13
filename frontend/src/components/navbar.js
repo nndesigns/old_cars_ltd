@@ -7,6 +7,8 @@ import { CiLocationOn } from "react-icons/ci";
 import { CiHeart } from "react-icons/ci";
 import { CiUser } from "react-icons/ci";
 import { BsCaretDownFill } from "react-icons/bs";
+import { motion, AnimatePresence } from "framer-motion";
+import "./carsFilters/filters.css";
 
 import { Link } from "react-router-dom";
 import { RiArrowDownSFill } from "react-icons/ri";
@@ -14,20 +16,20 @@ import LocationModal from "./locationModal";
 import { createPortal } from "react-dom";
 import LocationChangeModal from "./locationChangeModal.js";
 
-function Navbar({ darkRoute, inv }) {
+function Navbar({ darkRoute, inv, setAppliedFilters, setOrderedFilters }) {
   const [smallNav, setSmallNav] = useState(window.innerWidth < 850);
   const location = useSelector((state) => state.location); //redux user
   const [isLocationHovered, setIsLocationHovered] = useState(false);
-  const [showLocationChangeModal, setShowLocationChangeModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [locationInputValue, setLocationInputValue] = useState("");
   const [locObjs, setLocObjs] = useState(null);
 
-  const mousedownInsideLCM = useRef(false); //mousedown event ref
+  const locationRef = useRef(null); // track clicking in or out of <LocationSpan/> REF (parent of LM)
+  const locationInputRef = useRef(null); //NB > LM > SB input value
 
-  const locationRef = useRef(null); //<LocationSpan/> REF
-  const locationModalRef = useRef(null); // <LocationModal/> REF
-  const locationChangeRef = useRef(null); //<LocationChangeModal/> REF
-  const locationFocusRef = useRef(false); //NB > LM >SB input focus
-  const locationValueRef = useRef(""); //NB > LM > SB input value
+  const locationChangeRef = useRef(null); // track clicking in or out of <LocationChangeModal/> REF
+
+  const locationChangeInputRef = useRef(null);
 
   //RESIZE HANDLER
   useEffect(() => {
@@ -40,6 +42,14 @@ function Navbar({ darkRoute, inv }) {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  const LocationSpan = styled("span")(({ theme }) => ({
+    display: "flex",
+    position: "relative",
+    alignItems: "center",
+    paddingBlock: "1.5rem",
+    zIndex: "10",
+  }));
 
   const Nav = styled("nav")(({ theme }) => ({
     height: "48px",
@@ -80,7 +90,7 @@ function Navbar({ darkRoute, inv }) {
     textDecoration: "none",
     color: darkRoute ? "var(--iconColor)" : "#f4f5f7",
     height: "40px",
-    width: "30px",
+    width: "40px",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -124,107 +134,72 @@ function Navbar({ darkRoute, inv }) {
     },
   }));
 
-  //PAGEWRAPPER (LOCATIONCHANGEMODAL)
-  const PageWrapper = styled("div")(({ theme }) => ({
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
-    backgroundColor: "rgba(0,0,0,.4)",
-    zIndex: "20",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  }));
-
-  const LocationSpan = styled("span")(({ theme }) => ({
-    display: "flex",
-    position: "relative",
-    alignItems: "center",
-    paddingBlock: "1.5rem",
-    zIndex: "10",
-  }));
-
-  // console.log("redux location object (navbar)", location);
-
-  // DOM 'CLICK' LISTENER WHEN LOCATIONMODAL ACTIVE (for mobile)
   useEffect(() => {
-    if (!isLocationHovered && !showLocationChangeModal) return;
-
-    const handleMouseDown = (e) => {
-      if (showLocationChangeModal) {
-        if (!locationChangeRef.current.contains(e.target)) {
-          setShowLocationChangeModal(false);
-        } else {
-          mousedownInsideLCM.current = true;
+    function handleClickOutside(event) {
+      if (showLocationModal && locObjs) {
+        //BOTH modals showing
+        if (
+          !locationRef.current.contains(event.target) && // click is ouside Loc Span
+          !locationChangeRef.current.contains(event.target) // & outside Loc Change Mod
+        ) {
+          setLocObjs(null); // close LCM
+          locationInputRef.current.focus(); // re-focus Loc Mod input
+        }
+      } else if (!locObjs && showLocationModal) {
+        //only LM showing
+        if (!locationRef.current.contains(event.target)) {
+          //click is outside LS
+          setShowLocationModal(false); //close LM
         }
       }
-    };
+    }
+    // ADD / REMOVE EVENT LISTENER WHEN 'SHOWLOCATIONMODAL' CHANGES
+    if (showLocationModal) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
 
-    const handleClickOutside = (event) => {
-      if (isLocationHovered && !showLocationChangeModal) {
-        locationValueRef.current = "";
-      }
-
-      // LOCATION MODAL
-      if (
-        isLocationHovered &&
-        locationRef.current && //<LocationSpan/> exists in the DOM
-        !locationRef.current.contains(event.target) && //click that triggered HCO wasn't in it
-        !showLocationChangeModal && //LCM not currently displayed
-        !locationValueRef.current //
-      ) {
-        setIsLocationHovered(false);
-        locationFocusRef.current = false;
-        locationValueRef.current = "";
-      }
-
-      // LOCATION CHANGE MODAL
-      if (
-        showLocationChangeModal &&
-        locationChangeRef.current &&
-        !locationChangeRef.current.contains(event.target) &&
-        !mousedownInsideLCM.current //if mousedown didn't occur inside of LCM
-      ) {
-        // console.log("THIS WAS TRIGGERED");
-        setShowLocationChangeModal(false);
-      }
-    };
-
-    document.addEventListener("click", handleClickOutside);
-    document.addEventListener("mousedown", handleMouseDown);
-    // console.log("handleClickOutside click listener on DOM");
+    // cleanup on unmount or when showLocationModal changes
     return () => {
-      document.removeEventListener("click", handleClickOutside);
-      document.removeEventListener("mousedown", handleMouseDown);
-      mousedownInsideLCM.current = false;
+      document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [
-    isLocationHovered,
-    showLocationChangeModal,
-    locationValueRef,
-    locationRef,
-    locationFocusRef,
-    locationChangeRef,
-  ]);
+  }, [showLocationModal, locObjs]);
 
   return (
     <>
-      {showLocationChangeModal &&
+      {/* LOCATION CHANGE MODAL */}
+      {locObjs !== null &&
         createPortal(
-          <PageWrapper>
-            {/****** LOCATION CHANGE MODAL ******/}
-            <LocationChangeModal
-              ref={locationChangeRef}
-              location={location} //user Redux location passed from LocationModal
-              locationValueRef={locationValueRef}
-              setShowLocationChangeModal={setShowLocationChangeModal}
-              inv={inv}
-              locObjs={locObjs}
-              setLocObjs={setLocObjs}
-            />
-          </PageWrapper>,
+          /****** LOCATION CHANGE MODAL ******/
+          <AnimatePresence>
+            <motion.div
+              className="modal_overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+            >
+              <motion.div
+                className="modal_wrapper"
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 50 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              >
+                <LocationChangeModal
+                  ref={locationChangeRef}
+                  location={location} // user Redux location passed from LocationModal
+                  locationInputValue={locationInputValue}
+                  setLocationInputValue={setLocationInputValue}
+                  locationChangeInputRef={locationChangeInputRef}
+                  inv={inv}
+                  locObjs={locObjs}
+                  setLocObjs={setLocObjs}
+                />
+              </motion.div>
+            </motion.div>
+          </AnimatePresence>,
           document.body
         )}
 
@@ -265,12 +240,15 @@ function Navbar({ darkRoute, inv }) {
         <section style={sectionRightStyle}>
           {/* LOCATION BTN SPAN */}
           <LocationSpan
-            ref={locationRef}
-            onMouseEnter={() => setIsLocationHovered(true)}
+            ref={locationRef} //for  'mousedown' tracking
+            onMouseEnter={() => setShowLocationModal(true)}
             onMouseLeave={() => {
-              //HIDE LOC MODAL ONLY IF ITS SEARCHBAR NOT FOCUSED
-              if (!locationFocusRef.current) {
-                setIsLocationHovered(false);
+              if (
+                !locObjs &&
+                locationInputRef.current !== document.activeElement //not getting recog as untrue once typed into SB in LM
+              ) {
+                //hide the LM
+                setShowLocationModal(false);
               }
             }}
           >
@@ -310,17 +288,16 @@ function Navbar({ darkRoute, inv }) {
               </LocationBox>
             )}
             {/********* LOCATION MODAL *********/}
-            {(isLocationHovered === true ||
-              // showLocationChangeModal ||
-              locationValueRef.current) && (
+            {showLocationModal && ( //if Searchbar in LM has a value
               <LocationModal
-                ref={locationModalRef}
                 smallNav={smallNav}
                 location={location}
-                locationFocusRef={locationFocusRef} //to track Searchbar focus state from Navbar
-                locationValueRef={locationValueRef} //to track type value to send to LocationChangeModal here
-                setShowLocationChangeModal={setShowLocationChangeModal}
+                locationInputValue={locationInputValue}
+                setLocationInputValue={setLocationInputValue}
+                locationInputRef={locationInputRef} //to track type value to send to LocationChangeModal here
                 setLocObjs={setLocObjs}
+                setAppliedFilters={setAppliedFilters}
+                setOrderedFilters={setOrderedFilters}
               />
             )}
           </LocationSpan>

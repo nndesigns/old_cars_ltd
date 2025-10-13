@@ -1,15 +1,25 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { RiArrowRightSLine } from "react-icons/ri";
+import { GoChevronDown, GoChevronUp } from "react-icons/go";
 import "./filterMenu.css";
 import "./filters.css";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
-import { handleScroll } from "../utils.js";
+import { handleScroll, useClickOutside } from "../utils.js";
+import CustomSelect from "../customSelect";
+import { createPortal } from "react-dom";
+import LocationChangeModal from "../locationChangeModal.js";
+
+import { handleLocationSearch } from "../searchbar/searchHandlers.js";
+import { stateToStateMap } from "../utils.js";
+import { motion, AnimatePresence } from "framer-motion";
+import Button from "../buttons/button.js";
+import Searchbar from "../searchbar/searchbar.js";
+import { LoadingSpinner } from "../inventoryGrid/loadingSpinner.js";
 
 // import useFilterHistory from "./useFilterHistory";
 //EMBEDDED COMPONENTS
 import PriceSlider from "../price_slider";
 import RangeSelect from "../rangeSelect";
-import CustomSelect from "../customSelect";
 
 function FilterMenu({ setActiveFilter, filters, appliedFilters }) {
   // Create a filtered list before rendering
@@ -67,10 +77,430 @@ function SortByFilter({ sortCats, chosenSortCategory, setAppliedFilters }) {
   );
 }
 
-function DistanceShippingFilter({ setAppliedFilters }) {
+function DistanceLocationFilter({
+  inv,
+  location,
+  currentVehLocations, //appliedFilters.veh_locations
+  appliedFilters,
+  setAppliedFilters,
+  orderedFilters,
+  setOrderedFilters,
+}) {
+  // console.log("received appliedFilters", appliedFilters);
+  // console.log("received orderedFilters", orderedFilters);
+  /// DISTANCE (.dist_radius)
+  const custStyle = {
+    fontSize: "1rem",
+    paddingInline: ".75rem 2.25rem",
+    height: "45px",
+  };
+  const dist_amts = [
+    "Nationwide",
+    "25 miles",
+    "50 miles",
+    "75 miles",
+    "100 miles",
+    "250 miles",
+    "500 miles",
+  ];
+  //APPLIED FILTERS .DIST_RADIUS STATE
+  const [selectedDistance, setSelectedDistance] = useState(
+    appliedFilters.dist_radius ? appliedFilters.dist_radius : dist_amts[0]
+  );
+  //SHOP NEARBY STATE
+  const [nearbyList, setNearbyList] = useState([]);
+  //SHOP BY STATE  REF /STATE
+  const shopByRef = useRef(null);
+  const [shopByValue, setShopByValue] = useState("");
+  const [shopByObjs, setShopByObjs] = useState([]);
+
+  //LOC CHANGE MODAL REF / STATE
+  const [locationInputValue, setLocationInputValue] = useState("");
+  const [showLocationChangeModal, setShowLocationChangeModal] = useState(false);
+  const [locObjs, setLocObjs] = useState([]);
+  const locationChangeRef = useRef(null); //Modal ref
+  const locationChangeInputRef = useRef(null); //Modal input Ref
+
+  const changeBtnRef = useRef(null);
+
+  console.log("showLocationChangeModal", showLocationChangeModal);
+
+  //SET SHOP BY OBJS STATE
+  useEffect(() => {
+    const matchAbbrev = Object.entries(stateToStateMap).find(
+      ([abbrev, fullName]) =>
+        fullName.toLowerCase().includes(shopByValue.toLowerCase())
+    )?.[0];
+
+    const filteredInv = inv
+      .filter((obj) => {
+        const stateMatches = matchAbbrev ? obj.state === matchAbbrev : false;
+        const cityMatches = obj.city
+          .toLowerCase()
+          .includes(shopByValue.toLowerCase());
+        return stateMatches || cityMatches;
+      })
+      .sort((a, b) => a.state.localeCompare(b.state));
+
+    const filteredLocs = [
+      ...new Map(
+        filteredInv.map((obj) => [
+          `${obj.city}-${obj.state}`, // unique key
+          { city: obj.city, state: obj.state },
+        ])
+      ).values(),
+    ];
+
+    setShopByObjs(filteredLocs);
+  }, [shopByValue]);
+
+  // LOC CHANGE MODAL
+  useClickOutside(locationChangeRef, showLocationChangeModal, (e) => {
+    if (
+      !changeBtnRef.current.contains(e.target) &&
+      !locationChangeRef.current.contains(e.target)
+    ) {
+      setShowLocationChangeModal(false);
+      locationChangeInputRef.current = "";
+    }
+  });
+  // SET SELECTED DISTANCE & NEARBY LIST STATE
+  useEffect(() => {
+    if (!appliedFilters.dist_radius) {
+      // if changed TO 'nationwide' (so 'null' now)
+      setSelectedDistance(dist_amts[0]); //'Nationwide' default
+    }
+    //GENERATE 'NEARBY LIST' OBJ ARRAY FROM REDUX 'LOCATION' ZIP
+    const fetchPlaces = async () => {
+      const returnedPlaces = await handleLocationSearch(location.zip, true);
+      const placesWithOffers = returnedPlaces.filter((obj) => obj.offerCt > 0);
+
+      // Haversine formula
+      const toRad = (deg) => (deg * Math.PI) / 180;
+
+      const getDistanceMiles = (lat1, lon1, lat2, lon2) => {
+        const R = 3958.8; // radius of Earth in miles
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(toRad(lat1)) *
+            Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) *
+            Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+      };
+
+      // Add distance field to each place
+      const placesWithDistance = placesWithOffers.map((obj) => ({
+        ...obj,
+        distance: getDistanceMiles(
+          parseFloat(location.latitude),
+          parseFloat(location.longitude),
+          parseFloat(obj.latitude),
+          parseFloat(obj.longitude)
+        ),
+      }));
+
+      // Sort by distance ascending
+      const sortedPlaces = placesWithDistance.sort(
+        (a, b) => a.distance - b.distance
+      );
+
+      setNearbyList(sortedPlaces); // save if you want to use later in UI
+    };
+
+    fetchPlaces();
+  }, [appliedFilters.dist_radius, location]);
+
+  // SET APPLIED FILTERS .DIST_RADIUS STATE (drop down handler)
+  const handleDistChange = (value) => {
+    if (value === "Nationwide") {
+      setAppliedFilters((prev) => ({
+        ...prev,
+        dist_radius: null,
+      }));
+      console.log("this was triggered here");
+      setOrderedFilters((prev) => prev.filter((f) => f !== "dist_radius"));
+    } else {
+      const valNum = Number(value.slice(0, -6));
+      setAppliedFilters((prev) => ({
+        ...prev,
+        dist_radius: valNum,
+      }));
+      setOrderedFilters(
+        (prev) =>
+          prev.includes("dist_radius") ? prev : [...prev, "dist_radius"] // add it if not present
+      );
+    }
+  };
+  /// LOCATION  CHECKBOXES (.veh_locations state)
+  const handleVehLocChange = (city) => {
+    setAppliedFilters((prev) => {
+      let newVehLocations = [...prev.veh_locations];
+
+      //if prev AF.veh_locations already includes rec'd 'loc'
+      if (prev.veh_locations.includes(city)) {
+        //then clicking meant 'remove', filter it out, reassign filtered out
+        newVehLocations = prev.veh_locations.filter((m) => m !== city);
+      } else {
+        //otherwise if it didn't, add it in, reassign added in
+        newVehLocations = [...prev.veh_locations, city];
+      }
+      //if taken out & now it's empty, remove 'makes' orderedFilter
+      if (newVehLocations.length === 0) {
+        setOrderedFilters((prevOrdered) =>
+          prevOrdered.filter((filter) => filter !== "veh_locations")
+        );
+        //otherwise if it's not empty & orderedFilters doesn't yet include 'makes', incude it
+      } else if (!orderedFilters.includes("veh_locations")) {
+        setOrderedFilters([...orderedFilters, "veh_locations"]);
+      }
+
+      return {
+        ...prev,
+        veh_locations: newVehLocations,
+      };
+    });
+  };
+
+  //
+  const [showAllNearby, setShowAllNearby] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const visibleNearby = showAllNearby ? nearbyList : nearbyList.slice(0, 5);
+
   return (
-    <div className="filter_root">
-      <h3>Distance Shipping Filter</h3>
+    <div className="filter_root distance_root">
+      {showLocationChangeModal &&
+        createPortal(
+          <AnimatePresence>
+            <motion.div
+              className="modal_overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+            >
+              {/* <PageWrapper> */}
+              <motion.div
+                className="modal_wrapper"
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 50 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              >
+                <LocationChangeModal
+                  distMode={true}
+                  ref={locationChangeRef}
+                  location={location}
+                  locationInputValue={locationInputValue}
+                  setLocationInputValue={setLocationInputValue}
+                  locationChangeInputRef={locationChangeInputRef}
+                  setShowLocationChangeModal={setShowLocationChangeModal}
+                  inv={inv}
+                  locObjs={locObjs}
+                  setLocObjs={setLocObjs}
+                />
+              </motion.div>
+            </motion.div>
+            {/* </PageWrapper> */}
+          </AnimatePresence>,
+          document.body
+        )}
+
+      {/***  CURR LOC BOX ****/}
+      <div className="currLocBox">
+        <div className="currLocLeft">
+          <span>Your Location: {location.zip}</span>
+          <br />
+          <strong>
+            <span style={{ whiteSpace: "nowrap" }}>
+              {location.city}, {location.state}
+            </span>
+          </strong>
+        </div>
+        <button
+          ref={changeBtnRef}
+          className="changeBtn"
+          onClick={() => setShowLocationChangeModal(true)} // 👈 open modal
+        >
+          Change
+        </button>
+      </div>
+
+      <CustomSelect
+        prop={selectedDistance}
+        setProp={setSelectedDistance}
+        array={dist_amts}
+        label="Max Miles Away"
+        selectStyle={custStyle}
+        onChange={handleDistChange}
+      />
+      <small className="dist_helper_text">
+        The maximum number of miles you're willing to travel to pick up a car.
+      </small>
+      <hr />
+
+      <h3 className="checkbox_h3" style={{ marginBottom: "1.5rem" }}>
+        Shop Nearby
+      </h3>
+      <div
+        className={`checkboxes_container shopNearbyCheckboxes ${
+          nearbyList.length === 0 ? "flexCenter" : ""
+        }`}
+      >
+        {nearbyList.length ? (
+          nearbyList.slice(0, 5).map((obj) => (
+            <label
+              key={obj.zip}
+              className="custom_checkbox_label distance_label"
+            >
+              <input
+                type="checkbox"
+                className="custom_checkbox_input"
+                onChange={() => handleVehLocChange(obj.city)} //appear in SHOP BY LIST Checkboxes inputs too
+                checked={
+                  Array.isArray(currentVehLocations) && //appear in SHOP BY LIST Checkboxes inputs too
+                  currentVehLocations.includes(obj.city)
+                }
+              />
+              <span className="custom_checkbox_visual" />
+              <span className="checkbox_text places_text">
+                {`${obj.city} (~${obj.distance.toFixed(1)}mi)`}
+                <br />
+                <p className="checkbox_subtext">{`${obj.city}, ${
+                  stateToStateMap[obj.state]
+                }`}</p>
+              </span>
+            </label>
+          ))
+        ) : (
+          <LoadingSpinner />
+        )}
+
+        <AnimatePresence>
+          {showAllNearby && (
+            <motion.div
+              key="extra"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              style={{ overflow: "hidden" }}
+            >
+              {nearbyList.slice(5).map((obj) => (
+                <label
+                  key={obj.zip}
+                  className="custom_checkbox_label distance_label"
+                >
+                  <input
+                    type="checkbox"
+                    className="custom_checkbox_input"
+                    onChange={() => handleVehLocChange(obj.city)}
+                    checked={
+                      Array.isArray(currentVehLocations) &&
+                      currentVehLocations.includes(obj.city)
+                    }
+                  />
+                  <span className="custom_checkbox_visual" />
+                  <span className="checkbox_text places_text">
+                    {`${obj.city} (~${obj.distance.toFixed(1)}mi)`}
+                    <br />
+                    <p className="checkbox_subtext">{`${obj.city}, ${
+                      stateToStateMap[obj.state]
+                    }`}</p>
+                  </span>
+                </label>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {nearbyList.length > 5 && (
+          <Button
+            text={
+              showAllNearby ? "See less" : `See ${nearbyList.length - 5} more`
+            }
+            outlineStyle2={true}
+            onClick={() => setShowAllNearby((prev) => !prev)}
+            style={{
+              fontSize: ".9em",
+              padding: ".75rem 1.25rem",
+              height: "unset",
+              display: "block",
+              margin: "0 auto",
+              transform: "translateX(-.5rem)",
+            }}
+          />
+        )}
+      </div>
+      <div className="shopByStateWrapper">
+        <button
+          className="shopByStateBtn"
+          onClick={() => setShowSearch((prev) => !prev)}
+        >
+          SHOP BY STATE {!showSearch ? <GoChevronDown /> : <GoChevronUp />}
+        </button>
+        <AnimatePresence>
+          {showSearch && (
+            <motion.div
+              key="searchExtra"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              style={{ overflow: "hidden" }}
+            >
+              <Searchbar
+                darkRoute={true}
+                mode="distLocFilter"
+                shopByValue={shopByValue}
+                setShopByValue={setShopByValue}
+                inputRef={shopByRef}
+                style={{ marginBottom: "1rem" }}
+              />
+              <div
+                className="checkboxes_container"
+                style={{ paddingLeft: ".5rem" }}
+              >
+                {shopByObjs.map((obj, idx) => {
+                  const prevState = idx > 0 ? shopByObjs[idx - 1].state : null;
+                  const showHeader = obj.state !== prevState; // true if new state group
+                  return (
+                    <React.Fragment key={idx}>
+                      {showHeader && (
+                        <h3 className="shopBy_h3">
+                          {stateToStateMap[obj.state]}
+                        </h3>
+                      )}
+                      <label className="custom_checkbox_label distance_label">
+                        <input
+                          type="checkbox"
+                          className="custom_checkbox_input"
+                          onChange={() => handleVehLocChange(obj.city)}
+                          checked={
+                            Array.isArray(currentVehLocations) &&
+                            currentVehLocations.includes(obj.city)
+                          }
+                        />
+                        <span className="custom_checkbox_visual" />
+                        <span className="checkbox_text places_text">
+                          {`${obj.city}`}
+                          <br />
+                          <p className="checkbox_subtext">{`${obj.city}, ${
+                            stateToStateMap[obj.state]
+                          }`}</p>
+                        </span>
+                      </label>
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
@@ -386,7 +816,12 @@ function BodyTypeFilter({
 }
 
 /// YEAR FILTER /////
-function YearFilter({ options, setAppliedFilters, setOrderedFilters }) {
+function YearFilter({
+  options,
+  setAppliedFilters,
+  setOrderedFilters,
+  appliedFilters,
+}) {
   const years = options.map((option) => option.year);
   const [range, setRange] = useState([Math.min(...years), Math.max(...years)]);
 
@@ -440,6 +875,16 @@ function YearFilter({ options, setAppliedFilters, setOrderedFilters }) {
       });
     }
   };
+
+  // 🔑 Sync external appliedFilters → local range
+  useEffect(() => {
+    if (!computedRange) return;
+
+    const minYear = appliedFilters.yearFrom ?? computedRange.min;
+    const maxYear = appliedFilters.yearTo ?? computedRange.max;
+
+    setRange([minYear, maxYear]);
+  }, [appliedFilters.yearFrom, appliedFilters.yearTo, computedRange]);
 
   return (
     <div className="filter_root">
@@ -620,7 +1065,7 @@ function AdvancedSearchFilter({ setAppliedFilters }) {
 export {
   FilterMenu,
   SortByFilter,
-  DistanceShippingFilter,
+  DistanceLocationFilter,
   MakeFilter,
   ModelFilter,
   BodyTypeFilter,

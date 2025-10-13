@@ -5,8 +5,8 @@
       background-color: white;
       z-index: 3;
       display: flex;
-      width: 100%;
-
+      width: 100vw;
+      /* full-screen  .tabs_box buttons*/
       >.tab_li {
             padding: 26px 18px;
             position: relative;
@@ -17,19 +17,23 @@
             cursor: pointer;
             border: none;
             list-style-type: none;
+           
       }
 
       /* TABS DROPDOWN */
+      /* holds left (dropdown) & right (heart + claculator) sides */
       >.dropdown_wrapper {
             width: 100%;
             display: flex;
             align-items: center;
-            height: 73px;
-
+            height: 60px;
+            /* wrapper for left side */
             >.tabs_dropdown {
                   width: 100%;
                   height: 100%;
+                  position:relative; /* here */
 
+                  /* button (click to reveal .dropdown-menu) */
                   >.dropdown-toggle {
                         width: 100%;
                         height: 100%;
@@ -44,15 +48,19 @@
                         background-color: transparent;
                         color: grey;
                   }
-
+                        /* dropdown menu */
                   >.dropdown-menu {
                         list-style-type: none;
                         background-color: white;
-
+                        position: absolute;
+                        right: 0;
+                        top: 77px;
+                        width: 25rem;
+                        max-width:100%;
                         padding: 1rem;
                         border-radius: 20px;
                         box-shadow: var(--boxShadow2);
-                        margin-left: 1rem;
+                        
 
                         >.dropdown-item {
                               cursor: pointer;
@@ -86,25 +94,26 @@
       }
 }
 
+.horz_line {
+      width: 100vw;
+      box-shadow: 0 8px 10px rgba(0, 0, 0, 0.08);
+      position: sticky;
+      top: 73px;
+      /* color: lightgrey; */
+      outline: none;
+      border: 1px solid lightgrey;
+}
+
 @media(max-width:900px) {
       .tabs_box {
             padding-inline: 0px !important;
       }
+
+      .horz_line{
+            top: 60px;
+      }
 }
 
-
-
-div.fullWidth_div {
-      position: sticky;
-      top: 70px;
-      height: 1px;
-      width: 100%;
-      box-shadow:
-            0px 3px 4px rgba(0, 0, 0, 0.5),
-            0px 8px 12px rgba(0, 0, 0, 0.3),
-            0px 20px 24px rgba(0, 0, 0, 0.15),
-            0px 30px 40px rgba(0, 0, 0, 0.08);
-}
 
 
 .top_grid {
@@ -148,7 +157,7 @@ div.fullWidth_div {
             flex-direction: column;
 
             >.section {
-                  margin-block: 3.8rem 2rem;
+                  margin-block: 3rem 2rem;
             }
 
       }
@@ -363,8 +372,6 @@ h4.cell_title {
             > .features_img_textBox {
                     text-align: start;     }
       }
-
-    
 }
 
 

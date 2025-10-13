@@ -1,4 +1,4 @@
-import React, { useState, useEffect, forwardRef } from "react";
+import React, { useState, useEffect, forwardRef, useRef } from "react";
 import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Searchbar from "./searchbar/searchbar";
@@ -41,17 +41,18 @@ const Modal = styled(Box)(({ theme }) => ({
 const LocationChangeModal = forwardRef(
   (
     {
-      location, //user location object
-      locationValueRef, //searchbar input value
-      setShowLocationChangeModal,
+      distMode,
+      location, //user location objec
+      locationInputValue,
+      setLocationInputValue,
+      locationChangeInputRef,
       inv,
       locObjs,
       setLocObjs,
+      setShowLocationChangeModal,
     },
     ref
   ) => {
-    /*     console.log("LCM received location", location);
-    console.log("LCM rec'd locationValueRef", locationValueRef); */
     return (
       <Modal ref={ref}>
         <h3 style={{ marginBottom: "1rem", fontSize: "1.2em" }}>
@@ -60,19 +61,26 @@ const LocationChangeModal = forwardRef(
         <Searchbar
           darkRoute={true}
           mode="locationChange"
-          locationValueRef={locationValueRef}
+          locationInputValue={locationInputValue}
+          setLocationInputValue={setLocationInputValue}
+          inputRef={/* locationInputRef */ locationChangeInputRef}
           setLocObjs={setLocObjs}
         />
         <hr style={hr_style} />
         <ListScroll
+          hasSearchVal={!!locationChangeInputRef.current?.value}
           locObjs={locObjs} //matching 'us_zips.csv' objs
+          setLocObjs={setLocObjs}
           userLocationObj={location}
           inv={inv}
-          setShowLocationChangeModal={setShowLocationChangeModal}
         />
         <CloseIcon
           onClick={(e) => {
-            setShowLocationChangeModal(false);
+            setLocObjs(distMode ? [] : null);
+            setLocationInputValue("");
+            if (distMode) {
+              setShowLocationChangeModal(false);
+            }
             e.stopPropagation();
           }}
         />
@@ -82,11 +90,3 @@ const LocationChangeModal = forwardRef(
 );
 
 export default LocationChangeModal;
-
-//when LCM is closed by the DOM 'handleClickOutside' and the LM is still open, I want the 'locationValueRef' to still be showing inside of the LocationModal's Searchbar.
-
-//I think the Searchbar's handleSubmit (opening the LocationChangeModal) is causing the Navbar's 'locationValueRef' to be wiped, I want to maintain it.
-
-//Also when the 'showLocationChangeModal is being reset here to 'false', it's causing a re-render of Navbar and a re-declaration of isLocationHovered to 'false', closing the LocationModal, whereas, Iif the icon here is clicked I want it to also only close the LocationChangeModal and not both.
-
-//try setting iaLocationHovered to 'true' explicitly here in this component's 'onCLick';?

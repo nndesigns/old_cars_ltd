@@ -80,10 +80,10 @@ const MakeCard = styled(Card, {
   position: "relative",
   justifyContent: lastCard ? "center" : "",
 
-  transition: "transform 0.25s ease-out, filter 0.25s ease-out",
+  transition: "transform 0.25s ease-out, filter 0.25s ease-in",
   "&:hover": {
     cursor: "pointer",
-    /*     filter: "brightness(1..05)", */
+    filter: "brightness(1.15) contrast(1.1)",
     transform: "translateY(-.75rem)",
     boxShadow: "0 24px 30px -24px rgba(42,52,61,.4)",
   },

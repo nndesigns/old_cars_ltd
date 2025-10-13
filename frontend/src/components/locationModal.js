@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { IoHeart } from "react-icons/io5";
 import { MdLocalOffer } from "react-icons/md";
@@ -11,10 +11,12 @@ import Searchbar from "./searchbar/searchbar";
 const LocationModal = ({
   smallNav,
   location,
-  locationFocusRef,
-  locationValueRef,
-  setShowLocationChangeModal,
+  locationInputValue,
+  setLocationInputValue,
+  locationInputRef,
   setLocObjs,
+  setAppliedFilters,
+  setOrderedFilters,
   style = {},
 }) => {
   const [favoritesNear, setFavoritesNear] = useState([]);
@@ -31,7 +33,6 @@ const LocationModal = ({
     flexDirection: "column",
     "& > *": {
       padding: "1.25rem",
-      paddingRight: ".8rem",
     },
     "& > *:last-child": {
       borderTop: "1px solid lightGrey",
@@ -39,6 +40,8 @@ const LocationModal = ({
     },
     ...style,
   }));
+  const navigate = useNavigate();
+  const locationRef = useLocation();
 
   const heartedCars = useSelector((state) => state.favorites.heartedCars);
 
@@ -105,6 +108,27 @@ const LocationModal = ({
     },
   }));
 
+  const handleOffersClick = ({ nearby }) => {
+    // update appliedFilters
+    setAppliedFilters((prev) => ({
+      ...prev,
+      dist_radius: nearby ? 25 : 100,
+    }));
+
+    // update orderedFilters
+    setOrderedFilters((prev) => {
+      // only add "dist_radius" if it’s not already in the array
+      if (!prev.includes("dist_radius")) {
+        return [...prev, "dist_radius"];
+      }
+      return prev;
+    });
+
+    if (nearby && locationRef.pathname !== `/cars`) {
+      navigate(`/cars`);
+    }
+  };
+
   return (
     <PopupBox>
       <Box className="topBox">
@@ -117,7 +141,10 @@ const LocationModal = ({
         <Para>
           <MdLocalOffer style={{ fill: "var(--offBlue)" }} />
           <span>
-            <Linky>{location.localInv.length} offers</Linky> within{" "}
+            <Linky to="/cars" onClick={handleOffersClick}>
+              {location.localInv.length} offers
+            </Linky>{" "}
+            within{" "}
             <b>
               100<span style={{ fontSize: ".8em" }}>mi</span>
             </b>{" "}
@@ -127,25 +154,29 @@ const LocationModal = ({
         <Para>
           <IoHeart />
           <span>
-            <Linky>
-              {favoritesNear.length}{" "}
-              {favoritesNear.length > 1 || favoritesNear.length === 0
-                ? "favorites"
-                : "favorite"}
-            </Linky>{" "}
+            {favoritesNear.length ? (
+              <Linky to="/favorites?fromLocModal=true">
+                {favoritesNear.length}{" "}
+                {favoritesNear.length > 1 || favoritesNear.length === 0
+                  ? "favorites"
+                  : "favorite"}
+              </Linky>
+            ) : (
+              <span style={{ fontWeight: "600" }}>0 favorites</span>
+            )}{" "}
             near<strong> {location.city}</strong>
           </span>
         </Para>
         {/* BUTTON */}
         <Button
+          onClick={() => handleOffersClick({ nearby: true })}
           text="SEE NEARBY CARS"
           outlineStyle2={true}
           style={{
-            marginTop: ".5rem",
-            minWidth: "max-content",
-            marginLeft: "48%",
-            transform: " translateX(-50%)",
-            paddingInline: "15px",
+            marginTop: ".75rem",
+            display: "block",
+            marginInline: "auto",
+            padding: " .75rem 1.25rem",
           }}
         />
       </Box>
@@ -156,9 +187,9 @@ const LocationModal = ({
         <Searchbar
           darkRoute={true}
           mode="location"
-          locationFocusRef={locationFocusRef} // focus state reference for Navbar onMouseLeave()
-          locationValueRef={locationValueRef}
-          setShowLocationChangeModal={setShowLocationChangeModal}
+          locationInputValue={locationInputValue}
+          setLocationInputValue={setLocationInputValue}
+          inputRef={locationInputRef}
           setLocObjs={setLocObjs}
         />
       </Box>

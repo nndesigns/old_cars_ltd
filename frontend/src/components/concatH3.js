@@ -28,7 +28,8 @@ const ConcatH3 = ({ appliedFilters, noResults }) => {
     makes,
     models,
     styles,
-    distance,
+    dist_radius,
+    veh_locations,
     interiorColor,
     minPrice,
     maxPrice,
@@ -90,8 +91,14 @@ const ConcatH3 = ({ appliedFilters, noResults }) => {
     segments.push(formatList(pluralStyles, "and"));
   }
 
-  // 8. Distance
-  if (typeof distance === "number") segments.push(`within ${distance} miles`);
+  // 8. dist_radius
+  if (typeof dist_radius === "number")
+    segments.push(`within ${dist_radius} miles`);
+
+  // 9. veh_locations
+  if (veh_locations?.length) {
+    segments.push(`in ${formatList(veh_locations.map(String), "or")}`);
+  }
 
   // 9. Interior Color
   if (interiorColor?.length)

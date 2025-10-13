@@ -23,3 +23,37 @@ export async function getInventory() {
     throw err; // optionally rethrow for upstream handling
   }
 }
+
+//Inventory Search
+export async function searchInventory(query) {
+  if (!query) return [];
+
+  try {
+    const res = await axios.get(`http://localhost:5001/api/inventory/search`, {
+      params: { query },
+    });
+
+    return res.data; // array of matching car objects
+  } catch (err) {
+    console.error("Error searching inventory:", err);
+    return [];
+  }
+}
+
+export async function smartSearch(invSearch) {
+  if (!invSearch) return [];
+
+  try {
+    const res = await axios.get(
+      `http://localhost:5001/api/inventory/smartsearch`,
+      {
+        params: { invSearch },
+      }
+    );
+
+    return res.data; // array of matching car objects
+  } catch (err) {
+    console.error("Error searching inventory:", err);
+    return [];
+  }
+}

@@ -1,17 +1,14 @@
-// import {
-//   MakeFilter,
-//   ModelFilter,
-//   BodyTypeFilter,
-//   YearFilter,
-// } from "../carsFilters/carsFilters";
+import { searchInventory } from "../axiosCalls.js";
 
 //LOCATION SEARCH
-export const handleLocationSearch = async (loc) => {
+export const handleLocationSearch = async (loc, distFilter = false) => {
   const isZip = /^\d{5}$/.test(loc.trim());
   const param = isZip ? `zip=${loc}` : `city=${encodeURIComponent(loc)}`;
-  //   console.log("isZip", isZip);
-  //   console.log("param", param);
-  const url = `http://localhost:5001/api/locations/search?${param}`;
+
+  // add distFilter as a query param
+  const query = `${param}&distFilter=${distFilter}`;
+
+  const url = `http://localhost:5001/api/locations/search?${query}`;
 
   try {
     const res = await fetch(url);
@@ -19,37 +16,22 @@ export const handleLocationSearch = async (loc) => {
       throw new Error(`API error: ${res.status}`);
     }
     const data = await res.json();
-
-    // Expecting an array of { city, state, zip } objects
-    const result = data; // limit to 7 closest matches
-    return result;
+    return data;
   } catch (err) {
     console.error("handleLocationSearch error:", err);
     return [];
   }
 };
 
-function capitalizeWords(str) {
-  if (!str) return "";
-  return str
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-///dedupe objects helper fn
-function dedupeByKey(array, keyFn) {
-  const seen = new Set();
-  return array.filter((item) => {
-    const key = keyFn(item);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-// INV SEARCH
-export const handleInvSearch = (invSearch, inv) => {
+////////  INV STRING SEARCH (hitting 'enter')
+export const invStringSearch = async (
+  navigate,
+  currentRoute,
+  setAppliedFilters,
+  setOrderedFilters,
+  handleClearFilters,
+  string
+) => {
   const allStyles = [
     "convertible",
     "coupe",
@@ -63,211 +45,134 @@ export const handleInvSearch = (invSearch, inv) => {
     "van",
   ];
 
-  const invMatches = { Make: [], Model: [], Style: [], Year: [] };
-  if (!invSearch || !Array.isArray(inv)) return invMatches;
+  if (!string) return;
 
-  const search = invSearch.toLowerCase();
+  if (currentRoute !== "cars") navigate("/cars");
 
-  // ----------- MAKE MATCHES -----------
-  /*   let makeMatches = inv
-    .filter(
-      (item) =>
-        item.make &&
-        item.make.toLowerCase().includes(search.trim().toLowerCase())
-    )
-    .map((item) => item.make);
-  makeMatches = [...new Set(makeMatches)];
+  handleClearFilters();
 
-  invMatches.Make = makeMatches;
+  const lower = string.toLowerCase().trim();
 
-  //CHECKING whether COMPLETE MAKE provided
-  //adding all make models to invMatches.Models if so
-  const uniqueMakesLower = [
-    ...new Set(inv.map((item) => item.make.toLowerCase())),
-  ];
-  const isFullMakeWithSpace = uniqueMakesLower.some(
-    (make) => search === `${make} `
-  );
+  try {
+    // 🔹 Step 1: Ask backend for filtered inventory
+    const filteredCars = await searchInventory(lower);
 
-  //include all models (written as 'make+model') for all matching 'makes', add those to invMatches.Model too (in addition to models for matching models) (also written as 'make+model')
-  let dedupedMakeModelMatches;
-  if (isFullMakeWithSpace) {
-    const makeModelMatches = inv
-      .filter((item) => makeMatches.includes(item.make))
-      .map((item) => ({
-        display: `${item.make} ${item.model}`,
-        make: item.make,
-        model: item.model,
-      }));
-
-    dedupedMakeModelMatches = dedupeByKey(
-      makeModelMatches,
-      (item) => item.display
-    );
-  }
-
-  // ----------- MODEL MATCHES -----------
-  const modelMatches = inv
-    .filter((item) => item.model && item.model.toLowerCase().includes(search))
-    .map((item) => ({
-      display: `${item.make} ${item.model}`,
-      make: item.make,
-      model: item.model,
-    }));
-
-  //dedupe all modelMatches objects
-  const dedupedModelMatches = dedupeByKey(modelMatches, (item) => item.display);
-
-  //combine the two individual arrays, and dedupe their combination, assign to invMatches.Model
-  invMatches.Model = dedupeByKey(
-    [...(dedupedMakeModelMatches || []), ...dedupedModelMatches],
-    (item) => item.display
-  ); */
-  // ----------- MAKE MATCHES (partial) -----------
-  let makeMatches = inv
-    .filter(
-      (item) =>
-        item.make &&
-        item.make.toLowerCase().includes(search.trim().toLowerCase())
-    )
-    .map((item) => item.make);
-  makeMatches = [...new Set(makeMatches)];
-  invMatches.Make = makeMatches;
-
-  // Create lowercase makes list for quick comparison
-  const uniqueMakesLower = [
-    ...new Set(inv.map((item) => item.make.toLowerCase())),
-  ];
-
-  // Recognize "full make + space"
-  const isFullMakeWithSpace = uniqueMakesLower.some(
-    (make) => search === `${make} `
-  );
-
-  // Recognize "full make + space + at least one more letter"
-  let makeFromSearch = null;
-  const isFullMakeWithExtra = uniqueMakesLower.some((make) => {
-    if (search.startsWith(`${make} `) && search.length > make.length + 1) {
-      makeFromSearch = make; // store matched make
-      return true;
+    if (!filteredCars || filteredCars.length === 0) {
+      console.log("No matches found.");
+      return;
     }
-    return false;
-  });
 
-  // ----------- MODELS when "full make + space" -----------
-  let dedupedMakeModelMatches;
-  if (isFullMakeWithSpace) {
-    const makeModelMatches = inv
-      .filter((item) => makeMatches.includes(item.make))
-      .map((item) => ({
-        display: `${item.make} ${item.model}`,
-        make: item.make,
-        model: item.model,
-      }));
-    dedupedMakeModelMatches = dedupeByKey(
-      makeModelMatches,
-      (item) => item.display
-    );
-  }
+    // 🔹 Step 2: Build matchFlags from all filtered results
+    const matchFlags = {};
 
-  // ----------- MODEL MATCHES -----------
-  let modelMatches;
+    for (const car of filteredCars) {
+      const { year, make, model, style, vin } = car;
+      const lowerStyle = style?.toLowerCase();
+      const lowerMake = make?.toLowerCase();
+      const lowerModel = model?.toLowerCase();
+      const lowerVin = vin?.toLowerCase();
 
-  if (isFullMakeWithExtra && makeFromSearch) {
-    // Trim make + space from search
-    const modelSearchTerm = search.slice(makeFromSearch.length + 1);
+      if (!lowerMake && !lowerModel && !lowerStyle && !lowerVin) continue;
 
-    // Find models that start with the trimmed term
-    modelMatches = inv
-      .filter(
-        (item) =>
-          item.make.toLowerCase() === makeFromSearch &&
-          item.model &&
-          item.model.toLowerCase().startsWith(modelSearchTerm)
-      )
-      .map((item) => ({
-        display: `${item.make} ${item.model}`,
-        make: item.make,
-        model: item.model,
-      }));
+      // --- STYLE ---
+      const styleMatch =
+        lowerStyle &&
+        (lowerStyle.includes(lower) ||
+          (lower === "truck" && lowerStyle.includes("pickup")));
+      if (styleMatch) {
+        const matchedStyle = allStyles.find(
+          (s) =>
+            s.toLowerCase().includes(lower) ||
+            (lower === "truck" && s.toLowerCase() === "pickup")
+        );
+        if (matchedStyle) {
+          matchFlags.style = matchedStyle;
+          break; // style overrides all
+        }
+      }
 
-    // Also keep the make in Make matches
-    invMatches.Make = [
-      ...new Set([...invMatches.Make, capitalizeWords(makeFromSearch)]),
-    ];
-  } else {
-    // Normal model search (still contains match, not starts-with)
-    modelMatches = inv
-      .filter((item) => item.model && item.model.toLowerCase().includes(search))
-      .map((item) => ({
-        display: `${item.make} ${item.model}`,
-        make: item.make,
-        model: item.model,
-      }));
-  }
+      // --- MAKE ---
+      const makeMatch = lowerMake === lower;
+      if (makeMatch) {
+        matchFlags.make = make;
+      }
 
-  const dedupedModelMatches = dedupeByKey(modelMatches, (item) => item.display);
+      // --- MODEL ---
+      let modelSearch = lower;
+      if (lowerMake && lower.startsWith(lowerMake + " ")) {
+        modelSearch = lower.replace(lowerMake + " ", "");
+      }
 
-  // Merge dedupedMakeModelMatches (if present) with dedupedModelMatches
-  invMatches.Model = dedupeByKey(
-    [...(dedupedMakeModelMatches || []), ...dedupedModelMatches],
-    (item) => item.display
-  );
-  // ----------- STYLE MATCHES -----------
-  const styleMatches = allStyles.filter((item) =>
-    item.toLowerCase().includes(search)
-  );
+      const modelMatch = lowerModel && lowerModel.includes(modelSearch);
+      if (modelMatch) {
+        matchFlags.make = make;
+        if (!matchFlags.models) matchFlags.models = {};
+        if (!matchFlags.models[make]) matchFlags.models[make] = [];
+        if (!matchFlags.models[make].includes(model)) {
+          matchFlags.models[make].push(model);
+        }
+      }
 
-  invMatches.Style = styleMatches.map((match) => capitalizeWords(match));
+      // --- YEAR ---
+      if (String(year) === string) {
+        matchFlags.year = year;
+      }
 
-  // ----------- YEAR MATCHES -----------
-  const yearMatches = inv
-    .filter((item) => item.year && item.year.toString().includes(search))
-    .sort((a, b) => a.year - b.year) // sort by year ascending
-    .map((item) => ({
-      display: `${item.year} ${item.make} ${item.model}`,
-      make: item.make,
-      model: item.model,
-      year: item.year,
-    }));
-
-  invMatches.Year = dedupeByKey(yearMatches, (item) => item.display);
-
-  return invMatches;
-};
-
-////////  INV STRING SEARCH (hitting 'enter')
-export const invStringSearch = (
-  navigate,
-  currentRoute,
-  setAppliedFilters,
-  setOrderedFilters,
-  handleClearFilters,
-  dropMatches,
-  string
-) => {
-  if (currentRoute !== "cars") {
-    navigate("/cars");
-  }
-  // handleClearFilters();
-  console.log("dropMatches", dropMatches);
-  setAppliedFilters((prev) => {
-    // const cleared = handleClearFilters("return-only"); // Get cleared filters without setting state
-    const nextFilters = { ...prev };
-
-    if (dropMatches.Make.length) {
-      nextFilters.Make = dropMatches.Make;
+      // --- VIN ---
+      if (lowerVin === lower) {
+        matchFlags.vin = vin;
+      }
     }
-    return nextFilters;
-  });
 
-  setOrderedFilters((prev) => {
-    const nextOrdered = [...prev];
-    if (dropMatches.Make.length) {
-      nextOrdered.push("makes");
-    }
-    return nextOrdered;
-  });
+    if (Object.keys(matchFlags).length === 0) return;
+
+    // 🔹 Step 3: Apply filters as before
+    setAppliedFilters((prev) => {
+      const next = { ...prev };
+
+      if (matchFlags.make) {
+        next.makes = [...new Set([...(prev.makes || []), matchFlags.make])];
+      }
+
+      if (matchFlags.models) {
+        next.models = { ...prev.models };
+        for (const [make, models] of Object.entries(matchFlags.models)) {
+          next.models[make] = [
+            ...new Set([...(prev.models?.[make] || []), ...models]),
+          ];
+        }
+      }
+
+      if (matchFlags.style) {
+        next.styles = [...new Set([...(prev.styles || []), matchFlags.style])];
+      }
+
+      if (matchFlags.year) {
+        next.yearFrom = matchFlags.year;
+        next.yearTo = matchFlags.year;
+      }
+
+      if (matchFlags.vin) {
+        next.vin = matchFlags.vin;
+      }
+
+      return next;
+    });
+
+    setOrderedFilters((prev) => {
+      const keys = [];
+
+      if (matchFlags.make) keys.push("makes");
+      if (matchFlags.models) keys.push("models");
+      if (matchFlags.style) keys.push("styles");
+      if (matchFlags.year) keys.push("yearFrom", "yearTo");
+      if (matchFlags.vin) keys.push("vin");
+
+      return [...new Set([...prev, ...keys])];
+    });
+  } catch (err) {
+    console.error("Error searching inventory:", err);
+  }
 };
 
 ///////// MAKE MODEL SEARCH (clicking a droplist item)
