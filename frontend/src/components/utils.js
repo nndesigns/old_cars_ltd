@@ -2,6 +2,7 @@ import zipcodes from "zipcodes";
 import { getDistance } from "geolib";
 import { useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
+// import { IoCopyOutline } from "react-icons/io5";
 
 export function handleScroll(scrollContainerRef, direction, mobileRow) {
   const scrollContainer = scrollContainerRef.current;
@@ -323,6 +324,13 @@ export const formatPrice = (value) => {
     </>
   );
 };
+
+// MILEAGE FORMATTER
+export const mileageFormatter = (mil) => {
+  if (mil == null || isNaN(mil)) return ""; // handle invalid or null inputs
+  return mil.toLocaleString(); // adds commas in the thousandths place
+};
+
 // GET UNIQUE STYLES
 export const getUniqueStyles = (vehArr) => {
   const uniqueStyles = [

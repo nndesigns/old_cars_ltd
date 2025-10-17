@@ -7,6 +7,7 @@ import { getLocalOffers } from "../components/utils";
 
 import CarsToolbar from "../components/carsToolbar/carsToolbar";
 import InventoryGrid from "../components/inventoryGrid/inventoryGrid";
+import ComparePanel from "../components/carsToolbar/comparePanel.js";
 // import { useSelector, useDispatch } from "react-redux";
 import {
   FilterMenu,
@@ -57,6 +58,9 @@ const Cars = ({
 
   //ACTIVE FILTER
   const [activeFilter, setActiveFilter] = useState(null); ///// setter
+
+  // COMPARE PREP PANEL
+  const [showCompare, setShowCompare] = useState(false);
 
   const hasAppliedFilters = useMemo(() => {
     return Object.entries(appliedFilters)
@@ -555,12 +559,17 @@ const Cars = ({
                 sortCats={sortCats}
                 appliedFilters={appliedFilters}
                 setAppliedFilters={setAppliedFilters}
+                setShowCompare={setShowCompare}
+                showCompare={showCompare}
               />
+
+              {showCompare && <ComparePanel />}
 
               <InventoryGrid
                 cars={matchesArray}
                 below820={below820}
                 appliedFilters={appliedFilters}
+                // send 'showCompare' here to change InvCards' <MoreButton/> to 'select' btn when true
               />
             </div>
           </div>

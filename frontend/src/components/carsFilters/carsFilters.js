@@ -282,7 +282,6 @@ function DistanceLocationFilter({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.35, ease: "easeOut" }}
             >
-              {/* <PageWrapper> */}
               <motion.div
                 className="modal_wrapper"
                 initial={{ opacity: 0, y: 50 }}
@@ -304,7 +303,6 @@ function DistanceLocationFilter({
                 />
               </motion.div>
             </motion.div>
-            {/* </PageWrapper> */}
           </AnimatePresence>,
           document.body
         )}

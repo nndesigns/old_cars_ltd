@@ -103,6 +103,7 @@ const SearchBtn = styled("button", {
   padding: "unset",
 
   "&:hover": {
+    cursor: "pointer",
     backgroundColor: "white",
   },
 }));

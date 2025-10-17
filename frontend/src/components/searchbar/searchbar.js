@@ -839,7 +839,7 @@ function Searchbar({
       ...prev,
       [key]: !prev[key],
     }));
-    setHighlightedIndex(-1);
+    // setHighlightedIndex(-1);
   };
 
   const handleChange = (e) => {
@@ -861,10 +861,10 @@ function Searchbar({
   const handleSubmit = useCallback(
     async (e) => {
       const key = e.key;
+      const isClick = e.type === "click";
       const searchValue = e.value ?? inputRef.current.value ?? "";
 
       if (mode === "location" || mode === "locationChange") {
-        console.log("this was triggered LOCATION");
         if (!searchValue) {
           setLocationInputValue("");
           return;
@@ -873,7 +873,7 @@ function Searchbar({
         const results = await handleLocationSearch(searchValue);
         props.setLocObjs(results);
       } else {
-        if (key === "Enter") {
+        if (key === "Enter" || isClick) {
           handleOnBlur(e);
           invStringSearch(
             navigate,
@@ -1015,7 +1015,6 @@ function Searchbar({
       setShowDroplist(false);
     }
     // Reset the suppression after the effect runs once
-    console.log("this was reached here");
     suppressDroplistRef.current = false;
   }, [invSearch, mode]);
 
@@ -1027,8 +1026,6 @@ function Searchbar({
       inputRef.current.blur();
     }
   }, [isFocused]);
-  console.log("dropMatches", dropMatches);
-  console.log("invSearch", invSearch);
 
   return (
     <InputWrapper
@@ -1056,26 +1053,26 @@ function Searchbar({
             ? "Search City or Zip"
             : mode === "distLocFilter"
             ? "Search by City or State"
-            : "Search by make, model, or keyword"
+            : /* showDroplist
+            ? inputRef.current.value
+            : */ "Search by make, model, or keyword"
         }
         onKeyDown={(e) => {
           if (mode === "inventory" && showDroplist && flatMatches.length > 0) {
             if (e.key === "ArrowDown") {
-              ///// ARROW DOWN
+              ///// ARROW DOWN /////////////
               e.preventDefault();
               if (highlightedIndex === -1) setTypedValue(invSearch);
-
               setHighlightedIndex((prev) => {
                 const nextIndex =
                   prev < flatMatches.length - 1 ? prev + 1 : prev;
                 scrollHighlightedIntoView(nextIndex); // ✅ auto-scroll
                 return nextIndex;
               });
-
               const next = flatMatches[highlightedIndex + 1];
               if (next) inputRef.current.value = next.value;
             } else if (e.key === "ArrowUp") {
-              //// ARROW UP
+              //// ARROW UP ///////////////
               e.preventDefault();
               if (highlightedIndex > 0) {
                 const prevIndex = highlightedIndex - 1;
@@ -1088,7 +1085,7 @@ function Searchbar({
                 inputRef.current.value = typedValue;
               }
             } else if (e.key === "Enter") {
-              //// ENTER
+              //// ENTER ////////////////
               e.preventDefault();
               if (highlightedIndex >= 0) {
                 const selected = flatMatches[highlightedIndex];
@@ -1154,7 +1151,7 @@ function Searchbar({
       )}
 
       <SearchBtn
-        onClick={handleSubmit}
+        onClick={(e) => handleSubmit(e)}
         darkRoute={darkRoute}
         showDroplist={showDroplist}
       >

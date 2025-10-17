@@ -48,6 +48,8 @@ const ImgSliderWrapper = styled("div")((props) => ({
   position: "relative",
   width: "100%",
   // height: props.favorites && props.isMobile ? undefined : "170px",
+  borderTopLeftRadius: "8px",
+  borderTopRightRadius: "8px",
   overflow: "hidden",
   display: "flex",
   alignItems: "center",
@@ -63,6 +65,7 @@ const ImgSliderWrapper = styled("div")((props) => ({
     zIndex: 1,
     opacity: 0,
     transition: "opacity 0.3s ease-out",
+    // borderRadius: "8px 8px 0 0", /// NEW - overcome no overflow:hidden on StyledCard
   },
   "&::before": {
     left: 0,
@@ -176,6 +179,7 @@ const ImgSlider = ({ urls, favorites, isHovered }) => {
                   flexShrink: 0,
                   width: "100%",
                   objectFit: "cover",
+                  // borderRadius: "8px 8px 0 0", /// NEW - overcome no overflow:hidden on StyledCard
                 }}
               />
             );

@@ -1,9 +1,18 @@
-import React, { useRef, useMemo, useState } from "react";
+import React, { useRef, useMemo, useEffect, useState } from "react";
 import { styled } from "@mui/material/styles";
 import Card from "@mui/joy/Card";
 import Box from "@mui/material/Box";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+
+import FeatSpecBox from "./featSpecBox.js";
+
+//MoreDropdown Icons
+import { GoHeart } from "react-icons/go";
+import { IoHeartDislikeSharp } from "react-icons/io5";
+import { LuShare } from "react-icons/lu";
+import { FaCar } from "react-icons/fa";
+import { IoGitCompareOutline } from "react-icons/io5";
 
 import { CiMenuKebab } from "react-icons/ci";
 import noImage_img from "../images/no_image.webp";
@@ -23,11 +32,9 @@ const StyledCard = styled(Card, {
   flexDirection: "column",
   gap: "0",
   minWidth: nearYou ? "245px" : "",
-  overflow: "hidden",
   transition:
     "border 0.3s ease-in, transform .12s ease-in, boxShadow .3s ease-in",
   ...style,
-
   "&:hover": {
     cursor: "pointer",
     border: "1px solid var(--btnBG)",
@@ -71,16 +78,66 @@ const BottomBox = styled(Box)(({ theme, ...props }) => ({
   },
 }));
 
+// MORE DROPDOWN
+const MoreDropdown = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "dropdownPosition",
+})(({ theme }) => ({
+  position: "absolute",
+  paddingBlock: ".25rem",
+  backgroundColor: "white",
+  bottom: "-2rem",
+  right: ".5rem",
+  height: "192px",
+  width: "250px",
+  borderRadius: "8px",
+  boxShadow: "var(--boxShadow2)",
+  display: "flex",
+  flexDirection: "column",
+  zIndex: "3",
+  overflow: "hidden",
+}));
+
 const InventoryCard = ({ carData, nearYou, favorites, style }) => {
-  // const cardHoveredRef = useRef(false);
   const dispatch = useDispatch();
   const heartedCars = useSelector((state) => state.favorites.heartedCars);
   const isHearted = heartedCars.some((car) => car.id === carData.id); // or carData.stock
   const [isHovered, setIsHovered] = useState(false);
+  const cardRef = useRef();
+  const [moreClicked, setMoreClicked] = useState(false);
+  const dropdownRef = useRef(null);
+  const buttonRef = useRef();
+  const featBoxRef = useRef();
+
+  //Features & Specs
+  const [showFeatSpec, setShowFeatSpec] = useState(false);
 
   const navigate = useNavigate();
 
-  const toggleHeartClick = () => {
+  //CLOSE MORE DROPDOWN CLICKING AWAY
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // If dropdown is open and click is outside of it
+      if (
+        moreClicked && //<MoreDropdown/> is showing
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target) &&
+        dropdownRef.current && // its ref assignment is recognized
+        !dropdownRef.current.contains(event.target) //click outside of <MoreDropdown/>
+      ) {
+        setMoreClicked(false);
+      }
+    };
+    if (moreClicked) {
+      window.addEventListener("click", handleClickOutside, true);
+    }
+    // Cleanup on unmount or when dropdown closes
+    return () => {
+      window.removeEventListener("click", handleClickOutside, true);
+    };
+  }, [moreClicked]);
+
+  const toggleHeartClick = (e) => {
+    e.stopPropagation(); //for moreDropdown heart button
     dispatch(toggleHeart(carData));
   };
 
@@ -103,30 +160,75 @@ const InventoryCard = ({ carData, nearYou, favorites, style }) => {
 
   return (
     <StyledCard
+      ref={cardRef}
       nearYou={nearYou}
       style={style}
-      onMouseEnter={() =>
-        /* (cardHoveredRef.current = true) */ setIsHovered(true)
-      }
-      onMouseLeave={() =>
-        /* (cardHoveredRef.current = false) */ setIsHovered(false)
-      }
-      onClick={() => navigate(`/car/${carData.id}`)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={(e) => {
+        // If FeatSpecBox is open AND the click was inside it, skip navigation
+        if (featBoxRef.current && featBoxRef.current.contains(e.target)) {
+          e.stopPropagation(); // prevent bubbling up
+          return;
+        }
+        // Otherwise, proceed with navigation
+        navigate(`/car/${carData.id}`);
+      }}
     >
       <ImgSlider
         urls={memoizedUrls}
-        // cardHoveredRef={cardHoveredRef}
         isHovered={isHovered}
-        // visualIndex={visualIndex}
-        // setVisualIndex={setVisualIndex}
         favorites={favorites}
         nearYou={nearYou}
       />
 
       <Heart hearted={isHearted} onClick={toggleHeartClick} />
-      <MoreButton>
+      {/**** MORE BUTTON ****/}
+      <MoreButton
+        ref={buttonRef}
+        onClick={(e) => {
+          // if (moreClicked == false) {
+          //   setMoreClicked(true);
+          // }
+          setMoreClicked((prev) => !prev);
+          e.stopPropagation(); // 👈 prevents parent card from navigating
+        }}
+      >
         <CiMenuKebab />
       </MoreButton>
+      {/**** MORE DROPDOWN ****/}
+      {moreClicked && (
+        <MoreDropdown
+          ref={dropdownRef}
+          onClick={(e) => {
+            e.stopPropagation(); // 👈 prevents parent card from navigating
+          }}
+        >
+          <button className="moreItem" onClick={toggleHeartClick}>
+            {isHearted ? <IoHeartDislikeSharp /> : <GoHeart />}{" "}
+            {isHearted ? "Remove from" : "Add to"} favorites
+          </button>
+          <button className="moreItem">
+            <IoGitCompareOutline />
+            Compare
+          </button>
+          <button className="moreItem">
+            <LuShare />
+            Share
+          </button>
+          <button className="moreItem" onClick={() => setShowFeatSpec(true)}>
+            <FaCar />
+            Features & Specs
+          </button>
+        </MoreDropdown>
+      )}
+      {showFeatSpec && (
+        <FeatSpecBox
+          carData={carData}
+          setShowFeatSpec={setShowFeatSpec}
+          featBoxRef={featBoxRef}
+        />
+      )}
       <BottomBox>
         <h4 style={titleStyle}>
           {carData.year} {carData.make} <br />
@@ -141,10 +243,7 @@ const InventoryCard = ({ carData, nearYou, favorites, style }) => {
             alignItems: "center",
           }}
         >
-          <h5 style={priceStyle}>
-            {/* {priceFormatter(Number(carData.price))}* */}
-            {formatPrice(carData.price)}
-          </h5>{" "}
+          <h5 style={priceStyle}>{formatPrice(carData.price)}</h5>{" "}
           <span
             style={{
               color: "var(--greyBorder)",
@@ -154,9 +253,7 @@ const InventoryCard = ({ carData, nearYou, favorites, style }) => {
           >
             |
           </span>{" "}
-          <p /* style={{ fontSize: ".97em" }} */ /* style={priceStyle} */>
-            {Math.floor(Number(carData.mileage) / 1000)}K mi
-          </p>
+          <p>{Math.floor(Number(carData.mileage) / 1000)}K mi</p>
         </Box>
         <hr
           style={{

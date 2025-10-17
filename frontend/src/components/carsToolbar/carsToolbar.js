@@ -19,11 +19,33 @@ const CarsToolbar = ({
   sortCats,
   appliedFilters,
   setAppliedFilters,
+  setShowCompare,
+  showCompare,
 }) => {
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  //LOCAL STATE RE SHOW COMPARE
+  const [localChecked, setLocalChecked] = useState(showCompare);
+  useEffect(() => {
+    setLocalChecked(showCompare);
+  }, [showCompare]);
+
+  //INPUT ON CHANGE HANDLER
+  const handleToggle = () => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setLocalChecked((prev) => !prev);
+      });
+    });
+    setTimeout(() => setShowCompare((prev) => !prev), 100);
+  };
+
+  const dropdownRef = useRef(null);
+  const buttonRef = useRef(null);
+
   const Toolbar = styled("section")(({ theme }) => ({
     position: "sticky",
     top: 0,
-    zIndex: 3,
+    zIndex: 4,
     backgroundColor: "white",
     display: "flex",
     alignItems: "center",
@@ -39,10 +61,6 @@ const CarsToolbar = ({
       cursor: "pointer",
     },
   }));
-
-  const [showSortDropdown, setShowSortDropdown] = useState(false);
-  const dropdownRef = useRef(null);
-  const buttonRef = useRef(null);
 
   useEffect(() => {
     // console.log("showSortDropdown", showSortDropdown);
@@ -90,7 +108,6 @@ const CarsToolbar = ({
     }
   };
   // SORT DROPDOWN
-
   const dropdownVariants = {
     hidden: { opacity: 0, y: -10 },
     visible: { opacity: 1, y: 0 },
@@ -223,8 +240,19 @@ const CarsToolbar = ({
         style={{ marginLeft: below820 ? "auto" : "1rem" }}
       >
         Compare
-        <div className="toggle_container">
-          <input type="checkbox" />
+        {/* <div className="toggle_container">
+          <input
+            type="checkbox"
+            checked={showCompare}
+            onChange={() => {
+              setShowCompare((prev) => !prev);
+            }}
+          />
+        </div> */}
+        <div className="toggle_container" onClick={handleToggle}>
+          <div className={`toggle_track ${localChecked ? "checked" : ""}`}>
+            <div className="toggle_thumb" />
+          </div>
         </div>
       </div>
     </Toolbar>
