@@ -60,6 +60,7 @@ module.exports = (app) => {
       arr.slice(i * size, i * size + size)
     );
   /////////// GET MODEL IMAGES ROUTE
+
   // app.post("/api/batch", async (req, res) => {
   //   const { modelIds, inv } = req.body;
 
@@ -134,8 +135,82 @@ module.exports = (app) => {
   //   }
   // });
 
+  // app.post("/api/batch", async (req, res) => {
+  //   const { modelIds, inv, mobile } = req.body; // <-- add 'mobile' argument
+
+  //   if (!Array.isArray(modelIds)) {
+  //     return res.status(400).json({ error: "modelIds must be an array" });
+  //   }
+
+  //   if (modelIds.length === 0) {
+  //     return res.status(400).json({ error: "No model IDs provided." });
+  //   }
+
+  //   const chunks = chunkArray(modelIds, 100);
+  //   const results = {};
+
+  //   try {
+  //     for (const chunk of chunks) {
+  //       const keys = chunk.map((modelId) => ({
+  //         model_id: { S: modelId },
+  //       }));
+
+  //       const params = {
+  //         RequestItems: {
+  //           model_images: {
+  //             Keys: keys,
+  //           },
+  //         },
+  //       };
+
+  //       const command = new BatchGetItemCommand(params);
+  //       const response = await client.send(command);
+
+  //       (response.Responses?.model_images || []).forEach((item) => {
+  //         const model_id = item.model_id.S;
+
+  //         // ✅ pick correct image list based on 'mobile' flag
+  //         const imgArray = mobile
+  //           ? item.image_urls_mobile?.L
+  //           : item.image_urls_large?.L;
+
+  //         if (imgArray && imgArray.length > 0) {
+  //           if (inv === true) {
+  //             // inventory view: all images except "model.webp"
+  //             const filteredImgs = imgArray
+  //               .filter((img) => !img.S.includes("model.webp"))
+  //               .map((img) => getSignedUrl(getKeyFromUrl(img.S)));
+
+  //             results[model_id] = filteredImgs;
+  //           } else {
+  //             // single model image view
+  //             const modelImgObj = imgArray.find((img) =>
+  //               img.S.includes("model.webp")
+  //             );
+  //             const fallbackImgObj = imgArray[0];
+  //             const chosenImg = modelImgObj || fallbackImgObj;
+
+  //             if (chosenImg) {
+  //               const objectKey = getKeyFromUrl(chosenImg.S);
+  //               const signedUrl = getSignedUrl(objectKey);
+  //               results[model_id] = signedUrl;
+  //             }
+  //           }
+  //         }
+  //       });
+  //     }
+
+  //     res.json(results);
+  //   } catch (error) {
+  //     console.error("DynamoDB error:", error);
+  //     res.status(500).json({ error: "Internal server error" });
+  //   }
+  // });
+
   app.post("/api/batch", async (req, res) => {
-    const { modelIds, inv, mobile } = req.body; // <-- add 'mobile' argument
+    const { modelIds, inv, mobile } = req.body;
+
+    // console.log("rec'd modelIds", modelIds);
 
     if (!Array.isArray(modelIds)) {
       return res.status(400).json({ error: "modelIds must be an array" });
@@ -145,7 +220,10 @@ module.exports = (app) => {
       return res.status(400).json({ error: "No model IDs provided." });
     }
 
-    const chunks = chunkArray(modelIds, 100);
+    // Remove duplicates but keep original order
+    const uniqueModelIds = [...new Set(modelIds)];
+
+    const chunks = chunkArray(uniqueModelIds, 100);
     const results = {};
 
     try {
@@ -167,22 +245,18 @@ module.exports = (app) => {
 
         (response.Responses?.model_images || []).forEach((item) => {
           const model_id = item.model_id.S;
-
-          // ✅ pick correct image list based on 'mobile' flag
           const imgArray = mobile
             ? item.image_urls_mobile?.L
             : item.image_urls_large?.L;
 
           if (imgArray && imgArray.length > 0) {
             if (inv === true) {
-              // inventory view: all images except "model.webp"
               const filteredImgs = imgArray
                 .filter((img) => !img.S.includes("model.webp"))
                 .map((img) => getSignedUrl(getKeyFromUrl(img.S)));
 
               results[model_id] = filteredImgs;
             } else {
-              // single model image view
               const modelImgObj = imgArray.find((img) =>
                 img.S.includes("model.webp")
               );
@@ -190,16 +264,20 @@ module.exports = (app) => {
               const chosenImg = modelImgObj || fallbackImgObj;
 
               if (chosenImg) {
-                const objectKey = getKeyFromUrl(chosenImg.S);
-                const signedUrl = getSignedUrl(objectKey);
-                results[model_id] = signedUrl;
+                results[model_id] = getSignedUrl(getKeyFromUrl(chosenImg.S));
               }
             }
           }
         });
       }
 
-      res.json(results);
+      // Map back results to original requested modelIds (including duplicates)
+      const finalResults = {};
+      modelIds.forEach((id) => {
+        finalResults[id] = results[id] || null;
+      });
+
+      res.json(finalResults);
     } catch (error) {
       console.error("DynamoDB error:", error);
       res.status(500).json({ error: "Internal server error" });

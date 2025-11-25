@@ -30,7 +30,6 @@ module.exports = function (app) {
       console.log("CSV file successfully processed");
     });
   /////// UTILITY FUNCTIONS
-
   function getNearbyCities(match, zipData, radiusMiles, distFilter) {
     const matchLat = parseFloat(match.latitude);
     const matchLon = parseFloat(match.longitude);
@@ -161,5 +160,34 @@ module.exports = function (app) {
     }
 
     res.json(finalResults);
+  });
+
+  //// GET LONG, LAT OBJ
+  app.get("/api/locations/coords", async (req, res) => {
+    const { zip } = req.query;
+
+    if (!zip) {
+      return res.status(400).json({ message: "Missing zip query parameter." });
+    }
+
+    // Find the matching entry in your local zipData array
+    const match = zipData.find((item) => item.zip === zip);
+
+    if (!match) {
+      return res
+        .status(404)
+        .json({ message: `No coordinates found for ZIP: ${zip}` });
+    }
+
+    // Only return the essentials
+    const { city, state, latitude, longitude } = match;
+
+    res.json({
+      zip,
+      city,
+      state,
+      latitude,
+      longitude,
+    });
   });
 };
