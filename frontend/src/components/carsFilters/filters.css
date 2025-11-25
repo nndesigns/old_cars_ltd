@@ -268,15 +268,17 @@
      letter-spacing: -1px;;
 }
 
+.shopByStateWrapper{
+      margin-block: 1.75rem ;
+}
+
 .shopByStateBtn{
-     background: none;
+     background-color: white;
      border: none;
      display: flex;
      align-items: center;
      font-size: 1em;
      color: var(--iconColor);
-     margin-top: 1.75rem;
-     /* border: 1px solid grey; */
      cursor: pointer;
      padding-block: .5rem;
 
@@ -298,7 +300,7 @@
           width: 100vw;
           height: 100vh;
           background-color: rgba(0, 0, 0, 0.4);
-          z-index: 20;
+          z-index: 23;
           display: flex;
           justify-content: center;
           align-items: center;

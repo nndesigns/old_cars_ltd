@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Box from "@mui/material/Box";
-import { styled } from "@mui/material/styles";
+
 import { motion } from "framer-motion";
 import InventoryCard from "../components/inventoryCard";
 import { getModelImageURLs } from "../components/axiosCalls";
@@ -12,21 +12,23 @@ const Favorites = ({ hearted_cars, location }) => {
   const [searchParams] = useSearchParams();
   const fromLocModal = searchParams.get("fromLocModal") === "true";
   const [favoritesImagesMap, setFavoritesImagesMap] = useState({});
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+  // const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
   const [loadingCars, setLoadingCars] = useState(true);
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 640);
-    };
+  console.log("Favorites rec'd hearted_cars", hearted_cars);
 
-    window.addEventListener("resize", handleResize);
-    handleResize();
+  // useEffect(() => {
+  //   const handleResize = () => {
+  //     setIsMobile(window.innerWidth < 640);
+  //   };
 
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
+  //   window.addEventListener("resize", handleResize);
+  //   handleResize();
+
+  //   return () => {
+  //     window.removeEventListener("resize", handleResize);
+  //   };
+  // }, []);
 
   useEffect(() => {
     if (!hearted_cars || hearted_cars.length === 0) return;
@@ -100,7 +102,7 @@ const Favorites = ({ hearted_cars, location }) => {
                 >
                   <InventoryCard
                     carData={car}
-                    // favorites={true}
+                    favorites={true}
                     nearYou={true}
                     style={{
                       boxShadow: fromLocModal

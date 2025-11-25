@@ -32,5 +32,5 @@ def process_images(folder_path, small_size=(200, 200)):
             print(f"Skipping file {filename}: {e}")
 
 # Example usage
-folder_path = './Car_Images/bmw isetta 1957 300 cabriolet'  # Change this to your folder
+folder_path = './Car_Images/ferrari testarossa'  # Change this to your folder
 process_images(folder_path)

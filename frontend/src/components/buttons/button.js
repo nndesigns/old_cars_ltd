@@ -9,6 +9,7 @@ const Button = ({
   outlineStyle2,
   onClick,
   svg,
+  ...props
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -66,8 +67,17 @@ const Button = ({
       onClick={!disabled ? onClick : undefined}
       disabled={disabled}
     >
-      {svg}
-      {text}
+      {props.compare ? (
+        <>
+          {text}
+          {svg}
+        </>
+      ) : (
+        <>
+          {svg}
+          {text}
+        </>
+      )}
     </button>
   );
 };

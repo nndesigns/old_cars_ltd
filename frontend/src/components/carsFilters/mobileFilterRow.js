@@ -9,6 +9,7 @@ const MobileFilterRow = ({
   closePill,
   setActiveFilter,
   setShowMobileFilterPanel,
+  setPreventScroll,
   activeFiltersList,
 }) => {
   const mobileFilterRowWrapperRef = useRef(null);
@@ -60,6 +61,7 @@ const MobileFilterRow = ({
 
   const handleOpenMobileFilters = (btn_cat) => {
     setShowMobileFilterPanel(true);
+    setPreventScroll(true);
     if (btn_cat === "makes") {
       setActiveFilter("Make");
     } else if (btn_cat === "price") {

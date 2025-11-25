@@ -20,764 +20,11 @@ import { smartSearch } from "../axiosCalls.js";
 import { Box } from "@mui/material";
 import Button from "../buttons/button.js";
 
-// function Searchbar({
-//   currentRoute,
-//   darkRoute,
-//   mode,
-//   inv,
-//   locationInputValue,
-//   setLocationInputValue,
-//   shopByValue,
-//   setShopByValue,
-//   inputRef,
-//   setAppliedFilters,
-//   setOrderedFilters,
-//   handleClearFilters,
-//   ...props
-// }) {
-//   const [border, setBorder] = useState(false);
-//   const [isActive, setIsActive] = useState(
-//     mode === "location" || mode === "locationChange"
-//       ? locationInputValue.length > 0
-//       : false
-//   );
-
-//   const [invSearch, setInvSearch] = useState("");
-//   const [isFocused, setIsFocused] = useState(
-//     inputRef.current === document.activeElement
-//   );
-//   const [dropMatches, setDropMatches] = useState();
-//   const [showDroplist, setShowDroplist] = useState(false);
-//   const [expandedKeys, setExpandedKeys] = useState({});
-//   const navigate = useNavigate();
-
-//   console.log("dropMatches", dropMatches);
-
-//   // Style changes
-//   const handleHover = () => setBorder(true);
-
-//   const handleMouseLeave = () => {
-//     if (!isFocused) setBorder(false);
-//   };
-
-//   const handleOnBlur = (e) => {
-//     if (e.relatedTarget && e.relatedTarget.closest(".droplist")) return;
-//     setBorder(false);
-//     setIsFocused(false);
-//     setShowDroplist(false);
-//   };
-
-//   const handleFocus = (e) => {
-//     setIsFocused(true);
-//     if (!border) setBorder(true);
-//     if (mode === "inventory" && inputRef.current.value.length > 0) {
-//       handleSubmit(e);
-//       // setShowDroplist(true);
-//     }
-//   };
-
-//   const toggleExpand = (e, key) => {
-//     setExpandedKeys((prev) => ({
-//       ...prev,
-//       [key]: !prev[key],
-//     }));
-//   };
-
-//   const handleChange = (e) => {
-//     if (inputRef.current.value.length && !isActive) {
-//       setIsActive(true);
-//     } else if (!inputRef.current.value.length && isActive) {
-//       setIsActive(false);
-//     }
-
-//     if (mode === "location" || mode === "locationChange") {
-//       setLocationInputValue(e.target.value);
-//     } else if (mode === "distLocFilter") {
-//       setShopByValue(e.target.value);
-//     } else if (mode === "inventory") {
-//       setInvSearch(e.target.value);
-//       if (inputRef.current.value.length === 0) {
-//         setShowDroplist(false);
-//       }
-//     }
-//   };
-
-//   const handleSubmit = useCallback(
-//     async (e) => {
-//       const key = e.key;
-
-//       if (mode === "location" || mode === "locationChange") {
-//         if (!inputRef.current.value) {
-//           setLocationInputValue("");
-//           return;
-//         } else {
-//           setLocationInputValue(inputRef.current.value);
-//           const results = await handleLocationSearch(inputRef.current.value);
-//           props.setLocObjs(results);
-//         }
-//       } else {
-//         if (key === "Enter") {
-//           handleOnBlur(e);
-//           const searchValue = inputRef.current.value;
-//           invStringSearch(
-//             navigate,
-//             currentRoute,
-//             setAppliedFilters,
-//             setOrderedFilters,
-//             handleClearFilters,
-//             searchValue
-//           );
-//         } else {
-//           if (inputRef.current.value.length) {
-//             const matches = await smartSearch(invSearch);
-//             setDropMatches(matches);
-//             setShowDroplist(true);
-//           } else {
-//             setShowDroplist(false);
-//           }
-//         }
-//       }
-//     },
-//     [mode, invSearch, inv, inputRef, props]
-//   );
-
-//   //  while(showDroplist && Object.keys(dropMatches).length)
-
-//   useEffect(() => {
-//     if (isFocused && inputRef.current) {
-//       inputRef.current.focus();
-//       if (mode === "inventory" && inputRef.current.value.length === 0) {
-//         setShowDroplist(false);
-//       }
-//     } else if (!isFocused && inputRef.current === document.activeElement) {
-//       inputRef.current.blur();
-//     }
-//   }, [isFocused, invSearch, locationInputValue]);
-
-//   return (
-//     <InputWrapper
-//       onMouseEnter={handleHover}
-//       onMouseLeave={handleMouseLeave}
-//       darkRoute={darkRoute}
-//       distLocFilter={mode === "distLocFilter"}
-//     >
-//       <InputWrapperBorder
-//         darkRoute={darkRoute}
-//         border={border}
-//         showDroplist={showDroplist}
-//       />
-
-//       <SearchInput
-//         darkRoute={darkRoute}
-//         border={border}
-//         ref={inputRef}
-//         onChange={handleChange}
-//         value={mode === "inventory" ? invSearch : locationInputValue}
-//         onFocus={handleFocus}
-//         onBlur={handleOnBlur}
-//         placeholder={
-//           mode === "location" || mode === "locationChange"
-//             ? "Search City or Zip"
-//             : mode === "distLocFilter"
-//             ? "Search by City or State"
-//             : "Search by make, model, or keyword"
-//         }
-//         onKeyUp={(e) => {
-//           if (mode === "location" || mode === "locationChange") {
-//             if (e.key === "Enter") handleSubmit(e);
-//           } else if (mode === "inventory") {
-//             handleSubmit(e); /// detects key (Enter vs not Enter) and either sets dropMatches or runs invStringSearch()
-//           }
-//         }}
-//         showDroplist={showDroplist}
-//       />
-
-//       {isActive && (
-//         <button
-//           className="clearInputBtn"
-//           onClick={(e) => {
-//             e.stopPropagation();
-//             inputRef.current.value = null;
-
-//             if (mode === "locationChange" || mode === "location") {
-//               setLocationInputValue("");
-//               if (mode === "locationChange") props.setLocObjs([]);
-//             } else if (mode === "inventory") {
-//               setInvSearch("");
-//             } else if (mode === "distLocFilter") {
-//               setShopByValue("");
-//             }
-
-//             setIsActive(false);
-//             inputRef.current.focus();
-//           }}
-//         >
-//           <TfiClose />
-//         </button>
-//       )}
-
-//       <SearchBtn
-//         onClick={handleSubmit}
-//         darkRoute={darkRoute}
-//         showDroplist={showDroplist}
-//       >
-//         <CiSearch
-//           style={{
-//             transform: "scale(1.6)",
-//             fill: border ? "var(--offBlue)" : "var(--iconColor)",
-//           }}
-//         />
-//       </SearchBtn>
-
-//       {showDroplist && (
-//         <Box className="droplist" style={droplistStyle({ darkRoute })}>
-//           <div className="droplist_item search_val">
-//             Search for: "{inputRef.current.value}"
-//           </div>
-
-//           {Object.entries(dropMatches)
-//             .filter(([key]) => key.toLowerCase() !== "vin")
-//             .map(
-//               ([key, values]) =>
-//                 values.length > 0 && (
-//                   <div className="droplist_section" key={key}>
-//                     <h3>{key}</h3>
-//                     <ul>
-//                       {values.slice(0, 7).map((item, index) => (
-//                         <li
-//                           className="droplist_item"
-//                           key={index}
-//                           onMouseDown={(e) => {
-//                             makeModelSearch(
-//                               navigate,
-//                               currentRoute,
-//                               setAppliedFilters,
-//                               setOrderedFilters,
-//                               handleClearFilters,
-//                               key,
-//                               item,
-//                               inputRef,
-//                               setInvSearch
-//                             );
-//                             handleOnBlur(e);
-//                           }}
-//                         >
-//                           {key === "Model" || key === "Year"
-//                             ? item.display
-//                             : item}
-//                         </li>
-//                       ))}
-//                     </ul>
-
-//                     <AnimatePresence initial={false}>
-//                       {expandedKeys[key] && (
-//                         <motion.ul
-//                           key={`${key}-expanded`}
-//                           initial={{ height: 0, opacity: 0 }}
-//                           animate={{ height: "auto", opacity: 1 }}
-//                           exit={{ height: 0, opacity: 0 }}
-//                           transition={{ duration: 0.35, ease: "easeInOut" }}
-//                           style={{ overflow: "hidden" }}
-//                         >
-//                           {values.slice(7).map((item, index) => (
-//                             <li
-//                               className="droplist_item"
-//                               key={index + 7}
-//                               onMouseDown={(e) => {
-//                                 makeModelSearch(
-//                                   navigate,
-//                                   currentRoute,
-//                                   setAppliedFilters,
-//                                   setOrderedFilters,
-//                                   handleClearFilters,
-//                                   key,
-//                                   item,
-//                                   inputRef,
-//                                   setInvSearch
-//                                 );
-//                                 handleOnBlur(e);
-//                               }}
-//                             >
-//                               {key === "Model" || key === "Year"
-//                                 ? item.display
-//                                 : item}
-//                             </li>
-//                           ))}
-//                         </motion.ul>
-//                       )}
-//                     </AnimatePresence>
-
-//                     {values.length > 7 && (
-//                       <Button
-//                         onClick={(e) => toggleExpand(e, key)}
-//                         text={
-//                           expandedKeys[key]
-//                             ? "Show less"
-//                             : `View ${values.length - 7} more..`
-//                         }
-//                         outlineStyle2={true}
-//                         style={{
-//                           marginLeft: ".25rem",
-//                           marginTop: ".5rem",
-//                           transform: "scale(.85)",
-//                         }}
-//                       />
-//                     )}
-//                   </div>
-//                 )
-//             )}
-//         </Box>
-//       )}
-//     </InputWrapper>
-//   );
-// }
-
-// function Searchbar({
-//   currentRoute,
-//   darkRoute,
-//   mode,
-//   inv,
-//   locationInputValue,
-//   setLocationInputValue,
-//   shopByValue,
-//   setShopByValue,
-//   inputRef,
-//   setAppliedFilters,
-//   setOrderedFilters,
-//   handleClearFilters,
-//   ...props
-// }) {
-//   const [border, setBorder] = useState(false);
-//   const [isActive, setIsActive] = useState(
-//     mode === "location" || mode === "locationChange"
-//       ? locationInputValue.length > 0
-//       : false
-//   );
-
-//   const [invSearch, setInvSearch] = useState("");
-//   const [isFocused, setIsFocused] = useState(
-//     inputRef.current === document.activeElement
-//   );
-//   const [dropMatches, setDropMatches] = useState();
-//   const [showDroplist, setShowDroplist] = useState(false);
-//   const [expandedKeys, setExpandedKeys] = useState({});
-//   const [flatMatches, setFlatMatches] = useState([]);
-//   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-//   const [typedValue, setTypedValue] = useState("");
-//   const navigate = useNavigate();
-
-//   // hover border styling
-//   const handleHover = () => setBorder(true);
-//   const handleMouseLeave = () => {
-//     if (!isFocused) setBorder(false);
-//   };
-
-//   const handleOnBlur = (e) => {
-//     if (e.relatedTarget && e.relatedTarget.closest(".droplist")) return;
-//     setBorder(false);
-//     setIsFocused(false);
-//     setShowDroplist(false);
-//     setHighlightedIndex(-1);
-//   };
-
-//   const handleFocus = (e) => {
-//     setIsFocused(true);
-//     if (!border) setBorder(true);
-//     if (mode === "inventory" && inputRef.current.value.length > 0) {
-//       handleSubmit(e);
-//     }
-//   };
-
-//   const toggleExpand = (e, key) => {
-//     setExpandedKeys((prev) => ({
-//       ...prev,
-//       [key]: !prev[key],
-//     }));
-//   };
-
-//   const handleChange = (e) => {
-//     if (inputRef.current.value.length && !isActive) {
-//       setIsActive(true);
-//     } else if (!inputRef.current.value.length && isActive) {
-//       setIsActive(false);
-//     }
-
-//     if (mode === "location" || mode === "locationChange") {
-//       setLocationInputValue(e.target.value);
-//     } else if (mode === "distLocFilter") {
-//       setShopByValue(e.target.value);
-//     } else if (mode === "inventory") {
-//       setInvSearch(e.target.value);
-//       if (inputRef.current.value.length === 0) {
-//         setShowDroplist(false);
-//       }
-//     }
-//   };
-
-//   // useEffect(() => {
-//   //   console.log(
-//   //     "isActive changed, also inputRef latest",
-//   //     isActive,
-//   //     inputRef.current.value
-//   //   );
-//   // }, [isActive]);
-
-//   useEffect(() => {
-//     if (mode === "inventory" && invSearch.length > 0) {
-//       const fetchMatches = async () => {
-//         const matches = await smartSearch(invSearch);
-//         setDropMatches(matches);
-//         setShowDroplist(true);
-//       };
-//       fetchMatches();
-//     } else {
-//       setShowDroplist(false);
-//     }
-//   }, [invSearch, mode]);
-
-//   /// HANDLE SUBMIT
-//   const handleSubmit = useCallback(
-//     async (e) => {
-//       const key = e.key;
-//       const searchValue = e.value ?? inputRef.current.value ?? "";
-
-//       console.log("handleSubmit searchValue", searchValue);
-
-//       if (mode === "location" || mode === "locationChange") {
-//         if (/* !inputRef.current.value */ !searchValue) {
-//           setLocationInputValue("");
-//           return;
-//         } else {
-//           setLocationInputValue(/* inputRef.current.value */ searchValue);
-//           const results = await handleLocationSearch(
-//             /* inputRef.current.value */ searchValue
-//           );
-//           props.setLocObjs(results);
-//         }
-//       } else {
-//         if (key === "Enter") {
-//           handleOnBlur(e);
-//           // const searchValue = inputRef.current.value;
-//           invStringSearch(
-//             navigate,
-//             currentRoute,
-//             setAppliedFilters,
-//             setOrderedFilters,
-//             handleClearFilters,
-//             searchValue
-//           );
-//         } else {
-//           if (searchValue.length) {
-//             const matches = await smartSearch(/* invSearch */ searchValue);
-
-//             setDropMatches(matches);
-//             setShowDroplist(true);
-//           } else {
-//             setShowDroplist(false);
-//           }
-//         }
-//       }
-//     },
-//     [mode, invSearch, inv, inputRef, props]
-//   );
-
-//   // Flatten matches for arrow navigation
-//   useEffect(() => {
-//     if (dropMatches && Object.keys(dropMatches).length) {
-//       const flattened = Object.entries(dropMatches)
-//         .filter(([key]) => key.toLowerCase() !== "vin")
-//         .flatMap(([key, values]) =>
-//           values.map((item) => ({
-//             key,
-//             value: key === "Model" || key === "Year" ? item.display : item,
-//             raw: item,
-//           }))
-//         );
-//       setFlatMatches(flattened);
-//     } else {
-//       setFlatMatches([]);
-//       setHighlightedIndex(-1);
-//     }
-//   }, [dropMatches]);
-
-//   // useEffect(() => {
-//   //   console.log("flatMatches update, latest showDroplist", showDroplist);
-//   // }, [flatMatches, showDroplist]);
-
-//   // focus/blur management
-//   useEffect(() => {
-//     if (isFocused && inputRef.current) {
-//       inputRef.current.focus();
-//       if (mode === "inventory" && inputRef.current.value.length === 0) {
-//         setShowDroplist(false);
-//       }
-//     } else if (!isFocused && inputRef.current === document.activeElement) {
-//       inputRef.current.blur();
-//     }
-//   }, [isFocused, invSearch, locationInputValue]);
-
-//   return (
-//     <InputWrapper
-//       onMouseEnter={handleHover}
-//       onMouseLeave={handleMouseLeave}
-//       darkRoute={darkRoute}
-//       distLocFilter={mode === "distLocFilter"}
-//     >
-//       <InputWrapperBorder
-//         darkRoute={darkRoute}
-//         border={border}
-//         showDroplist={showDroplist}
-//       />
-
-//       <SearchInput
-//         darkRoute={darkRoute}
-//         border={border}
-//         ref={inputRef}
-//         onChange={handleChange}
-//         value={mode === "inventory" ? invSearch : locationInputValue}
-//         onFocus={handleFocus}
-//         onBlur={handleOnBlur}
-//         placeholder={
-//           mode === "location" || mode === "locationChange"
-//             ? "Search City or Zip"
-//             : mode === "distLocFilter"
-//             ? "Search by City or State"
-//             : "Search by make, model, or keyword"
-//         }
-//         onKeyDown={(e) => {
-//           if (mode === "inventory" && showDroplist && flatMatches.length > 0) {
-//             ///where do 'flatMatches
-//             if (e.key === "ArrowDown") {
-//               e.preventDefault();
-//               if (highlightedIndex === -1)
-//                 setTypedValue(inputRef.current.value);
-//               setHighlightedIndex((prev) =>
-//                 prev < flatMatches.length - 1 ? prev + 1 : prev
-//               );
-//               const next = flatMatches[highlightedIndex + 1];
-//               if (next) inputRef.current.value = next.value;
-//             } else if (e.key === "ArrowUp") {
-//               e.preventDefault();
-//               if (highlightedIndex > 0) {
-//                 const prevItem = flatMatches[highlightedIndex - 1];
-//                 setHighlightedIndex((prevIndex) => prevIndex - 1);
-//                 if (prevItem) inputRef.current.value = prevItem.value;
-//               } else if (highlightedIndex === 0) {
-//                 setHighlightedIndex(-1);
-//                 inputRef.current.value = typedValue;
-//               }
-//             } else if (e.key === "Enter") {
-//               e.preventDefault();
-//               if (highlightedIndex >= 0) {
-//                 const { key, raw } = flatMatches[highlightedIndex];
-//                 makeModelSearch(
-//                   navigate,
-//                   currentRoute,
-//                   setAppliedFilters,
-//                   setOrderedFilters,
-//                   handleClearFilters,
-//                   key,
-//                   raw,
-//                   inputRef,
-//                   setInvSearch
-//                 );
-//                 handleOnBlur(e);
-//               } else {
-//                 handleSubmit(e);
-//               }
-//             }
-//           } else if (
-//             mode === "location" ||
-//             mode === "locationChange" ||
-//             mode === "distLocFilter"
-//           ) {
-//             if (e.key === "Enter") handleSubmit(e);
-//           } else if (mode === "inventory") {
-//             console.log("you actually only THIS FAR");
-//             console.log(
-//               "inputRef.current.value so far",
-//               inputRef.current.value
-//             );
-//             // handleSubmit(e);
-//             handleSubmit({ ...e, value: invSearch });
-//           }
-//         }}
-//         showDroplist={showDroplist}
-//       />
-
-//       {isActive && (
-//         <button
-//           className="clearInputBtn"
-//           onClick={(e) => {
-//             e.stopPropagation();
-//             inputRef.current.value = null;
-
-//             if (mode === "locationChange" || mode === "location") {
-//               setLocationInputValue("");
-//               if (mode === "locationChange") props.setLocObjs([]);
-//             } else if (mode === "inventory") {
-//               setInvSearch("");
-//             } else if (mode === "distLocFilter") {
-//               setShopByValue("");
-//             }
-
-//             setIsActive(false);
-//             inputRef.current.focus();
-//           }}
-//         >
-//           <TfiClose />
-//         </button>
-//       )}
-
-//       <SearchBtn
-//         onClick={handleSubmit}
-//         darkRoute={darkRoute}
-//         showDroplist={showDroplist}
-//       >
-//         <CiSearch
-//           style={{
-//             transform: "scale(1.6)",
-//             fill: border ? "var(--offBlue)" : "var(--iconColor)",
-//           }}
-//         />
-//       </SearchBtn>
-
-//       {showDroplist && (
-//         <Box className="droplist" style={droplistStyle({ darkRoute })}>
-//           <div className="droplist_item search_val">
-//             Search for: "{inputRef.current.value}"
-//           </div>
-
-//           {Object.entries(dropMatches)
-//             .filter(([key]) => key.toLowerCase() !== "vin")
-//             .map(
-//               ([key, values]) =>
-//                 values.length > 0 && (
-//                   <div className="droplist_section" key={key}>
-//                     <h3>{key}</h3>
-//                     <ul>
-//                       {values.slice(0, 7).map((item, index) => {
-//                         const flatIndex = flatMatches.findIndex(
-//                           (m) =>
-//                             m.key === key &&
-//                             m.value ===
-//                               (key === "Model" || key === "Year"
-//                                 ? item.display
-//                                 : item)
-//                         );
-//                         return (
-//                           <li
-//                             className={`droplist_item ${
-//                               flatIndex === highlightedIndex
-//                                 ? "highlighted"
-//                                 : ""
-//                             }`}
-//                             key={index}
-//                             onMouseDown={(e) => {
-//                               makeModelSearch(
-//                                 navigate,
-//                                 currentRoute,
-//                                 setAppliedFilters,
-//                                 setOrderedFilters,
-//                                 handleClearFilters,
-//                                 key,
-//                                 item,
-//                                 inputRef,
-//                                 setInvSearch
-//                               );
-//                               handleOnBlur(e);
-//                             }}
-//                           >
-//                             {key === "Model" || key === "Year"
-//                               ? item.display
-//                               : item}
-//                           </li>
-//                         );
-//                       })}
-//                     </ul>
-
-//                     <AnimatePresence initial={false}>
-//                       {expandedKeys[key] && (
-//                         <motion.ul
-//                           key={`${key}-expanded`}
-//                           initial={{ height: 0, opacity: 0 }}
-//                           animate={{ height: "auto", opacity: 1 }}
-//                           exit={{ height: 0, opacity: 0 }}
-//                           transition={{ duration: 0.35, ease: "easeInOut" }}
-//                           style={{ overflow: "hidden" }}
-//                         >
-//                           {values.slice(7).map((item, index) => {
-//                             const flatIndex = flatMatches.findIndex(
-//                               (m) =>
-//                                 m.key === key &&
-//                                 m.value ===
-//                                   (key === "Model" || key === "Year"
-//                                     ? item.display
-//                                     : item)
-//                             );
-//                             return (
-//                               <li
-//                                 className={`droplist_item ${
-//                                   flatIndex === highlightedIndex
-//                                     ? "highlighted"
-//                                     : ""
-//                                 }`}
-//                                 key={index + 7}
-//                                 onMouseDown={(e) => {
-//                                   makeModelSearch(
-//                                     navigate,
-//                                     currentRoute,
-//                                     setAppliedFilters,
-//                                     setOrderedFilters,
-//                                     handleClearFilters,
-//                                     key,
-//                                     item,
-//                                     inputRef,
-//                                     setInvSearch
-//                                   );
-//                                   handleOnBlur(e);
-//                                 }}
-//                               >
-//                                 {key === "Model" || key === "Year"
-//                                   ? item.display
-//                                   : item}
-//                               </li>
-//                             );
-//                           })}
-//                         </motion.ul>
-//                       )}
-//                     </AnimatePresence>
-
-//                     {values.length > 7 && (
-//                       <Button
-//                         onClick={(e) => toggleExpand(e, key)}
-//                         text={
-//                           expandedKeys[key]
-//                             ? "Show less"
-//                             : `View ${values.length - 7} more..`
-//                         }
-//                         outlineStyle2={true}
-//                         style={{
-//                           marginLeft: ".25rem",
-//                           marginTop: ".5rem",
-//                           transform: "scale(.85)",
-//                         }}
-//                       />
-//                     )}
-//                   </div>
-//                 )
-//             )}
-//         </Box>
-//       )}
-//     </InputWrapper>
-//   );
-// }
-
 function Searchbar({
   currentRoute,
   darkRoute,
   mode,
-  inv,
+  inv, ////WHY  DOES SEARCHBAR NEED INV (THIS ISN'T BEING USED)
   locationInputValue,
   setLocationInputValue,
   shopByValue,
@@ -872,6 +119,9 @@ function Searchbar({
         setLocationInputValue(searchValue);
         const results = await handleLocationSearch(searchValue);
         props.setLocObjs(results);
+        if (mode === "location") {
+          props.setPreventScroll(true);
+        }
       } else {
         if (key === "Enter" || isClick) {
           handleOnBlur(e);
@@ -922,43 +172,6 @@ function Searchbar({
       });
     }
   };
-
-  // Flatten matches for arrow navigation
-  // useEffect(() => {
-  //   if (dropMatches && Object.keys(dropMatches).length) {
-  //     const flattened = Object.entries(dropMatches)
-  //       .filter(([key]) => key.toLowerCase() !== "vin")
-  //       .flatMap(([key, values]) => {
-  //         // 🟢 Only show up to 7 items unless expanded
-  //         const visibleValues = expandedKeys[key] ? values : values.slice(0, 7);
-
-  //         const baseItems = visibleValues.map((item) => ({
-  //           type: "item",
-  //           key,
-  //           value: key === "Model" || key === "Year" ? item.display : item,
-  //           raw: item,
-  //         }));
-
-  //         // 🟢 Add expand/collapse "button" entry if needed
-  //         if (values.length > 7) {
-  //           baseItems.push({
-  //             type: "button",
-  //             key,
-  //             value: expandedKeys[key]
-  //               ? "Show less"
-  //               : `View ${values.length - 7} more..`,
-  //           });
-  //         }
-
-  //         return baseItems;
-  //       });
-
-  //     setFlatMatches(flattened);
-  //   } else {
-  //     setFlatMatches([]);
-  //     setHighlightedIndex(-1);
-  //   }
-  // }, [dropMatches, expandedKeys]);
 
   useEffect(() => {
     if (dropMatches && Object.keys(dropMatches).length) {
@@ -1038,14 +251,26 @@ function Searchbar({
         darkRoute={darkRoute}
         border={border}
         showDroplist={showDroplist}
+        rightPanelError={props.rightPanelError}
       />
 
       <SearchInput
         darkRoute={darkRoute}
         border={border}
         ref={inputRef}
-        onChange={handleChange}
-        value={mode === "inventory" ? invSearch : locationInputValue}
+        rightPanel={true}
+        onChange={
+          mode === "rightPanel"
+            ? (e) => props.handleOnChange(e.target.value)
+            : handleChange
+        }
+        value={
+          mode === "inventory"
+            ? invSearch
+            : mode === "rightPanel"
+            ? props.inputValue
+            : locationInputValue
+        }
         onFocus={handleFocus}
         onBlur={handleOnBlur}
         placeholder={
@@ -1053,9 +278,9 @@ function Searchbar({
             ? "Search City or Zip"
             : mode === "distLocFilter"
             ? "Search by City or State"
-            : /* showDroplist
-            ? inputRef.current.value
-            : */ "Search by make, model, or keyword"
+            : mode === "rightPanel"
+            ? "Search by URL or Stock #"
+            : "Search by make, model, or keyword"
         }
         onKeyDown={(e) => {
           if (mode === "inventory" && showDroplist && flatMatches.length > 0) {
@@ -1129,6 +354,7 @@ function Searchbar({
       {isActive && (
         <button
           className="clearInputBtn"
+          style={{ right: mode === "distLocFilter" ? ".5rem" : "" }}
           onClick={(e) => {
             e.stopPropagation();
             inputRef.current.value = null;
@@ -1150,18 +376,20 @@ function Searchbar({
         </button>
       )}
 
-      <SearchBtn
-        onClick={(e) => handleSubmit(e)}
-        darkRoute={darkRoute}
-        showDroplist={showDroplist}
-      >
-        <CiSearch
-          style={{
-            transform: "scale(1.6)",
-            fill: border ? "var(--offBlue)" : "var(--iconColor)",
-          }}
-        />
-      </SearchBtn>
+      {mode !== "rightPanel" && mode !== "distLocFilter" && (
+        <SearchBtn
+          onClick={(e) => handleSubmit(e)}
+          darkRoute={darkRoute}
+          showDroplist={showDroplist}
+        >
+          <CiSearch
+            style={{
+              transform: "scale(1.6)",
+              fill: border ? "var(--offBlue)" : "var(--iconColor)",
+            }}
+          />
+        </SearchBtn>
+      )}
 
       {showDroplist && (
         <Box

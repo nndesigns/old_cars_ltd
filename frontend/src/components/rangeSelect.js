@@ -88,14 +88,14 @@ const RangeSelect = ({
         setProp={setMinOption}
         array={minOptions}
         label={yearFilter ? "Min Year" : "Min Price"}
-        onChange={(value) => handleUpdateRange(null, value, null, "minSelect")}
+        onChange={(value) => handleUpdateRange(value, "minSelect")}
       />
       <CustomSelect
         prop={maxOption}
         setProp={setMaxOption}
         array={maxOptions}
         label={yearFilter ? "Max Year" : "Max Price"}
-        onChange={(value) => handleUpdateRange(null, value, null, "maxSelect")}
+        onChange={(value) => handleUpdateRange(value, "maxSelect")}
         secondCS={true}
         leftPanel={leftPanel}
         above601={!below601}

@@ -47,6 +47,10 @@
                         font-size: 1em;
                         background-color: transparent;
                         color: grey;
+                        
+                        > .arrow{
+                              pointer-events: none;
+                        }
                   }
                         /* dropdown menu */
                   >.dropdown-menu {

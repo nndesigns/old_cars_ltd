@@ -40,7 +40,7 @@ const BottomNav = forwardRef(({ value, setValue }, ref) => {
         position: "fixed",
         bottom: 0,
         width: "100vw",
-        zIndex: "5",
+        zIndex: 15,
         backgroundColor: "rgba(245, 246, 247, .6)",
         backdropFilter: "blur(20px)",
         boxShadow: value != null ? "" : "0 -4px 32px 0 rgba(0, 0, 0, .16)",

@@ -12,32 +12,36 @@
           position: relative;
           max-width: 90vw;
           max-height: 90vh;
-          overflow: hidden;
-          border-radius: 12px;
+          /* overflow: hidden; */
+          /* border-radius: 12px; */
+          /* border: 1px solid aqua */
 }
 
 .preview_image {
           width: 90vw;
-         max-height: 100%;
+          max-width: 1500px;
+         max-height: 1000px;
           object-fit: cover;
+          border-radius: 12px;
           box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
 }
 
 .close_btn {
           position: absolute;
-          top: 5px;
-          right: 5px;
+          top: -25px;
+          right: -25px;
           
           background: transparent;
           border: none;
-          color: var(--btnBG);
+          color: /* var(--btnBG) */white;
           cursor: pointer;
           z-index: 1000;
+        transition: color 0.2s ease,
 }
 
 .nav_btn {
-          /* position: absolute; */
-          position: fixed;
+          position: absolute;
+          /* position: fixed; */
           top: 50%;
           transform: translateY(-50%);
         
@@ -51,7 +55,7 @@
 }
 
 .nav_btn.left {
-          left: 6%;
+          left: -37px;
           
           > svg{
          filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.4));
@@ -59,8 +63,8 @@
 }
 
 .nav_btn.right {
-          right:6%;
-          
+          /* right:6%; */
+          right:-37px;
           > svg{
          filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.4));
           }
@@ -75,5 +79,5 @@
         transform: translateY(-50%) scale(1);
 }
 .close_btn:hover {
-        color: red;
+        color: var(--btnBG);
 }

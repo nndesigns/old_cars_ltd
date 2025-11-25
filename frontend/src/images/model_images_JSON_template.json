@@ -1,0 +1,80 @@
+{
+  "model_id": {
+    "S": "ferrari 308"
+  },
+  "image_count_large": { "S": "10" },
+  "image_count_mobile": { "S": "10" },
+  "image_urls_large": {
+    "L": [
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/large/1.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/large/10.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/large/2.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/large/3.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/large/4.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/large/5.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/large/6.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/large/7.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/large/8.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/large/9.webp"
+      }
+    ]
+  },
+  "image_urls_mobile": {
+    "L": [
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/mobile/1.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/mobile/10.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/mobile/2.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/mobile/3.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/mobile/4.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/mobile/5.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/mobile/6.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/mobile/7.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/mobile/8.webp"
+      },
+      {
+        "S": "https://imgs-all.s3.amazonaws.com/Car_Images/Car_Models/ferrari 308/mobile/9.webp"
+      }
+    ]
+  },
+  "last_updated": { "S": "2025-11-23T23:45:12.123456+00:00" },
+  "make": { "S": "Ferrari" },
+  "model": { "S": "308" },
+  "s3_prefix": { "S": "Car_Images/Car_Models/ferrari 308/" },
+  "year": { "N": "1990" }
+}

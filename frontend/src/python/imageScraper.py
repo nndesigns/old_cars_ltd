@@ -45,3 +45,6 @@ print(f"All images saved in {car_folder}")
 
 
 
+
+
+

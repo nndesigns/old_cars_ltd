@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { LuListFilter } from "react-icons/lu";
 import { RiArrowLeftSLine } from "react-icons/ri";
 import Button from "../buttons/button";
 import FilterPillsBox from "./filterPillsBox";
+import { motion, AnimatePresence } from "framer-motion";
 // import { FilterMenu } from "./carsFilters";
 import { IoMdClose } from "react-icons/io";
 import MobileFilterRow from "./mobileFilterRow";
@@ -22,8 +23,14 @@ const FilterPanel = ({
   //MOBILE-SPECIFIC ARGS
   mobile,
   setShowMobileFilterPanel,
+  setPreventScroll,
   matchesTotal,
 }) => {
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
   // HANDLE CLEAR FILTERS (ALL)
   const handleClearFilters = (mobile) => {
     const { sort, ...filtersWithoutSort } = defaultFilterState;
@@ -37,6 +44,7 @@ const FilterPanel = ({
 
     if (mobile) {
       setShowMobileFilterPanel(false);
+      setPreventScroll(false);
     }
   };
 
@@ -60,7 +68,7 @@ const FilterPanel = ({
               height: "100vh",
               background: "white",
               maxWidth: "unset",
-              zIndex: 9999,
+              zIndex: 22,
               overflowY: "auto",
             }
           : {}
@@ -92,7 +100,12 @@ const FilterPanel = ({
       )}
       {/* CLOSE 'X' SVG */}
       {mobile && !activeFilter && (
-        <IoMdClose onClick={() => setShowMobileFilterPanel(false)} />
+        <IoMdClose
+          onClick={() => {
+            setShowMobileFilterPanel(false);
+            setPreventScroll(false);
+          }}
+        />
       )}
 
       {/* MOBILE FILTER ROW */}
@@ -102,6 +115,7 @@ const FilterPanel = ({
           closePill={closePill}
           setActiveFilter={setActiveFilter}
           setShowMobileFilterPanel={setShowMobileFilterPanel}
+          setPreventScroll={setPreventScroll}
           activeFiltersList={activeFiltersList}
         />
       ) : (
@@ -111,13 +125,9 @@ const FilterPanel = ({
             activeFilter={activeFilter}
             setActiveFilter={setActiveFilter}
             closePill={closePill}
-
-            // setAppliedFilters = {setAppliedFilters}
-            // setOrderedFilters={setOrderedFilters}
           />
         )
       )}
-
       <hr />
 
       {/* SAVE SEARCH BOX */}
@@ -161,53 +171,67 @@ const FilterPanel = ({
           />
         </div>
       )}
-
-      {/* rec'd 'activeFilter' (Cars) assigned? */}
-      {activeFilter ? (
-        <>
-          <button
-            className="filterBtnStyle backBtn"
-            onClick={() => setActiveFilter(null)}
+      <AnimatePresence mode="wait">
+        {activeFilter ? (
+          <>
+            <button
+              className="filterBtnStyle backBtn"
+              onClick={() => setActiveFilter(null)}
+            >
+              <RiArrowLeftSLine /> Back to all filters
+            </button>
+            <span className="h3ClearWrapper">
+              <h3 className="activeFilter_h3">{activeFilter}</h3>
+              {activeFilter !== "Sort by" &&
+                activeFilter !== "Price" &&
+                activeFiltersList.includes(compKeyToReduxKey[activeFilter]) && (
+                  <ClearAllBtn
+                    currFilter={compKeyToReduxKey[activeFilter]}
+                    setAppliedFilters={setAppliedFilters}
+                    setOrderedFilters={setOrderedFilters}
+                  />
+                )}
+            </span>
+            {/* </motion.div> */}
+            <motion.div
+              initial={hasMounted ? { opacity: 0, x: -50 } : false}
+              // initial={{ opacity: 0, x: -50 }} // ✅ this works
+              animate={{ opacity: 1, x: 0 }} // move back into view
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="scrollBox_filter"
+            >
+              {/******* ACTIVE FILTER  CALL********/}
+              {filterComponentsMap[activeFilter]()}
+            </motion.div>
+          </>
+        ) : (
+          <motion.div
+            initial={hasMounted ? { opacity: 0, x: -50 } : false}
+            // initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }} // move back into view
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="scrollBox_filterMenu"
+            style={{
+              overflowY: mobile ? "scroll" : "auto", // control scroll behavior
+              scrollbarWidth: mobile ? "none" : "auto", // Firefox
+              msOverflowStyle: mobile ? "none" : "auto", // IE/Edge legacy
+            }}
           >
-            <RiArrowLeftSLine /> Back to all filters
-          </button>
-          <span className="h3ClearWrapper">
-            <h3 className="activeFilter_h3">{activeFilter}</h3>
-            {activeFilter !== "Sort by" &&
-              activeFilter !== "Price" &&
-              activeFiltersList.includes(compKeyToReduxKey[activeFilter]) && (
-                <ClearAllBtn
-                  currFilter={compKeyToReduxKey[activeFilter]}
-                  setAppliedFilters={setAppliedFilters}
-                  setOrderedFilters={setOrderedFilters}
-                />
-              )}
-          </span>
-
-          <div className="scrollBox_filter">
-            {" "}
-            {/******* ACTIVE FILTER  CALL********/}
-            {filterComponentsMap[activeFilter]()}
-          </div>
-        </>
-      ) : (
-        <div
-          className="scrollBox_filterMenu"
-          style={{
-            overflowY: mobile ? "hidden" : "auto", // control scroll behavior
-            scrollbarWidth: mobile ? "none" : "auto", // Firefox
-            msOverflowStyle: mobile ? "none" : "auto", // IE/Edge legacy
-          }}
-        >
-          {filterComponentsMap["Filter Menu"]()}
-        </div>
-      )}
+            {filterComponentsMap["Filter Menu"]()}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {mobile && (
         <div className="mobileFilterPanelFooter">
           <Button
             text={`SEE ${matchesTotal} MATCHES`}
-            onClick={() => setShowMobileFilterPanel(false)}
+            onClick={() => {
+              setShowMobileFilterPanel(false);
+              setPreventScroll(false);
+            }}
           />
         </div>
       )}

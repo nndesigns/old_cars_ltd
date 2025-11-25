@@ -9,7 +9,7 @@ const Header = ({
   setAppliedFilters,
   setOrderedFilters,
   handleClearFilters,
-  // setStringMatchesArr,
+  setPreventScroll,
 }) => {
   const bottomShadow = "0 8px 16px -4px rgba(0, 0, 0, 0.12)";
   const darkRoutes = ["favorites", "cars", "car"];
@@ -28,7 +28,7 @@ const Header = ({
         maxWidth: darkRoutes.includes(currentRoute) ? "none" : "1200px",
         paddingBottom: "1rem",
         boxShadow:
-          darkRoutes.includes(currentRoute) && currentRoute != "cars"
+          darkRoutes.includes(currentRoute) && currentRoute !== "cars"
             ? bottomShadow
             : "none",
 
@@ -48,6 +48,7 @@ const Header = ({
           inv={inv}
           setAppliedFilters={setAppliedFilters}
           setOrderedFilters={setOrderedFilters}
+          setPreventScroll={setPreventScroll}
         />
         <Searchbar
           currentRoute={currentRoute}

@@ -17,18 +17,21 @@ const LocationModal = ({
   setLocObjs,
   setAppliedFilters,
   setOrderedFilters,
+  setPreventScroll,
   style = {},
 }) => {
   const [favoritesNear, setFavoritesNear] = useState([]);
   const PopupBox = styled(Box)(({ theme }) => ({
     backgroundColor: "var(--tileBG)",
     position: "absolute",
-    top: smallNav ? "4rem" : "5em",
-    right: "0",
+    // top: smallNav ? "4rem" : "5em",
+    top: smallNav ? "37px" : "48px",
+    right: -15,
     width: smallNav ? "290px" : "310px",
     borderRadius: "12px",
     boxShadow: "var(--allAroundBoxShadow)",
-    // border: "1px solid green",
+    // zIndex: 50,
+
     display: "flex",
     flexDirection: "column",
     "& > *": {
@@ -191,6 +194,7 @@ const LocationModal = ({
           setLocationInputValue={setLocationInputValue}
           inputRef={locationInputRef}
           setLocObjs={setLocObjs}
+          setPreventScroll={setPreventScroll}
         />
       </Box>
     </PopupBox>

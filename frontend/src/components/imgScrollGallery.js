@@ -8,12 +8,15 @@ import {
 import { handleScroll } from "./utils.js";
 import ImagePreviewer from "./ImagePreviewer/imgPreviewer.js";
 import { LoadingWave } from "../components/inventoryGrid/loadingWave.js";
+import NoImage from "../images/no_image.webp";
 
 const ImgScrollGallery = ({ model_imgs_key, below900 }) => {
   const scrollContainerRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [invImagesMap, setInvImagesMap] = useState({});
+
+  const placeholderArray = Array(10).fill(NoImage);
 
   //IMAGE PREVIEWER
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -25,10 +28,18 @@ const ImgScrollGallery = ({ model_imgs_key, below900 }) => {
       try {
         // 4. Fetch only the new image keys
         const imagesMap = await getModelImageURLs([model_imgs_key], true);
+
+        // If value is null, replace with placeholder array
+        let updatedMap = imagesMap;
+        if (imagesMap[model_imgs_key] === null) {
+          updatedMap = {
+            [model_imgs_key]: placeholderArray,
+          };
+        }
         // 5. Merge them into the existing image map
         setInvImagesMap((prev) => ({
           ...prev,
-          ...imagesMap,
+          /*  ...imagesMap */ ...updatedMap,
         }));
       } catch (err) {
         console.error("Failed to fetch image map", err);
@@ -37,6 +48,8 @@ const ImgScrollGallery = ({ model_imgs_key, below900 }) => {
 
     fetchImages();
   }, [model_imgs_key]);
+
+  // console.log("invImagesMap[model_img_key]", invImagesMap[model_imgs_key]);
 
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
@@ -87,7 +100,8 @@ const ImgScrollGallery = ({ model_imgs_key, below900 }) => {
     setIsPreviewOpen(true);
   };
 
-  const allImages = invImagesMap[model_imgs_key] || [];
+  // const allImages = invImagesMap[model_imgs_key] || [NoImage];
+  const allImages = invImagesMap[model_imgs_key] ?? [NoImage];
 
   return (
     <>
@@ -149,15 +163,18 @@ const ImgScrollGallery = ({ model_imgs_key, below900 }) => {
           </div>
         )}
       </div>
-      {isPreviewOpen && (
-        <ImagePreviewer
-          images={allImages}
-          currentIndex={currentImageIndex}
-          onClose={() => setIsPreviewOpen(false)}
-          setCurrentIndex={setCurrentImageIndex}
-          isOpen={isPreviewOpen}
-        />
-      )}
+      {/* {isPreviewOpen && ( */}
+      <ImagePreviewer
+        isPreviewOpen={isPreviewOpen}
+        setIsPreviewOpen={setIsPreviewOpen}
+        images={allImages}
+        currentIndex={currentImageIndex}
+        // onClose={() => setIsPreviewOpen(false)}
+
+        setCurrentIndex={setCurrentImageIndex}
+        // isOpen={isPreviewOpen}
+      />
+      {/* )} */}
     </>
   );
 };

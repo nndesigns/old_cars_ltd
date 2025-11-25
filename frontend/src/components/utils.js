@@ -2,7 +2,6 @@ import zipcodes from "zipcodes";
 import { getDistance } from "geolib";
 import { useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
-// import { IoCopyOutline } from "react-icons/io5";
 
 export function handleScroll(scrollContainerRef, direction, mobileRow) {
   const scrollContainer = scrollContainerRef.current;
@@ -91,19 +90,19 @@ export const stateToStateMap = {
   WY: "Wyoming",
 };
 
-const cityToZipMap = {
+export const cityToZipMap = {
   "New Orleans, LA": "70124",
   "Los Angeles, CA": "90001",
   "Miami, FL": "33101",
-  "Phoenix, AZ": "85001",
+  "Phoenix, AZ": "85003",
   "Charlotte, NC": "28202",
   "Seattle, WA": "98101",
   "Chicago, IL": "60601",
   "Tampa, FL": "33602",
   "Denver, CO": "80202",
-  "Austin, TX": "73301",
-  "Atlanta, GA": "30301",
-  "Houston, TX": "77001",
+  "Austin, TX": "78701",
+  "Atlanta, GA": "30303",
+  "Houston, TX": "77002",
   "Louisville, KY": "40202",
   "Portland, OR": "97201",
   "Richmond, VA": "23219",
@@ -117,7 +116,6 @@ const cityToZipMap = {
   "Bozeman, MT": "59715",
   "Boston, MA": "02108",
   "San Francisco, CA": "94102",
-  // Additional cities
   "Huntsville, AL": "35801",
   "Lexington, KY": "40502",
   "Haines City, FL": "33844",
@@ -194,6 +192,79 @@ const cityToZipMap = {
   "Hattiesburg, MS": "39401",
   "Newark, NJ": "07102",
 };
+
+// function parseCsv(text) {
+//   const lines = text.trim().split("\n");
+//   const headers = lines[0].split(",");
+//   return lines.slice(1).map((line) => {
+//     const cols = line.split(",");
+//     return Object.fromEntries(
+//       headers.map((h, i) => [h.trim(), cols[i]?.trim()])
+//     );
+//   });
+// }
+
+// // Main function
+// export async function processCityToZipMap() {
+//   // fetch from frontend/public folder
+//   const response = await fetch("/us_zips.csv");
+//   const csvText = await response.text();
+//   const csvData = parseCsv(csvText);
+
+//   console.log("parsed 'csvData'", csvData);
+
+//   // Build quick lookup structures
+//   const zipSet = new Set(csvData.map((row) => row.zip));
+
+//   // Convert city+state combos to their zips for easy lookup
+//   const cityStateToZip = {};
+//   for (const row of csvData) {
+//     const key = `${row.city}, ${row.state_id}`;
+//     if (!cityStateToZip[key]) cityStateToZip[key] = [];
+//     cityStateToZip[key].push(row.zip);
+//   }
+
+//   const updatedMap = {};
+//   let replacedCount = 0;
+
+//   // Loop through the cityToZipMap entries
+//   for (const [cityState, zip] of Object.entries(cityToZipMap)) {
+//     // ✅ Case 1: The ZIP exists in the CSV → keep it
+//     if (zipSet.has(zip)) {
+//       updatedMap[cityState] = zip;
+//       continue;
+//     }
+
+//     // ❌ Case 2: ZIP not found → try to find one by city/state
+//     const [cityPart, statePart] = cityState.split(",").map((s) => s.trim());
+
+//     // Look for a matching row in the CSV
+//     const match = csvData.find(
+//       (row) =>
+//         row.city.toLowerCase() === cityPart.toLowerCase() &&
+//         row.state_id.toLowerCase() === statePart.toLowerCase()
+//     );
+
+//     if (match) {
+//       updatedMap[cityState] = match.zip;
+//       replacedCount++;
+//       console.warn(
+//         `⚠️ Replaced missing ZIP ${zip} → ${match.zip} for ${cityState}`
+//       );
+//     } else {
+//       updatedMap[cityState] = zip; // keep original
+//       console.error(`❌ No ZIP found in CSV for ${cityState}, keeping ${zip}`);
+//     }
+//   }
+
+//   console.log(`✅ Updated ${replacedCount} ZIPs`);
+//   return updatedMap;
+// }
+
+// (async () => {
+//   const updatedMap = await processCityToZipMap();
+//   console.log(updatedMap);
+// })();
 
 //uses provided 'radius', location.latitude & .longitude, to
 //// OFFER COUNT //
@@ -375,4 +446,27 @@ export function useClickOutside(ref, isActive, onClose) {
       mouseDownInside.current = false;
     };
   }, [ref, isActive, onClose]);
+}
+
+export function truncateString(string, limit) {
+  // If the string is shorter than or equal to the limit, return it as-is
+  if (string.length <= limit) return string;
+  // Otherwise, truncate to the limit and append "..."
+  return string.slice(0, limit) + "...";
+}
+
+/// CALC DISTANCE IN MILES
+const toRad = (deg) => (deg * Math.PI) / 180;
+export function getDistanceMiles(lat1, lon1, lat2, lon2) {
+  const R = 3958.8; // radius of Earth in miles
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
 }

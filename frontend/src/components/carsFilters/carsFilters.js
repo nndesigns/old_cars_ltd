@@ -4,7 +4,7 @@ import { GoChevronDown, GoChevronUp } from "react-icons/go";
 import "./filterMenu.css";
 import "./filters.css";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
-import { handleScroll, useClickOutside } from "../utils.js";
+import { handleScroll, useClickOutside, getDistanceMiles } from "../utils.js";
 import CustomSelect from "../customSelect";
 import { createPortal } from "react-dom";
 import LocationChangeModal from "../locationChangeModal.js";
@@ -85,6 +85,7 @@ function DistanceLocationFilter({
   setAppliedFilters,
   orderedFilters,
   setOrderedFilters,
+  setPreventScroll,
 }) {
   // console.log("received appliedFilters", appliedFilters);
   // console.log("received orderedFilters", orderedFilters);
@@ -123,7 +124,7 @@ function DistanceLocationFilter({
 
   const changeBtnRef = useRef(null);
 
-  console.log("showLocationChangeModal", showLocationChangeModal);
+  // console.log("showLocationChangeModal", showLocationChangeModal);
 
   //SET SHOP BY OBJS STATE
   useEffect(() => {
@@ -161,6 +162,9 @@ function DistanceLocationFilter({
       !locationChangeRef.current.contains(e.target)
     ) {
       setShowLocationChangeModal(false);
+      if (window.innerWidth >= 820) {
+        setPreventScroll(false);
+      }
       locationChangeInputRef.current = "";
     }
   });
@@ -169,30 +173,19 @@ function DistanceLocationFilter({
     if (!appliedFilters.dist_radius) {
       // if changed TO 'nationwide' (so 'null' now)
       setSelectedDistance(dist_amts[0]); //'Nationwide' default
+    } else {
+      setSelectedDistance(() => {
+        const stringified = `${appliedFilters.dist_radius} miles`;
+        return stringified;
+      });
     }
     //GENERATE 'NEARBY LIST' OBJ ARRAY FROM REDUX 'LOCATION' ZIP
     const fetchPlaces = async () => {
       const returnedPlaces = await handleLocationSearch(location.zip, true);
       const placesWithOffers = returnedPlaces.filter((obj) => obj.offerCt > 0);
 
-      // Haversine formula
-      const toRad = (deg) => (deg * Math.PI) / 180;
-
-      const getDistanceMiles = (lat1, lon1, lat2, lon2) => {
-        const R = 3958.8; // radius of Earth in miles
-        const dLat = toRad(lat2 - lat1);
-        const dLon = toRad(lon2 - lon1);
-        const a =
-          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-          Math.cos(toRad(lat1)) *
-            Math.cos(toRad(lat2)) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-      };
-
       // Add distance field to each place
+      //calculate distance btwn user & 'place w/ offer' obj
       const placesWithDistance = placesWithOffers.map((obj) => ({
         ...obj,
         distance: getDistanceMiles(
@@ -221,7 +214,6 @@ function DistanceLocationFilter({
         ...prev,
         dist_radius: null,
       }));
-      console.log("this was triggered here");
       setOrderedFilters((prev) => prev.filter((f) => f !== "dist_radius"));
     } else {
       const valNum = Number(value.slice(0, -6));
@@ -268,26 +260,26 @@ function DistanceLocationFilter({
   //
   const [showAllNearby, setShowAllNearby] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
-  const visibleNearby = showAllNearby ? nearbyList : nearbyList.slice(0, 5);
+  // const visibleNearby = showAllNearby ? nearbyList : nearbyList.slice(0, 5);
 
   return (
     <div className="filter_root distance_root">
-      {showLocationChangeModal &&
-        createPortal(
-          <AnimatePresence>
+      {createPortal(
+        <AnimatePresence>
+          {showLocationChangeModal && (
             <motion.div
               className="modal_overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
             >
               <motion.div
                 className="modal_wrapper"
-                initial={{ opacity: 0, y: 50 }}
+                initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 50 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
+                exit={{ opacity: 0, y: 40 }}
+                transition={{ duration: 0.3, ease: "easeIn" }}
               >
                 <LocationChangeModal
                   distMode={true}
@@ -297,15 +289,17 @@ function DistanceLocationFilter({
                   setLocationInputValue={setLocationInputValue}
                   locationChangeInputRef={locationChangeInputRef}
                   setShowLocationChangeModal={setShowLocationChangeModal}
+                  setPreventScroll={setPreventScroll}
                   inv={inv}
                   locObjs={locObjs}
                   setLocObjs={setLocObjs}
                 />
               </motion.div>
             </motion.div>
-          </AnimatePresence>,
-          document.body
-        )}
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/***  CURR LOC BOX ****/}
       <div className="currLocBox">
@@ -321,12 +315,14 @@ function DistanceLocationFilter({
         <button
           ref={changeBtnRef}
           className="changeBtn"
-          onClick={() => setShowLocationChangeModal(true)} // 👈 open modal
+          onClick={() => {
+            setShowLocationChangeModal(true);
+            setPreventScroll(true);
+          }} // 👈 open modal
         >
           Change
         </button>
       </div>
-
       <CustomSelect
         prop={selectedDistance}
         setProp={setSelectedDistance}
@@ -339,7 +335,6 @@ function DistanceLocationFilter({
         The maximum number of miles you're willing to travel to pick up a car.
       </small>
       <hr />
-
       <h3 className="checkbox_h3" style={{ marginBottom: "1.5rem" }}>
         Shop Nearby
       </h3>
@@ -433,10 +428,24 @@ function DistanceLocationFilter({
           />
         )}
       </div>
-      <div className="shopByStateWrapper">
+      <div
+        className="shopByStateWrapper"
+        style={{
+          // marginBottom: showSearch ? "" : "25rem",
+          minHeight: showSearch ? "30rem" : "",
+          // overflowY: showSearch ? "scroll" : "",
+        }}
+      >
         <button
           className="shopByStateBtn"
-          onClick={() => setShowSearch((prev) => !prev)}
+          onClick={() => {
+            if (showSearch) {
+              if (shopByValue.length) {
+                setShopByValue("");
+              }
+            }
+            setShowSearch((prev) => !prev);
+          }}
         >
           SHOP BY STATE {!showSearch ? <GoChevronDown /> : <GoChevronUp />}
         </button>
@@ -444,11 +453,11 @@ function DistanceLocationFilter({
           {showSearch && (
             <motion.div
               key="searchExtra"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-              style={{ overflow: "hidden" }}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ duration: 0.35, ease: "easeInOut" }}
+              // style={{ overflow: "hidden" }}
             >
               <Searchbar
                 darkRoute={true}
@@ -456,7 +465,6 @@ function DistanceLocationFilter({
                 shopByValue={shopByValue}
                 setShopByValue={setShopByValue}
                 inputRef={shopByRef}
-                style={{ marginBottom: "1rem" }}
               />
               <div
                 className="checkboxes_container"
@@ -510,6 +518,7 @@ function PriceFilter({
   leftPanel,
   setOrderedFilters,
 }) {
+  console.log("received appliedFilters", appliedFilters);
   return (
     <div className="filter_root">
       <PriceSlider
@@ -821,6 +830,7 @@ function YearFilter({
   appliedFilters,
 }) {
   const years = options.map((option) => option.year);
+  // console.log("years", years);
   const [range, setRange] = useState([Math.min(...years), Math.max(...years)]);
 
   const computedRange = useMemo(() => {

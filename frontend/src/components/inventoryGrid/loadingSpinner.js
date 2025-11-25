@@ -25,11 +25,11 @@ const spinTransition = {
   duration: 1,
 };
 
-export const LoadingSpinner = () => {
+export const LoadingSpinner = ({ style = {} }) => {
   return (
     <div style={styleContainer}>
       <motion.span
-        style={styleSpan}
+        style={{ ...styleSpan, ...style }}
         animate={{ rotate: 360 }}
         transition={spinTransition}
       />

@@ -46,8 +46,8 @@ const ThumbNav = forwardRef(({ navItem, setValue }, ref) => {
       {navItem != null && (
         <div
           style={{
-            position: "absolute",
-            zIndex: "3",
+            position: /* "absolute" */ "fixed",
+            zIndex: 10,
             width: "100%",
             backgroundColor: "rgba(0,0,0,.4",
             top: navItem != null ? "0%" : "100%",
@@ -63,7 +63,8 @@ const ThumbNav = forwardRef(({ navItem, setValue }, ref) => {
           backgroundColor: "white",
           padding: "1.25rem 2rem ",
           position: "fixed",
-          zIndex: "3",
+          // zIndex: "3",
+          zIndex: 11,
           top: navItem != null ? "10%" : "100%",
           bottom: navItem != null ? "0" : "-100%",
           transition: "top 0.3s ease-out, bottom 0.4s ease-out",

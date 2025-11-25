@@ -242,16 +242,16 @@ const Footer = ({ inv }) => {
         )}
         {above900 && (
           <IconBox>
-            <a href="">
+            <a href="#" onClick={(e) => e.preventDefault()}>
               <BsYoutube />
             </a>
-            <a href="">
+            <a href="#" onClick={(e) => e.preventDefault()}>
               <RiInstagramFill />
             </a>
-            <a href="">
+            <a href="#" onClick={(e) => e.preventDefault()}>
               <FaTiktok />
             </a>
-            <a href="">
+            <a href="#" onClick={(e) => e.preventDefault()}>
               <FaFacebook />
             </a>
           </IconBox>
@@ -298,57 +298,103 @@ const Footer = ({ inv }) => {
       <div style={{ ...styles.footer_child, ...styles.bottom }}>
         <FooterSectionBox>
           <h3>Shop</h3>
-          <a href="">Browse by category</a>
-          <a href="">View all inventory</a>
-          <a href="">Find a store</a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Browse by category
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            View all inventory
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Find a store
+          </a>
         </FooterSectionBox>
         <FooterSectionBox>
           <h3>Sell/Trade</h3>
-          <a href="">Get an online offer</a>
-          <a href="">How it works</a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Get an online offer
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            How it works
+          </a>
         </FooterSectionBox>
         <FooterSectionBox>
           <h3>Finance</h3>
-          <a href="">Get pre-qualified</a>
-          <a href="">How it works</a>
-          <a href="">Old Cars Ltd Financing</a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Get pre-qualified
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            How it works
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Old Cars Ltd Financing
+          </a>
         </FooterSectionBox>
         <FooterSectionBox>
           <h3>About</h3>
-          <a href="">About Old Cars Ltd</a>
-          <a href="">Contact Us</a>
-          <a href="">Social impact</a>
-          <a href="">Old Cars Ltd giving back</a>
-          <a href="">Media center</a>
-          <a href="">Supplier inclusion</a>
-          <a href="">Investor relations</a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            About Old Cars Ltd
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Contact Us
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Social impact
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Old Cars Ltd giving back
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Media center
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Supplier inclusion
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Investor relations
+          </a>
         </FooterSectionBox>
         <FooterSectionBox>
           <h3>Careers</h3>
-          <a href="">Search jobs</a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Search jobs
+          </a>
         </FooterSectionBox>
         <FooterSectionBox>
           <h3>More</h3>
-          <a href="">Service & repairs</a>
-          <a href="">FAQ & support</a>
-          <a href="">Why Old Cars Ltd</a>
-          <a href="">Buying online</a>
-          <a href="">Car research & advice</a>
-          <a href="">Guide to EVs</a>
-          <a href="">Warranties</a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Service & repairs
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            FAQ & support
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Why Old Cars Ltd
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Buying online
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Car research & advice
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Guide to EVs
+          </a>
+          <a href="#" onClick={(e) => e.preventDefault()}>
+            Warranties
+          </a>
         </FooterSectionBox>
         {!above900 && (
           <IconBox>
-            <a href="">
+            <a href="#" onClick={(e) => e.preventDefault()}>
               <BsYoutube />
             </a>
-            <a href="">
+            <a href="#" onClick={(e) => e.preventDefault()}>
               <FaFacebook />
             </a>
-            <a href="">
+            <a href="#" onClick={(e) => e.preventDefault()}>
               <FaTiktok />
             </a>
-            <a href="">
+            <a href="#" onClick={(e) => e.preventDefault()}>
               <RiInstagramFill />
             </a>
           </IconBox>
@@ -366,15 +412,49 @@ const Footer = ({ inv }) => {
       </p>
 
       <LinksSection>
-        <a href="">Privacy Policy</a> |{" "}
-        <a href="">Do Not Sell or Share My Information</a> |{" "}
-        <a href="">Financial Privacy Policy</a> |{" "}
-        <a href="">Interest-Based Ads</a> | <a href="">Terms of Use</a> |{" "}
-        <a href="">Responsible Disclosure</a> |{" "}
-        <a href="">OldCarsLtd Recall Policy</a> |{" "}
-        <a href="">Social Community Guidelines</a> |{" "}
-        <a href="">CA Supply Chain Transparency</a> |{" "}
-        <a href="">Accessibility</a> | <a href="">Feedback</a>
+        <a href="#" onClick={(e) => e.preventDefault()}>
+          Privacy Policy
+        </a>{" "}
+        |{" "}
+        <a href="#" onClick={(e) => e.preventDefault()}>
+          Do Not Sell or Share My Information
+        </a>{" "}
+        |{" "}
+        <a href="#" onClick={(e) => e.preventDefault()}>
+          Financial Privacy Policy
+        </a>{" "}
+        |{" "}
+        <a href="#" onClick={(e) => e.preventDefault()}>
+          Interest-Based Ads
+        </a>{" "}
+        |{" "}
+        <a href="#" onClick={(e) => e.preventDefault()}>
+          Terms of Use
+        </a>{" "}
+        |{" "}
+        <a href="#" onClick={(e) => e.preventDefault()}>
+          Responsible Disclosure
+        </a>{" "}
+        |{" "}
+        <a href="#" onClick={(e) => e.preventDefault()}>
+          OldCarsLtd Recall Policy
+        </a>{" "}
+        |{" "}
+        <a href="#" onClick={(e) => e.preventDefault()}>
+          Social Community Guidelines
+        </a>{" "}
+        |{" "}
+        <a href="#" onClick={(e) => e.preventDefault()}>
+          CA Supply Chain Transparency
+        </a>{" "}
+        |{" "}
+        <a href="#" onClick={(e) => e.preventDefault()}>
+          Accessibility
+        </a>{" "}
+        |{" "}
+        <a href="#" onClick={(e) => e.preventDefault()}>
+          Feedback
+        </a>
       </LinksSection>
 
       <p style={{ textAlign: "center", fontSize: ".75em" }}>

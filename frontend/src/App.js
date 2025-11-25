@@ -20,13 +20,18 @@ import { getLocalOffers, ScrollToTop } from "./components/utils.js";
 import Header from "./components/header.js";
 import BottomNav from "./components/bottom_nav/bottom_nav.js";
 import ThumbNav from "./components/bottom_nav/ThumbNav.js";
+//ROUTES
 import Home from "./pages/home.js";
 import Favorites from "./pages/favorites.js";
 import Cars from "./pages/cars.js";
 import VehiclePage from "./pages/vehiclePage.js";
+import Compare from "./pages/compare.js";
+
 import Footer from "./components/footer.js";
 import "./index.css";
 import { saveFilter } from "./user/filtersSlice";
+
+import { AnimatePresence, motion } from "framer-motion";
 
 // ----------------- CONSTANTS -----------------
 const defaultFilterState = {
@@ -54,6 +59,18 @@ const defaultFilterState = {
   vin: null,
 };
 
+/// TRANSITION (Framer-Motion)
+const PageTransition = ({ children }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 50 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -30 }}
+    transition={{ duration: 0.65 }}
+  >
+    {children}
+  </motion.div>
+);
+
 // ----------------- PAGE WRAPPER -----------------
 const PageWrapper = function PageWrapper({
   children,
@@ -64,6 +81,7 @@ const PageWrapper = function PageWrapper({
   setAppliedFilters,
   setOrderedFilters,
   handleClearFilters,
+  setPreventScroll,
 }) {
   const thumbNavRef = useRef(null);
   const bottomNavRef = useRef(null);
@@ -92,15 +110,22 @@ const PageWrapper = function PageWrapper({
 
   return (
     <div className="app_root">
-      <Header
-        currentRoute={!currentRoute.length ? "home" : currentRoute}
-        inv={inv}
-        setAppliedFilters={setAppliedFilters}
-        setOrderedFilters={setOrderedFilters}
-        handleClearFilters={handleClearFilters}
-      />
+      {currentRoute !== "compare" && (
+        <Header
+          currentRoute={!currentRoute.length ? "home" : currentRoute}
+          inv={inv} /// WHY DOES HEADER NEED INV
+          setAppliedFilters={setAppliedFilters}
+          setOrderedFilters={setOrderedFilters}
+          handleClearFilters={handleClearFilters}
+          setPreventScroll={setPreventScroll}
+        />
+      )}
+      {/*      <AnimatePresence> */}
+      {/*  <PageTransition> */}
       {children}
-      <Footer inv={inv} />
+      {/* </PageTransition> */}
+      {/*       </AnimatePresence> */}
+      <Footer inv={inv} /> {/* WHY DOES FOOTER NEED INV */}
       {showBottomNav && (
         <BottomNav ref={bottomNavRef} value={value} setValue={setValue} />
       )}
@@ -118,6 +143,10 @@ function App() {
     (state) => state.filters.appliedFilters || {}
   );
   console.log("App.js just re-rendered!!!");
+
+  //FOR DISABLING APP SCROLL WHILE MODALS OPEN
+  // const [showMobileFilterPanel, setShowMobileFilterPanel] = useState(false);
+  const [preventScroll, setPreventScroll] = useState(false);
 
   const location = useSelector((state) => state.location);
   const heartedCars = useSelector((state) => state.favorites.heartedCars);
@@ -138,6 +167,38 @@ function App() {
   const [below820, setBelow820] = useState(window.innerWidth < 820);
   const [above375, setAbove375] = useState(window.innerWidth > 375);
   const [inventory, setInventory] = useState([]);
+  //COMPARE CARS
+  const [compareCars, setCompareCars] = useState(() => {
+    const saved = localStorage.getItem("compareCars");
+    return saved ? JSON.parse(saved) : [];
+  });
+  //CHOSEN CARS (displayed in Compare)
+  // const [chosenCars, setChosenCars] = useState([]);
+  const [chosenCars, setChosenCars] = useState(() => {
+    const saved = localStorage.getItem("chosenCars");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("compareCars", JSON.stringify(compareCars));
+    localStorage.setItem("chosenCars", JSON.stringify(chosenCars));
+    // console.log("compareCars (app.js)", compareCars);
+    // console.log("chosenCars (app.js)", chosenCars);
+
+    if (compareCars.length >= 2 && !chosenCars.length) {
+      setChosenCars([compareCars[0], compareCars[1]]);
+    } else if (compareCars.length >= 2 && chosenCars.length === 1) {
+      //if use ralready went into 'Compare' (setting 'chosenCars'), then came back to ComparePanel and removed one of the 'chosenCars' objects from the 'handleRemove' of the ComparePanel, resulting in there only being 1 'chosenCars' object
+      const existing = chosenCars[0];
+      //auto-append that single chosenCar obj with another 'compareCar' obj whose .id differs from the remainig 'chosenCars' obj
+      const nextCar = compareCars.find((car) => car.id !== existing.id);
+
+      if (nextCar) {
+        console.log("this part here ran");
+        setChosenCars([existing, nextCar]);
+      }
+    }
+  }, [compareCars, chosenCars]);
 
   // ✅ Moved handleClearFilters here so it can be shared
   const handleClearFilters = useCallback(() => {
@@ -146,7 +207,7 @@ function App() {
     setOrderedFilters([]);
   }, [appliedFilters.sort, setAppliedFilters, setOrderedFilters]);
 
-  // Save ordered filters to localStorage
+  // SAVE ORDERED FILTERS TO LOCAL STORAGE
   useEffect(() => {
     localStorage.setItem("orderedFilters", JSON.stringify(orderedFilters));
   }, [orderedFilters]);
@@ -156,7 +217,7 @@ function App() {
     dispatch(saveFilter(appliedFilters));
   }, [appliedFilters, dispatch]);
 
-  // Throttled resize handler
+  //RESIZE HANDLER
   useEffect(() => {
     let timeout;
     const handleResize = () => {
@@ -175,7 +236,7 @@ function App() {
     };
   }, []);
 
-  // Fetch inventory on mount
+  // FETCH INVENTORY
   useEffect(() => {
     if (inventory.length > 0) return;
     (async () => {
@@ -188,7 +249,7 @@ function App() {
     })();
   }, [inventory.length]);
 
-  // Get user location
+  // GET USER LOCATION
   useEffect(() => {
     // check if redux location obj has location values
     const isLocationValid =
@@ -204,17 +265,32 @@ function App() {
     }
   }, [dispatch, location]);
 
-  // Memoized filtered inventory
+  // MEMOIZED FILTERED INVENTORY
   const activeInv = useMemo(
     () => inventory.filter((car) => car.status),
     [inventory]
   );
+
   const localInventory = useMemo(() => {
     if (!location) return [];
     return getLocalOffers(activeInv, location, 100, false);
   }, [activeInv, location]);
 
-  // console.log("localInventory (getLocalOffers)", localInventory);
+  // DISABLE SCROLLING IN /CARS WHEN
+
+  useEffect(() => {
+    if (preventScroll) {
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
+    } else {
+      const scrollY = parseInt(document.body.style.top || "0") * -1;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      window.scrollTo(0, scrollY);
+    }
+  }, [preventScroll]);
 
   // Update Redux with local inventory (location.localInv)
   useEffect(() => {
@@ -224,7 +300,7 @@ function App() {
     }
   }, [localInventory, location, inventory.length, dispatch]);
 
-  // Memoized props for routes
+  // CARS PROPS
   const carsProps = useMemo(
     () => ({
       location,
@@ -236,10 +312,27 @@ function App() {
       setAppliedFilters,
       orderedFilters,
       setOrderedFilters,
+      compareCars, /// NEW
+      setCompareCars, ////NEW
+      chosenCars,
+      setChosenCars,
+      // showMobileFilterPanel,
+      // setShowMobileFilterPanel,
+      setPreventScroll,
     }),
-    [inventory, location, below820, above375, appliedFilters, orderedFilters]
+    [
+      inventory,
+      location,
+      below820,
+      above375,
+      appliedFilters,
+      orderedFilters,
+      compareCars,
+      chosenCars,
+      // showMobileFilterPanel,
+    ]
   );
-
+  //HOME PROPS
   const homeProps = useMemo(
     () => ({
       inventory,
@@ -254,33 +347,82 @@ function App() {
 
   return (
     <Router>
-      <PageWrapper
-        inv={inventory}
-        setValue={setValue}
-        value={value}
-        showBottomNav={showBottomNav}
-        appliedFilters={appliedFilters}
-        setAppliedFilters={setAppliedFilters}
-        setOrderedFilters={setOrderedFilters}
-        handleClearFilters={handleClearFilters} // Header
-      >
-        <ScrollToTopButton />
-        <ScrollToTop />
-        <Routes>
-          <Route path="/*" element={<Home {...homeProps} />} />{" "}
-          <Route
-            path="/favorites/*"
-            element={
-              <Favorites hearted_cars={heartedCars} location={location} />
-            }
-          />
-          <Route path="/cars/*" element={<Cars {...carsProps} />} />
-          <Route
-            path="/car/:id"
-            element={<VehiclePage inventory={inventory} />}
-          />
-        </Routes>
-      </PageWrapper>
+      <AnimatePresence mode="wait">
+        <PageTransition>
+          <PageWrapper
+            key={location.pathname}
+            inv={inventory}
+            setValue={setValue}
+            value={value}
+            showBottomNav={showBottomNav}
+            appliedFilters={appliedFilters}
+            setAppliedFilters={setAppliedFilters}
+            setOrderedFilters={setOrderedFilters}
+            handleClearFilters={handleClearFilters} // Header
+            setPreventScroll={setPreventScroll}
+            location={location}
+          >
+            <ScrollToTop />
+            <ScrollToTopButton />
+
+            <Routes /* location={location} */ /* key={location.pathname} */>
+              <Route
+                // path="/"
+                index
+                element={
+                  //<PageTransition>
+                  <Home {...homeProps} />
+                  //</PageTransition>
+                }
+              />
+
+              <Route
+                path="/favorites/*"
+                element={
+                  // <PageTransition>
+                  <Favorites hearted_cars={heartedCars} location={location} />
+                  //</PageTransition>
+                }
+              />
+
+              <Route
+                path="/cars/*"
+                element={
+                  //<PageTransition>
+                  <Cars {...carsProps} />
+                  //</PageTransition>
+                }
+              />
+
+              <Route
+                path="/car/:id"
+                element={
+                  // <PageTransition>
+                  <VehiclePage inventory={inventory} />
+                  // </PageTransition>
+                }
+              />
+
+              <Route
+                path="/compare"
+                element={
+                  //<PageTransition>
+                  <Compare
+                    compareCars={compareCars}
+                    setCompareCars={setCompareCars}
+                    location={location}
+                    inventory={inventory}
+                    chosenCars={chosenCars}
+                    setChosenCars={setChosenCars}
+                    setPreventScroll={setPreventScroll}
+                  />
+                  //  </PageTransition>
+                }
+              />
+            </Routes>
+          </PageWrapper>
+        </PageTransition>
+      </AnimatePresence>
     </Router>
   );
 }

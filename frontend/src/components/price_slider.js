@@ -13,12 +13,13 @@ const PriceSlider = ({
   leftPanel, // false = /home only
 }) => {
   const [range, setRange] = useState([]);
+  const [prevRange, setPrevRange] = useState([]);
   const [grabbing, setGrabbing] = useState(false);
 
   const StyledBar = styled("div")(
     ({ barKey, height, activeRange, leftPanel }) => ({
       flex: "1",
-      height: leftPanel ? `${height * 6}px` : `${height * 10.5}px`,
+      height: leftPanel ? `${height * 4}px` : `${height * 10.5}px`,
       backgroundColor: "var(--btnBG)",
       opacity:
         barKey >= activeRange[0] && barKey <= activeRange[1] ? "1" : ".3",
@@ -54,7 +55,7 @@ const PriceSlider = ({
     }));
 
     return {
-      counts: adjustedCounts,
+      counts: adjustedCounts, //{[name: value}] how many car objs (value) for each 'thousandths place' (3 - 72) (name)
       min: adjustedCounts[0].name,
       max: adjustedCounts[adjustedCounts.length - 1].name,
     };
@@ -73,11 +74,12 @@ const PriceSlider = ({
   // CLAMP VALUE
   const clampValue = (value, min, max) => Math.max(min, Math.min(value, max));
 
-  // UPDATE FILTERS
+  // console.log("clampValue", clampValue);
+
+  //////////  UPDATE FILTERS   //////
   const updateFilters = (newRange, changedKey, clear) => {
     if (clear) {
       // clear both filters
-
       setAppliedFilters((prev) => ({
         ...prev,
         minPrice: null,
@@ -102,9 +104,28 @@ const PriceSlider = ({
   };
 
   // HANDLE UPDATE RANGE
-  const handleUpdateRange = (event, newValue, activeThumb, activeSelect) => {
-    if (!computedRange) return;
 
+  /// RANGE SELECT HANDLER
+  const handleUpdateRange1 = (newValue, activeSelect) => {
+    console.log("received activeSelect", activeSelect);
+    const minPrice = computedRange.min;
+    const maxPrice = computedRange.max;
+
+    setRange((prev) => {
+      const updated =
+        activeSelect === "minSelect"
+          ? [clampValue(newValue, minPrice, maxPrice), prev[1]]
+          : [prev[0], clampValue(newValue, minPrice, maxPrice)];
+      updateFilters(
+        updated,
+        activeSelect === "minSelect" ? "minPrice" : "maxPrice"
+      );
+      return updated;
+    });
+  };
+
+  //// SLIDER HANDLER (onChangeCommitted)
+  const handleUpdateRange2 = (event, newValue) => {
     const minPrice = computedRange.min;
     const maxPrice = computedRange.max;
 
@@ -113,26 +134,24 @@ const PriceSlider = ({
       newValue[0] === minPrice &&
       newValue[1] === maxPrice;
 
-    if (activeThumb !== null) {
-      setRange(newValue);
-      updateFilters(
-        newValue,
-        activeThumb === 0 ? "minPrice" : "maxPrice",
-        isFullRange
-      );
-    } else if (activeSelect) {
-      setRange((prev) => {
-        const updated =
-          activeSelect === "minSelect"
-            ? [clampValue(newValue, minPrice, maxPrice), prev[1]]
-            : [prev[0], clampValue(newValue, minPrice, maxPrice)];
-        updateFilters(
-          updated,
-          activeSelect === "minSelect" ? "minPrice" : "maxPrice"
-        );
-        return updated;
-      });
+    let changedThumb = null;
+    if (newValue[0] !== prevRange[0]) {
+      changedThumb = "minPrice";
+    } else if (newValue[1] !== prevRange[1]) {
+      changedThumb = "maxPrice";
     }
+
+    // Fallback — if neither changed (edge case)
+    if (!changedThumb) {
+      return; // or default to whatever makes sense for your logic
+    }
+
+    updateFilters(
+      newValue,
+      //  activeThumb === 0 ? "minPrice" : "maxPrice",
+      changedThumb,
+      isFullRange
+    );
   };
 
   const handleClear = () => {
@@ -145,6 +164,7 @@ const PriceSlider = ({
       prev.filter((key) => key !== "minPrice" && key !== "maxPrice")
     );
     if (computedRange) setRange([computedRange.min, computedRange.max]);
+    setPrevRange([]);
   };
 
   if (!computedRange) return null;
@@ -163,7 +183,7 @@ const PriceSlider = ({
           setRange={setRange}
           adjCounts={computedRange.counts}
           leftPanel
-          handleUpdateRange={handleUpdateRange}
+          handleUpdateRange={handleUpdateRange1}
         />
       )}
 
@@ -196,7 +216,12 @@ const PriceSlider = ({
         min={computedRange.min}
         max={computedRange.max}
         step={1000}
-        onChange={handleUpdateRange}
+        onChange={(event, newValue) => {
+          // This runs *while dragging*, purely to show movement
+          setPrevRange(range);
+          setRange(newValue);
+        }}
+        onChangeCommitted={handleUpdateRange2}
         valueLabelDisplay="auto"
         valueLabelFormat={(v) => `$${v / 1000}k`}
         sx={{
@@ -256,7 +281,7 @@ const PriceSlider = ({
           setRange={setRange}
           adjCounts={computedRange.counts}
           leftPanel={false}
-          handleUpdateRange={handleUpdateRange}
+          handleUpdateRange={handleUpdateRange1}
           home={true}
         />
       )}

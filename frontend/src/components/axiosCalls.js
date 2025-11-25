@@ -1,10 +1,14 @@
 import axios from "axios";
 
 export async function getModelImageURLs(modelIds, inv, mobile) {
+  // console.log("rec'd modelIds arg", modelIds);
+
+  // console.log("rec'd 'inv arg", inv);
+
   try {
     const res = await axios.post("http://localhost:5001/api/batch", {
       modelIds,
-      inv, //boolean (true = inv imgs, false = model imgs)
+      inv, //boolean (true = inv imgs (VehiclePage), false/null = model imgs (InventoryCard))
       mobile,
     });
     return res.data;

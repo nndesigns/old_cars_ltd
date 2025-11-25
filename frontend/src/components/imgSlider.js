@@ -47,7 +47,7 @@ const arrowFadeInRight = keyframes`
 const ImgSliderWrapper = styled("div")((props) => ({
   position: "relative",
   width: "100%",
-  // height: props.favorites && props.isMobile ? undefined : "170px",
+
   borderTopLeftRadius: "8px",
   borderTopRightRadius: "8px",
   overflow: "hidden",
@@ -126,7 +126,7 @@ const ViewMoreSlide = styled(Box)(({ theme }) => ({
   },
 }));
 
-const ImgSlider = ({ urls, favorites, isHovered }) => {
+const ImgSlider = ({ urls, isHovered }) => {
   const [visualIndex, setVisualIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
 
@@ -152,11 +152,7 @@ const ImgSlider = ({ urls, favorites, isHovered }) => {
   };
 
   return (
-    <ImgSliderWrapper
-      isHovered={isHovered}
-      favorites={favorites}
-      isMobile={isMobile}
-    >
+    <ImgSliderWrapper isHovered={isHovered} isMobile={isMobile}>
       <div
         className="slider-track"
         style={{

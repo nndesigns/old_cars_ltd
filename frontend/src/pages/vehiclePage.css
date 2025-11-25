@@ -51,6 +51,11 @@ h3.carSubtitle {
           font-weight: 550;     
  }
 
+ .copyBtnWrapper{
+      display:flex;
+      gap: .5rem;
+ }
+
  .vinCopyBtn {
            padding: 0.9rem;
            background-color: var(--tileBG);

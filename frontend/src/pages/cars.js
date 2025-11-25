@@ -7,7 +7,7 @@ import { getLocalOffers } from "../components/utils";
 
 import CarsToolbar from "../components/carsToolbar/carsToolbar";
 import InventoryGrid from "../components/inventoryGrid/inventoryGrid";
-import ComparePanel from "../components/carsToolbar/comparePanel.js";
+import ComparePanel from "../components/comparePanel.js";
 // import { useSelector, useDispatch } from "react-redux";
 import {
   FilterMenu,
@@ -36,6 +36,7 @@ import FilterPanel from "../components/carsFilters/filterPanel.js";
 // import { saveFilter } from "../user/filtersSlice";
 import MobileFilterRow from "../components/carsFilters/mobileFilterRow.js";
 import ConcatH3 from "../components/concatH3.js";
+// import { processCityToZipMap } from "../components/utils.js";
 
 import {
   sortInventoryByDistance,
@@ -52,15 +53,32 @@ const Cars = ({
   setAppliedFilters, /// setter
   orderedFilters,
   setOrderedFilters, ////setter
+  compareCars,
+  setCompareCars,
+  chosenCars,
+  setChosenCars,
+  /*   showMobileFilterPanel,
+  setShowMobileFilterPanel, */
+  setPreventScroll,
 }) => {
-  //MOBILE FILTER PANEL
-  const [showMobileFilterPanel, setShowMobileFilterPanel] = useState(false); ///setter
+  const [showMobileFilterPanel, setShowMobileFilterPanel] = useState(false);
 
   //ACTIVE FILTER
   const [activeFilter, setActiveFilter] = useState(null); ///// setter
 
-  // COMPARE PREP PANEL
-  const [showCompare, setShowCompare] = useState(false);
+  //  SHOW COMPARE PREP PANEL
+  const [showCompare, setShowCompare] = useState(() => {
+    const saved = localStorage.getItem("showCompare");
+    return saved ? JSON.parse(saved) : false;
+  });
+  // CHECKED CARS FROM /CARS (which 2 being compared, for 'More' tool)
+  // console.log("appliedFilters (Cars))", appliedFilters);
+  // console.log("showCompare", showCompare);
+
+  // SAVE COMPARE PANEL STATES TO LOCAL STORAGE
+  useEffect(() => {
+    localStorage.setItem("showCompare", JSON.stringify(showCompare));
+  }, [showCompare]);
 
   const hasAppliedFilters = useMemo(() => {
     return Object.entries(appliedFilters)
@@ -77,8 +95,6 @@ const Cars = ({
           )
       );
   }, [appliedFilters]);
-
-  //NOTE : TRY TO MAKE  ORDERED FILTERS A USEREF INSTEAD, SO RESETTING WON'T CAUSE FILTER TO RE-RENDER W/ ONLY SELECTED OPTIONS.
 
   // CATEGORIES FOR SORT FILTER
   const sortCats = [
@@ -250,12 +266,24 @@ const Cars = ({
           setAppliedFilters={setAppliedFilters}
           orderedFilters={orderedFilters}
           setOrderedFilters={setOrderedFilters}
+          setPreventScroll={setPreventScroll}
         />
       ),
 
       Price: () => (
         <PriceFilter
-          options={inventory}
+          options={[
+            ...(filterStageArrays["minPrice"]
+              ? filterStageArrays["minPrice"]
+              : orderedFilters.length > 0
+              ? matchesArray
+              : inventory),
+            ...(filterStageArrays["maxPrice"]
+              ? filterStageArrays["maxPrice"]
+              : orderedFilters.length > 0
+              ? matchesArray
+              : inventory),
+          ]}
           setAppliedFilters={setAppliedFilters}
           appliedFilters={appliedFilters}
           leftPanel={true}
@@ -314,6 +342,7 @@ const Cars = ({
 
       Year: () => (
         <YearFilter
+          // options={inventory}
           options={[
             ...(filterStageArrays["yearFrom"]
               ? filterStageArrays["yearFrom"]
@@ -400,6 +429,7 @@ const Cars = ({
       // console.log("current appliedFilters", appliedFilters);
       setAppliedFilters((prev) => {
         const newFilters = { ...prev };
+        console.log("newFilters", newFilters);
 
         if (Array.isArray(newFilters[key])) {
           newFilters[key] = newFilters[key].filter((item) => item !== value);
@@ -498,6 +528,7 @@ const Cars = ({
             //EXTRA MOBILE ARGS
             mobile={true}
             setShowMobileFilterPanel={setShowMobileFilterPanel}
+            setPreventScroll={setPreventScroll}
             matchesTotal={matchesArray.length}
           />
         )}
@@ -527,9 +558,9 @@ const Cars = ({
 
             <div
               className="right_panel"
-              style={
-                /* hasAppliedFilters ? */ { width: "1600px" } /* : undefined */
-              }
+              style={{
+                width: "1600px",
+              }}
             >
               {below820 && orderedFilters.length > 0 && (
                 <MobileFilterRow
@@ -537,6 +568,7 @@ const Cars = ({
                   closePill={closePill}
                   setActiveFilter={setActiveFilter}
                   setShowMobileFilterPanel={setShowMobileFilterPanel}
+                  setPreventScroll={setPreventScroll}
                   activeFiltersList={orderedFilters}
                 />
               )}
@@ -554,6 +586,7 @@ const Cars = ({
                 below820={below820}
                 above375={above375}
                 setShowMobileFilterPanel={setShowMobileFilterPanel}
+                setPreventScroll={setPreventScroll}
                 orderedFilterCount={orderedFilters.length}
                 setActiveFilter={setActiveFilter}
                 sortCats={sortCats}
@@ -561,14 +594,28 @@ const Cars = ({
                 setAppliedFilters={setAppliedFilters}
                 setShowCompare={setShowCompare}
                 showCompare={showCompare}
+                setCompareCars={setCompareCars}
+                setChosenCars={setChosenCars}
               />
 
-              {showCompare && <ComparePanel />}
+              <ComparePanel
+                compareCars={compareCars}
+                setCompareCars={setCompareCars}
+                showCompare={showCompare}
+                chosenCars={chosenCars}
+                setChosenCars={setChosenCars}
+              />
 
               <InventoryGrid
                 cars={matchesArray}
                 below820={below820}
                 appliedFilters={appliedFilters}
+                showCompare={showCompare}
+                setShowCompare={setShowCompare}
+                setCompareCars={setCompareCars}
+                compareCars={compareCars}
+                setPreventScroll={setPreventScroll}
+
                 // send 'showCompare' here to change InvCards' <MoreButton/> to 'select' btn when true
               />
             </div>

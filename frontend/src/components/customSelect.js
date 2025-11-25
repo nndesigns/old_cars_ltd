@@ -15,6 +15,9 @@ const CustomSelect = ({
   const [clickedOn, setClickedOn] = useState(false);
   const selectRef = useRef(null);
 
+  // console.log("customSelect received prop", prop);
+  // console.log("array received", array);
+
   const handleChange = (e) => {
     const rawValue = e.target.value;
     // Try to convert to number if the original array contains numbers
@@ -89,7 +92,7 @@ const CustomSelect = ({
           ...selectStyle,
         }}
       >
-        {label != "From" && (
+        {label !== "From" && (
           <option value="" disabled>
             Select a {label}
           </option>

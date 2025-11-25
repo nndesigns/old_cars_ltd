@@ -25,7 +25,7 @@
    top: 0;
    min-width: 320px;
    max-width: 320px;
-  height: 100dvh;        
+  height: 100vh;    /*  */   
    overflow: hidden;
             
             >button.filterSortBtn{
@@ -181,7 +181,7 @@
 }
 .scrollBox_filterMenu{
    width: 100%;
-  margin-bottom: 75px;
+  /* margin-bottom: 75px; */
   scrollbar-width: auto;
 
 /* FilterMenu */
@@ -241,6 +241,9 @@
           
          
           h3{
+            /* position:sticky; */
+            position: relative;
+            z-index:9;
              letter-spacing: -.5px;
              font-weight:700;
           padding: 1.25rem;
@@ -251,6 +254,7 @@
           >.wrapper_box {             
                flex: 1;
                padding-block: 3rem 2rem;
+               z-index: 9;
              
                border-radius: 20px;
                background-color: var(--tileBG);
@@ -281,7 +285,9 @@
 
          h3{
             padding: 1rem; 
-            border-block:  1px solid lightgrey;     
+            padding-block: 2rem;
+            border-block:  1px solid lightgrey; 
+        
          }
 
          > .wrapper_box{
@@ -297,7 +303,7 @@
       .mobileFilterRowWrapper {
          position: relative;
          display: flex;
-         /* border: 1px solid red; */
+         z-index: 9;
          padding-right: 1rem;
 
          >button {

@@ -6,7 +6,9 @@ import { IoCopyOutline } from "react-icons/io5";
 import { styled } from "@mui/material/styles";
 
 import { AnimatePresence } from "motion/react";
+// import { createPortal } from "react-dom";
 import * as motion from "motion/react-client";
+import "./invCard.css";
 
 import { mileageFormatter, stateToStateMap } from "./utils";
 
@@ -102,7 +104,7 @@ const driveTrainMap = {
 // Functional Component
 const SectionBox = ({ title, specs, grid, ...props }) => {
   return (
-    <SectionBoxContainer grid={grid} {...props}>
+    <SectionBoxContainer {...props}>
       {/* Title/header section (not part of grid) */}
       {title && <h4 style={h4_style}>{title}</h4>}
       <hr style={title_hr_style} />
@@ -137,7 +139,13 @@ const SectionBox = ({ title, specs, grid, ...props }) => {
   );
 };
 
-const FeatSpecBox = ({ carData, setShowFeatSpec, featBoxRef }) => {
+const FeatSpecBox = ({
+  carData,
+  showFeatSpec,
+  setShowFeatSpec,
+  featBoxRef,
+  setPreventScroll,
+}) => {
   const [copied, setCopied] = useState(false);
   const [keyFeaturesArray, setKeyFeaturesArray] = useState([]);
   const [highlightsArray, setHighlightsArray] = useState([]);
@@ -263,8 +271,10 @@ const FeatSpecBox = ({ carData, setShowFeatSpec, featBoxRef }) => {
     setFeaturesArray(features);
   }, [carData]);
 
-  const close = () => {
+  const close = (e) => {
     setShowFeatSpec(false);
+    setPreventScroll(false);
+    e.stopPropagation();
   };
 
   const handleCopyVin = () => {
@@ -279,86 +289,97 @@ const FeatSpecBox = ({ carData, setShowFeatSpec, featBoxRef }) => {
 
   return (
     <AnimatePresence>
-      {/** Only render when FeatSpecBox should show */}
-      <motion.div
-        key="featSpecBG"
-        className="featSpecBG"
-        ref={featBoxRef}
-        onClick={close}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
-      >
+      {showFeatSpec && (
         <motion.div
-          key="featSpecModal"
-          className="spec_box"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 50 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          onClick={(e) => e.stopPropagation()}
+          key="featSpecBG"
+          className="featSpecBG"
+          ref={featBoxRef}
+          onClick={(e) => {
+            close(e);
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
         >
-          <h2>About this car</h2>
-          <IoClose onClick={close} className="closeBtn" />
-          <button className="vinCopyBtn" onClick={handleCopyVin}>
-            <IoCopyOutline /> VIN {carData.vin}
-          </button>
-          {/** Small VIN Copied animation */}
-          <AnimatePresence>
-            {copied && (
-              <motion.span
-                key="vinCopied"
-                style={vinCopiedSpanStyles}
-                initial={{ opacity: 0, scale: 0.3, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.3, y: 10 }}
-                transition={{ duration: 0.1 }}
-              >
-                VIN Copied!
-              </motion.span>
-            )}
-          </AnimatePresence>
-          {/* BASE SPECS */}
-          <SectionBox
-            grid={false}
-            title="Base Specifications"
-            specs={Object.entries(baseSpecs).map(([key, value]) => ({
-              prop: key,
-              value: value,
-            }))}
-          />
-          {/* COLOR */}
-          <SectionBox
-            grid={false}
-            title="Color"
-            specs={Object.entries(colorSpecs).map(([key, value]) => ({
-              prop: key,
-              value: value,
-            }))}
-          />
-          {/* ENGINE */}
-          <SectionBox
-            grid={false}
-            title="Engine"
-            specs={Object.entries(engineSpecs).map(([key, value]) => ({
-              prop: key,
-              value: value,
-            }))}
-          />
-          {/* KEY FEATURES */}
-          <SectionBox
-            grid={true}
-            title="Key Features"
-            specs={keyFeaturesArray}
-          />
+          <motion.div
+            key="featSpecModal"
+            className="spec_box"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2>About this car</h2>
+            <IoClose onClick={close} className="closeBtn" />
+            <button className="vinCopyBtn" onClick={handleCopyVin}>
+              <IoCopyOutline /> VIN {carData.vin}
+            </button>
+            {/** VIN COPIED ANIMATION*/}
+            <AnimatePresence>
+              {copied && (
+                <motion.span
+                  key="vinCopied"
+                  style={vinCopiedSpanStyles}
+                  initial={{ opacity: 0, scale: 0.3, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.3, y: 10 }}
+                  transition={{ duration: 0.1 }}
+                >
+                  VIN Copied!
+                </motion.span>
+              )}
+            </AnimatePresence>
+            {/* BASE SPECS */}
+            <SectionBox
+              grid={false}
+              title="Base Specifications"
+              specs={Object.entries(baseSpecs).map(([key, value]) => ({
+                prop: key,
+                value: value,
+              }))}
+            />
+            {/* COLOR */}
+            <SectionBox
+              grid={false}
+              title="Color"
+              specs={Object.entries(colorSpecs).map(([key, value]) => ({
+                prop: key,
+                value: value,
+              }))}
+            />
+            {/* ENGINE */}
+            <SectionBox
+              grid={false}
+              title="Engine"
+              specs={Object.entries(engineSpecs).map(([key, value]) => ({
+                prop: key,
+                value: value,
+              }))}
+            />
+            {/* KEY FEATURES */}
+            <SectionBox
+              grid={true}
+              title="Key Features"
+              specs={keyFeaturesArray}
+            />
 
-          {/* HIGHLIGHTS */}
-          <SectionBox grid={true} title="Highlights" specs={highlightsArray} />
-          {/* FEATURES */}
-          <SectionBox grid={true} title="All Features" specs={featuresArray} />
+            {/* HIGHLIGHTS */}
+            <SectionBox
+              grid={true}
+              title="Highlights"
+              specs={highlightsArray}
+            />
+            {/* FEATURES */}
+            <SectionBox
+              grid={true}
+              title="All Features"
+              specs={featuresArray}
+            />
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
     </AnimatePresence>
   );
 };

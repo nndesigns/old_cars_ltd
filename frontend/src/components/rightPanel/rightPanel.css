@@ -1,0 +1,105 @@
+.compareCard{
+          padding-block: 13px;
+          border-bottom: 1px solid var(--greyBorder);
+          width: 100%;
+          position: relative;
+          /* height: 10rem; */
+
+          >*{
+                    display:inline-block;
+          }
+
+          &.opaqueStyle{
+                    opacity: .6
+          }
+        
+}
+
+.compareCard_imgBox{
+          position: relative;
+          border-radius: 5px;
+          margin-right: 1rem;
+          width: 120px;
+          height: 80px;
+          box-sizing: content-box;
+
+          &.selectable{
+                    cursor: pointer;
+          }
+}
+
+.compareCard_imgBox.selectable::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          pointer-events: none;
+}
+
+/* hover activates border */
+.compareCard_imgBox.selectable:hover::before {
+          border: 2px solid var(--offBlue);
+          
+}
+
+.imgBox_svg{
+          position:absolute;
+          top:-10px;
+          right:-8px;
+          font-size: 1.5em;
+          fill: var(--btnBG);
+          
+}
+
+
+.compareCard_img{
+          border-radius: 5px;
+          height: 100%;
+          width:100%;
+          object-fit: cover;
+     
+         
+}
+
+.compareCard_detailsBox{
+font-size: 14px;
+display: inline-block;
+vertical-align: top;
+/* border: 1px solid blue; */
+width: max-content;
+}
+
+h4.compareCard_title{
+        font-weight:450;
+        letter-spacing: 0px;
+
+}
+
+p.stockNum{
+          margin-top: .225rem;
+          color: grey;
+
+}
+
+.likeTrashBox{
+          /* border: 1px solid grey; */
+          display: flex;
+          align-items: center;
+          height:30px;
+
+          >svg{
+                    margin-top: -2px;
+                    font-size: 1.5em;
+                    fill: var(--offBlue);
+                    cursor: pointer;
+
+                    &:hover{
+                              fill:#ff4e50;
+                    }
+          }
+}
+
+
+
+
+

@@ -1,6 +1,7 @@
 import React from "react";
 
 const ClearAllBtn = ({ currFilter, setAppliedFilters, setOrderedFilters }) => {
+  console.log("currFilters", currFilter);
   const btnStyle = {
     backgroundColor: "transparent",
     border: "none",
@@ -18,6 +19,12 @@ const ClearAllBtn = ({ currFilter, setAppliedFilters, setOrderedFilters }) => {
       if (Array.isArray(prevState[filter])) {
         //might have to test for objects later as well
         newFilters[filter] = [];
+      } else if (
+        typeof prevState[filter] === "object" &&
+        prevState[filter] !== null
+      ) {
+        // Case: object → reset to empty object
+        newFilters[filter] = {};
       } else {
         newFilters[filter] = null;
       }

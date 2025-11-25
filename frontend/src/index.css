@@ -9,11 +9,13 @@
 :root{
   --primaryColor: #2e2e2e;
   --tileBG: #f3f5f9;
+  --tileBG2: #f2f3f4;
   --hoverBG:#ededed;
   --iconColor: #415658;
   --offBlue: rgb(83, 105, 117);
   --disabledBtn: #dadbde;
   --btnBG: rgb(249, 88, 65); /* coral */;
+  --btnBGFaded: rgba(249, 89, 65, 0.533);
   --inviteGreen: rgb(103, 208, 207);
   --inviteYellow: rgb(252, 255, 197);
   --greyBorder: rgba(83, 105, 117, .3);
@@ -135,8 +137,8 @@ code {
     &::-webkit-scrollbar {
       display: none !important;
     }
-    /* overflow: hidden; */
 }
+
 
 .center_box{
       display: flex;
@@ -144,12 +146,13 @@ code {
       margin-bottom: 120px;
       /* border: 1px solid blue; */
       
+
+      /*  MIDDLE BOX (L + R PADDING) */
       .middle_content{
         padding-inline: 24px;
         width:1200px;
         max-width:100%;
-        /* border: 1px solid red; */
-
+    
        
       >h2 {
           margin-bottom: 32px;
@@ -180,10 +183,34 @@ code {
                   justify-content: center;
                 }
         }
-      }   
-
-     
+      }        
 }
+
+
+/*  COMPARE CENTER_BOX 1 */
+.compare_middle_content {
+  /* border: 2px solid blue; */
+  margin-top:
+    215px;
+}
+
+/* COMPARE DETAILS TOOL CENTER_BOX */
+.details_center_box {
+  background-color: var(--tileBG2);
+  width: 100vw;
+  flex-direction: column;
+  align-items: center;
+  /* position: relative; */
+  /* border: 2px solid red; */
+
+}
+
+/*  DETAILS TOOL MIDDLE_CONTENT */
+/* .details_middle{ */
+      /* padding-top:55px; */
+/* } */
+
+
 
 p{
   line-height:1.6;

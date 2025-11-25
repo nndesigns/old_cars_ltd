@@ -1,0 +1,245 @@
+
+
+.top_row{
+          /* width: 100%; */
+          display:flex;
+          justify-content: center;
+          position: /* sticky */fixed;
+          /* make fixed, and give padding-inline of .middle_content (24px) */
+          /* left: 0; */
+          left: 50%;
+          transform: translateX(-50%);
+          padding-inline: 24px;
+          
+          width: 100vw;
+          /* max-width: 100%; */
+          z-index:10;
+          top: 0;
+          background-color: white;
+       /* border:1px solid black */
+}
+
+.innerTopRow{
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 1200px;
+          max-width: 100%;
+}
+
+.gapBox{
+          width: .5rem;
+          height: 100%;
+          background-color: white;
+}
+
+h2.titleBox_h2{
+          font-size:1.7em;
+          text-align: left !important;
+}
+
+.titleBox_model{
+          font-size:.95em;
+          margin-bottom:.5rem;
+}
+
+.btn_box{
+          display: flex;
+          gap: .5rem;
+          flex-wrap: wrap;
+          padding-bottom: 28px;
+}
+
+
+/* CAR IMAGES */
+
+.carImg{
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+}
+
+.btn_wrapper{
+          display: flex;
+          justify-content: center;
+          padding-block: 2rem;
+}
+
+
+/* MOBILE : DROPDOWN (TITLEBOX)  STYLE*/
+.dropdown-item:hover{
+          background-color: var(--tileBG);
+          cursor: pointer;
+          /* font-weight: 600; */
+}
+
+.dropdown-item.active{
+          background-color: var(--tileBG);
+        
+}
+
+/* DETAILS SECTION */
+.tabs_container{
+          width: 100vw;
+          /* border: 1px solid black;          */
+          height: 55px;
+          left: 0;
+          z-index:1;
+          background-color: white;
+          display:flex;
+          justify-content: center;
+          position: sticky;
+          top: 213px;
+          overflow-x:scroll;
+}
+
+.tabsContainer_inner{
+          /* border: 1px solid black; */
+          display: flex;
+          align-items: center;
+          overflow-x: scroll;
+
+
+}
+
+/* TABS */
+.tab_li{
+          padding-inline: 13px 16px;
+          padding-block: 17px 12px;
+          position: relative;
+          font-weight: 550;
+          font-size: 1.08rem;
+          color: var(--iconColor);
+          background-color: transparent;
+          cursor: pointer;
+          border: none;
+        
+          height: 100%;
+          list-style-type: none;
+}
+
+.details_table{
+          /* border: 1px solid blue; */
+          width: 100%;
+}
+
+.detail_section{
+          padding-block:2rem;
+}
+
+.details_h1{
+          margin-bottom:1.5rem;
+          /* font-size: 40px */
+}
+
+.details_h1, h3.detail_title {
+          font-weight: 600;
+          letter-spacing: -1px;
+}
+
+h3.detail_title{
+          margin-bottom:1rem;
+}
+
+.detailComp_box{
+          display: flex;
+          gap:.25rem;     
+          margin-bottom: 2rem;     
+}
+
+.detail{
+          flex:1;
+          border-radius: 5px;
+          background-color: white;
+          min-height: 64px;
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          /* font-size:1.1em; */
+          letter-spacing: -.25px;
+
+         
+}
+
+.sectionDiv_hr{
+          border: none;
+          border-bottom: 1px solid var(--greyBorder);
+          /* margin-block: 3rem; */
+}
+
+.icon_span{
+         display:inline-flex;
+         align-items: center;
+         gap: .5rem
+          
+
+}
+.svg{
+          font-size: 1.2em;
+}
+
+.starSVG{
+          color: rgb(232, 182, 0);
+}
+
+.gearSVG{ 
+          color: forestGreen;
+}
+
+.gearSVG.empty{
+          color: rgba(128, 128, 128, 0.623)
+}
+
+.gauge{
+          font-size: 1.5em;
+          color: rgb(0, 145, 255);
+          width: 101%;
+}
+.gauge.gauge1{
+          transform:scaleX(-1);
+}
+
+.color_container{
+          display: flex;
+          justify-content: center;
+          flex-wrap:wrap;
+          gap:.75rem;
+}
+
+.colorBox{
+          display: flex;
+          align-items: center;
+          gap: .5rem;
+}
+
+.colorCircle{
+          display:inline-block;
+          border: 1px solid black;
+          height: 45px;
+          width: 45px;
+          border-radius: 50%;
+          z-index: 0;
+}
+
+.colorBox_textBox{
+          >h5{
+               font-weight:400;     
+          }
+}
+
+.compareCardsWrapper{
+          margin-bottom:1.5rem;
+}
+
+.searchbarBtnWrapper{
+          position:relative;
+}
+
+span.errorMessage{
+          position:absolute;
+          width: 100%;
+          text-align: center;
+          color: red;
+          font-size:.9em;
+          margin-top:.2rem;
+}

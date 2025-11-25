@@ -6,7 +6,7 @@ import { GoHeartFill } from "react-icons/go";
 const Heart = ({ hearted, onClick, ...props }) => {
   const heartColor = "#ff4e50";
 
-  const HeartBtn = styled("button")(({ theme, hearted, ...props }) => ({
+  const HeartBtn = styled("button")(({ /* theme, */ hearted, ...props }) => ({
     // position: "absolute",
     position: props.position ?? "absolute",
     backgroundColor: "transparent",
@@ -30,8 +30,6 @@ const Heart = ({ hearted, onClick, ...props }) => {
       ":nth-of-type(2)": {
         fill: hearted ? heartColor : "var(--greyBorder)",
         position: "absolute", //in order to be on top of first-child?
-        // top: 0,
-        // right: 0,
         top: props.top ?? 0,
         right: props.right ?? 0,
         left: props.left ?? "",
@@ -49,6 +47,7 @@ const Heart = ({ hearted, onClick, ...props }) => {
         },
       },
     },
+    ...props.style,
   }));
 
   return (

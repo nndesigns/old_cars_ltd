@@ -1,4 +1,4 @@
-import React, { useState, useEffect, forwardRef, useRef } from "react";
+import React, { forwardRef } from "react";
 import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Searchbar from "./searchbar/searchbar";
@@ -50,6 +50,7 @@ const LocationChangeModal = forwardRef(
       locObjs,
       setLocObjs,
       setShowLocationChangeModal,
+      setPreventScroll,
     },
     ref
   ) => {
@@ -80,6 +81,9 @@ const LocationChangeModal = forwardRef(
             setLocationInputValue("");
             if (distMode) {
               setShowLocationChangeModal(false);
+              if (window.innerWidth >= 820) {
+                setPreventScroll(false);
+              }
             }
             e.stopPropagation();
           }}

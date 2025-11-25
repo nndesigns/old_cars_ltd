@@ -6,8 +6,18 @@ import Button from "../buttons/button.js";
 import { getModelImageURLs } from "../axiosCalls.js"; // adjust import
 import ConcatH3 from "../concatH3.js";
 import { LoadingWave } from "./loadingWave.js";
+import NoImage from "../../images/no_image.webp";
 
-const InventoryGrid = ({ cars, below820, appliedFilters }) => {
+const InventoryGrid = ({
+  cars,
+  below820,
+  appliedFilters,
+  showCompare,
+  setShowCompare,
+  setCompareCars,
+  compareCars,
+  setPreventScroll,
+}) => {
   const [invImagesMap, setInvImagesMap] = useState({});
   const [visibleCars, setVisibleCars] = useState([]);
   const gridRef = useRef(null);
@@ -66,6 +76,7 @@ const InventoryGrid = ({ cars, below820, appliedFilters }) => {
       try {
         setLoadingImages(true);
         const imagesMap = await getModelImageURLs(newKeysToFetch, !!cars, true);
+
         setInvImagesMap((prev) => ({
           ...prev,
           ...imagesMap,
@@ -88,7 +99,11 @@ const InventoryGrid = ({ cars, below820, appliedFilters }) => {
   const carsWithPics = useMemo(() => {
     return visibleCars.map((veh) => ({
       ...veh,
-      imageArray: invImagesMap[veh.images.model_imgs_key] || [],
+      imageArray:
+        invImagesMap[veh.images.model_imgs_key] ||
+        [
+          /* NoImage */
+        ],
     }));
   }, [visibleCars, invImagesMap]);
 
@@ -133,7 +148,15 @@ const InventoryGrid = ({ cars, below820, appliedFilters }) => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: Math.min(index, 6) * 0.05 }}
             >
-              <InventoryCard carData={car} below820={below820} />
+              <InventoryCard
+                carData={car}
+                below820={below820}
+                showCompare={showCompare}
+                setShowCompare={setShowCompare}
+                setCompareCars={setCompareCars}
+                compareCars={compareCars}
+                setPreventScroll={setPreventScroll}
+              />
             </motion.div>
           ))}
         </div>

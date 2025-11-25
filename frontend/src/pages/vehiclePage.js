@@ -2,11 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import Box from "@mui/material/Box";
-import Button from "../components/buttons/button";
-import { useNavigate } from "react-router-dom";
 import "./vehiclePage.css";
-import CalculatePanel from "../components/calculatePanel.js";
+import RightPanel from "../components/rightPanel/rightPanel.js";
 import ImgScrollGallery from "../components/imgScrollGallery.js";
+import SearchBackBtn from "../components/searchBackBtn.js";
 import "../components/vehiclePage/detailSections.css";
 
 import { AnimatePresence } from "motion/react";
@@ -24,9 +23,7 @@ import {
   DeliveryBox,
 } from "../components/vehiclePage/sectionParts.js";
 
-// import { motion, AnimatePresence } from "framer-motion"; //vin copy message
 import { useSelector } from "react-redux";
-import { ImArrowLeft } from "react-icons/im";
 import { IoCopyOutline } from "react-icons/io5";
 import LikeCalcBox from "../components/likeCalcBox.js";
 import { formatPrice } from "../components/utils.js";
@@ -35,12 +32,10 @@ import { TabsDropdown } from "../components/vehiclePage/sectionParts.js";
 const VehiclePage = ({ inventory }) => {
   const { id } = useParams();
 
-  const navigate = useNavigate();
-  // const dispatch = useDispatch();
   const heartedCars = useSelector((state) => state.favorites.heartedCars);
   const [showRightPanel, setShowRightPanel] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [toggleLike, setToggleLike] = useState(false);
+  const [copyMessage, setCopyMessage] = useState();
   const [below900, setBelow900] = useState(window.innerWidth < 900);
   const detailSectionRef = useRef(null);
   const [detailsAtTop, setDetailsAtTop] = useState(false);
@@ -62,9 +57,7 @@ const VehiclePage = ({ inventory }) => {
     const handleResize = () => {
       setBelow900(window.innerWidth < 900);
     };
-
     window.addEventListener("resize", handleResize);
-
     // Clean up the event listener on unmount
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -112,26 +105,18 @@ const VehiclePage = ({ inventory }) => {
     return <div>Vehicle not found</div>;
   }
 
-  // console.log("carData", carData);
-  const isHearted = heartedCars.some((car) => car.id === carData.id);
-
-  const handleCopyVin = () => {
+  const handleCopy = (prop) => {
     navigator.clipboard
-      .writeText(carData.vin)
+      .writeText(prop === "vin" ? carData.vin : carData.id)
       .then(() => {
         setCopied(true);
-        setTimeout(() => setCopied(false), 2000); // reset after 2 sec
+        setCopyMessage(prop === "vin" ? "VIN copied!" : "STOCK copied!");
+        setTimeout(() => {
+          setCopied(false);
+          setCopyMessage();
+        }, 2000); // reset after 2 sec
       })
       .catch((err) => console.error("Copy failed", err));
-  };
-
-  const searchBackBtnStyle = {
-    marginBlock: below900 ? "1rem 1.5rem" : "1.5rem 1rem",
-    display: "flex",
-    gap: ".5rem",
-    paddingInline: below900 ? ".8rem" : "1.25rem",
-    height: below900 ? "40px" : "inherit",
-    paddingBlock: below900 ? ".65rem" : "",
   };
 
   const underline = {
@@ -146,8 +131,6 @@ const VehiclePage = ({ inventory }) => {
 
   // TABS & DROP DOWN
   const handleTabSelect = (index) => {
-    // setActiveTab(index);
-
     const element = sectionRefs.current[index]?.current;
     if (element) {
       const navbarHeight =
@@ -179,13 +162,7 @@ const VehiclePage = ({ inventory }) => {
       <div className="page_container">
         <Box className="center_box vehiclePage_center_box">
           <Box className="middle_content">
-            <Button
-              text="Search"
-              outlineStyle2={true}
-              style={searchBackBtnStyle}
-              svg={<ImArrowLeft />}
-              onClick={() => navigate("/cars")}
-            />
+            <SearchBackBtn page="car" />
             <Box className="mc_top">
               <span>
                 <h1 className="carTitle">
@@ -211,14 +188,17 @@ const VehiclePage = ({ inventory }) => {
                   heartedCount={heartedCars.length}
                   setShowRightPanel={setShowRightPanel}
                   carData={carData}
-                  setToggleLike={setToggleLike}
-                  isHearted={isHearted}
                 />
               )}
             </Box>
-            <button className="vinCopyBtn" onClick={handleCopyVin}>
-              <IoCopyOutline /> VIN {carData.vin}
-            </button>
+            <div className="copyBtnWrapper">
+              <button className="vinCopyBtn" onClick={() => handleCopy("vin")}>
+                <IoCopyOutline /> VIN {carData.vin}
+              </button>
+              <button className="vinCopyBtn" onClick={() => handleCopy("id")}>
+                <IoCopyOutline /> STOCK # {carData.id}
+              </button>
+            </div>
           </Box>
 
           <AnimatePresence>
@@ -230,31 +210,13 @@ const VehiclePage = ({ inventory }) => {
                 exit={{ opacity: 0, scale: 0.3, y: 10 }}
                 transition={{ duration: 0.25 }}
               >
-                VIN Copied!
+                {copyMessage}
               </motion.span>
             )}
           </AnimatePresence>
-          <AnimatePresence>
-            {toggleLike && (
-              <motion.span
-                className="toggleLikeSpan"
-                initial={{ opacity: 0, scale: 0.3, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.3, y: 10 }}
-                transition={{ duration: 0.25 }}
-              >
-                {isHearted ? (
-                  <>
-                    Added to your favorites! <a href="/favorites">VIEW</a>
-                  </>
-                ) : (
-                  "Removed from your favorites"
-                )}
-              </motion.span>
-            )}
-          </AnimatePresence>
-          <CalculatePanel
-            show={showRightPanel}
+          <RightPanel
+            mode="calcPay"
+            showRightPanel={showRightPanel}
             setShowRightPanel={setShowRightPanel}
           />
 
@@ -271,16 +233,13 @@ const VehiclePage = ({ inventory }) => {
                   tabs={tabs}
                   handleTabSelect={handleTabSelect}
                   activeTab={activeTab}
-                  sectionRefs={sectionRefs}
+                  // sectionRefs={sectionRefs}
                 />
                 <div className="second_child">
                   <LikeCalcBox
                     heartedCount={heartedCars.length}
                     setShowRightPanel={setShowRightPanel}
                     carData={carData}
-                    setToggleLike={setToggleLike}
-                    isHearted={isHearted}
-                    // detailSection={false}
                   />
                 </div>
               </div>
@@ -294,7 +253,10 @@ const VehiclePage = ({ inventory }) => {
                     color: index === activeTab ? "rgb(56,111,165)" : "#415658",
                   }}
                   className="tab_li"
-                  onClick={() => (setActiveTab(index), handleTabSelect(index))}
+                  onClick={() => {
+                    setActiveTab(index);
+                    handleTabSelect(index);
+                  }}
                 >
                   {`${label}`}
                   {index === activeTab ? (
@@ -312,14 +274,11 @@ const VehiclePage = ({ inventory }) => {
                 heartedCount={heartedCars.length}
                 setShowRightPanel={setShowRightPanel}
                 carData={carData}
-                setToggleLike={setToggleLike}
-                isHearted={isHearted}
                 detailSection={true}
               />
             )}
           </Box>
           <hr className="horz_line" />
-          {/* <div className="fullWidth_div" /> */}
 
           <Box className="middle_content">
             <span className="top_grid">

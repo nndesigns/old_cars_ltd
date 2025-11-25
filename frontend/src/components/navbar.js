@@ -16,7 +16,13 @@ import LocationModal from "./locationModal";
 import { createPortal } from "react-dom";
 import LocationChangeModal from "./locationChangeModal.js";
 
-function Navbar({ darkRoute, inv, setAppliedFilters, setOrderedFilters }) {
+function Navbar({
+  darkRoute,
+  inv,
+  setAppliedFilters,
+  setOrderedFilters,
+  setPreventScroll,
+}) {
   const [smallNav, setSmallNav] = useState(window.innerWidth < 850);
   const location = useSelector((state) => state.location); //redux user
   const [isLocationHovered, setIsLocationHovered] = useState(false);
@@ -47,8 +53,14 @@ function Navbar({ darkRoute, inv, setAppliedFilters, setOrderedFilters }) {
     display: "flex",
     position: "relative",
     alignItems: "center",
-    paddingBlock: "1.5rem",
-    zIndex: "10",
+    // border: "1px solid orange",
+    paddingBottom: ".75rem",
+    marginTop: ".9rem",
+
+    // "& > *": {  },
+    "&:hover": {
+      cursor: "pointer",
+    },
   }));
 
   const Nav = styled("nav")(({ theme }) => ({
@@ -60,6 +72,8 @@ function Navbar({ darkRoute, inv, setAppliedFilters, setOrderedFilters }) {
     justifyContent: "space-between",
     alignItems: "center",
     overflow: "visible",
+    zIndex: 20, //overtake sibling  SearchBar & its dropdown (15)
+    position: "relative",
 
     [`@media (min-width: 850px)`]: {
       height: "70px", // Change background color on wider screens
@@ -71,10 +85,9 @@ function Navbar({ darkRoute, inv, setAppliedFilters, setOrderedFilters }) {
     lineHeight: "11px",
     marginLeft: "-.05rem",
     marginRight: ".25rem",
+
     color: darkRoute ? "var(--iconColor)" : "#f4f5f7",
-    "&:hover": {
-      cursor: "pointer",
-    },
+    // border: "1px solid blue",
   }));
 
   const sectionRightStyle = {
@@ -84,9 +97,7 @@ function Navbar({ darkRoute, inv, setAppliedFilters, setOrderedFilters }) {
     height: "100%",
   };
 
-  const RightBtn = styled(Link, {
-    shouldForwardProp: (prop) => prop !== "disableHoverBg",
-  })(({ theme, disableHoverBg }) => ({
+  const RightBtn = styled(Link)(({ theme }) => ({
     textDecoration: "none",
     color: darkRoute ? "var(--iconColor)" : "#f4f5f7",
     height: "40px",
@@ -97,12 +108,10 @@ function Navbar({ darkRoute, inv, setAppliedFilters, setOrderedFilters }) {
     backgroundColor: "transparent",
     borderRadius: "50%",
     fontSize: "1.65em",
-    zIndex: 10,
+    // border: "1px solid green",
 
     "&:hover": {
-      backgroundColor: disableHoverBg
-        ? "transparent"
-        : "rgba(83, 105, 177, .3)",
+      backgroundColor: "rgba(83, 105, 177, .3)",
       cursor: "pointer",
     },
 
@@ -143,6 +152,7 @@ function Navbar({ darkRoute, inv, setAppliedFilters, setOrderedFilters }) {
           !locationChangeRef.current.contains(event.target) // & outside Loc Change Mod
         ) {
           setLocObjs(null); // close LCM
+          setPreventScroll(false);
           locationInputRef.current.focus(); // re-focus Loc Mod input
         }
       } else if (!locObjs && showLocationModal) {
@@ -169,23 +179,23 @@ function Navbar({ darkRoute, inv, setAppliedFilters, setOrderedFilters }) {
   return (
     <>
       {/* LOCATION CHANGE MODAL */}
-      {locObjs !== null &&
-        createPortal(
-          /****** LOCATION CHANGE MODAL ******/
-          <AnimatePresence>
+      {createPortal(
+        /****** LOCATION CHANGE MODAL ******/
+        <AnimatePresence>
+          {locObjs !== null && (
             <motion.div
               className="modal_overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
             >
               <motion.div
                 className="modal_wrapper"
-                initial={{ opacity: 0, y: 50 }}
+                initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 50 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
+                exit={{ opacity: 0, y: 40 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
               >
                 <LocationChangeModal
                   ref={locationChangeRef}
@@ -196,12 +206,14 @@ function Navbar({ darkRoute, inv, setAppliedFilters, setOrderedFilters }) {
                   inv={inv}
                   locObjs={locObjs}
                   setLocObjs={setLocObjs}
+                  setPreventScroll={setPreventScroll}
                 />
               </motion.div>
             </motion.div>
-          </AnimatePresence>,
-          document.body
-        )}
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       <Nav>
         {/******* LEFT SECTION NAV *******/}
@@ -253,9 +265,13 @@ function Navbar({ darkRoute, inv, setAppliedFilters, setOrderedFilters }) {
             }}
           >
             <RightBtn
-              disableHoverBg={smallNav ? false : true}
+              // disableHoverBg={smallNav ? false : true}
               style={{
-                marginLeft: smallNav ? "" : "-.5rem",
+                marginLeft: smallNav ? "" : "-.5.5rem",
+                marginRight: smallNav ? "" : ".25rem",
+                backgroundColor: showLocationModal
+                  ? "rgba(83, 105, 177, .3)"
+                  : "",
               }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -298,6 +314,7 @@ function Navbar({ darkRoute, inv, setAppliedFilters, setOrderedFilters }) {
                 setLocObjs={setLocObjs}
                 setAppliedFilters={setAppliedFilters}
                 setOrderedFilters={setOrderedFilters}
+                setPreventScroll={setPreventScroll}
               />
             )}
           </LocationSpan>

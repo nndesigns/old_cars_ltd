@@ -4,8 +4,11 @@ import Box from "@mui/material/Box";
 
 const SearchInput = styled("input", {
   shouldForwardProp: (prop) =>
-    prop !== "darkRoute" && prop !== "border" && prop !== "showDroplist",
-})(({ theme, darkRoute, border, showDroplist }) => ({
+    prop !== "darkRoute" &&
+    prop !== "border" &&
+    prop !== "showDroplist" &&
+    prop !== "rightPanel",
+})(({ theme, darkRoute, border, showDroplist, rightPanel }) => ({
   backgroundColor: darkRoute
     ? showDroplist
       ? "white"
@@ -17,8 +20,8 @@ const SearchInput = styled("input", {
   paddingLeft: "1rem",
 
   height: "100%",
-  width: "calc(100% - 57px)",
-  borderRadius: showDroplist ? "8px 0 0 0" : "8px 0 0 8px",
+  width: /*  rightPanel ? "100%" : */ /* "calc(100% - 57px)" */ "100%",
+  borderRadius: showDroplist ? "8px 8px 0 0" : "8px",
   color: "var(--primaryColor)",
   borderTop: "none",
   paddingTop: "none",
@@ -39,6 +42,7 @@ const InputWrapper = styled(Box, {
   shouldForwardProp: (prop) => prop !== "darkRoute" && prop !== "distLocFilter",
 })(({ darkRoute, distLocFilter }) => ({
   position: "relative",
+
   border: "none",
   height: "48px",
   width: distLocFilter ? "98%" : "100%",
@@ -54,16 +58,22 @@ const InputWrapper = styled(Box, {
 // Border layer (abs -pos'd box wrapping the input)
 const InputWrapperBorder = styled(Box, {
   shouldForwardProp: (prop) =>
-    prop !== "darkRoute" && prop !== "border" && prop !== "showDroplist",
-})(({ darkRoute, border, showDroplist }) => ({
+    prop !== "darkRoute" &&
+    prop !== "border" &&
+    prop !== "showDroplist" &&
+    prop !== "rightPanelError",
+})(({ darkRoute, border, showDroplist, rightPanelError }) => ({
   position: "absolute",
+  zIndex: 5,
   width: !darkRoute ? "calc(100% - 8px)" : "100%",
   height: !darkRoute ? "calc(100% - 8px)" : "100%",
   top: !darkRoute ? "4px" : "0",
   left: !darkRoute ? "4px" : "0",
   backgroundColor: "transparent",
   outline: border
-    ? "2px solid var(--invCardTitle)"
+    ? rightPanelError
+      ? "2px solid red"
+      : "2px solid var(--invCardTitle)"
     : darkRoute
     ? "1px solid lightGrey"
     : "2px solid transparent",
@@ -88,6 +98,8 @@ const droplistStyle = ({ darkRoute }) => ({
 const SearchBtn = styled("button", {
   shouldForwardProp: (prop) => prop !== "darkRoute" && prop !== "showDroplist",
 })(({ darkRoute, showDroplist }) => ({
+  position: "absolute",
+  right: 0,
   height: "48px",
   width: "100%",
   verticalAlign: "middle",
@@ -104,7 +116,7 @@ const SearchBtn = styled("button", {
 
   "&:hover": {
     cursor: "pointer",
-    backgroundColor: "white",
+    // backgroundColor: "white",
   },
 }));
 

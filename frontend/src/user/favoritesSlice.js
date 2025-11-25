@@ -26,8 +26,14 @@ const favoritesSlice = createSlice({
     clearHearts(state) {
       state.heartedCars = [];
     },
+    cleanupHeartedCars(state) {
+      state.heartedCars = state.heartedCars.filter(
+        (car) => !car.carObj // removes any entry that has a `carObj` key
+      );
+    },
   },
 });
 
-export const { toggleHeart, clearHearts } = favoritesSlice.actions;
+export const { toggleHeart, clearHearts, cleanupHeartedCars } =
+  favoritesSlice.actions;
 export default favoritesSlice.reducer;

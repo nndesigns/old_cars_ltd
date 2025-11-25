@@ -1,41 +1,43 @@
 import React, { useEffect } from "react";
 import { IoCloseCircleOutline } from "react-icons/io5";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
-import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion"; // use framer-motion, not motion/react
 import "./imagePreviewer.css";
 
 const ImagePreviewer = ({
+  isPreviewOpen,
+  setIsPreviewOpen,
   images,
   currentIndex,
-  onClose,
+
   setCurrentIndex,
-  isOpen,
 }) => {
   // Close when user presses Escape
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
-      if (e.key === "ArrowLeft") handlePrev();
-      if (e.key === "ArrowRight") handleNext();
+      if (e.key === "Escape") setIsPreviewOpen(false);
+      if (e.key === "ArrowLeft") handlePrev(e);
+      if (e.key === "ArrowRight") handleNext(e);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   });
 
-  const handlePrev = () =>
+  const handlePrev = (e) => {
+    e.stopPropagation();
     setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
-  const handleNext = () =>
+  };
+  const handleNext = (e) => {
+    e.stopPropagation();
     setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+  };
 
-  if (!isOpen || !images || images.length === 0) return null;
-
-  return createPortal(
+  return (
     <AnimatePresence>
-      {isOpen && (
+      {isPreviewOpen && (
         <motion.div
           className="image_previewer_overlay"
-          onClick={onClose}
+          onClick={() => setIsPreviewOpen(false)}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -47,13 +49,16 @@ const ImagePreviewer = ({
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 40 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
           >
-            <button className="close_btn" onClick={onClose}>
+            <button
+              className="close_btn"
+              onClick={() => setIsPreviewOpen(false)}
+            >
               <IoCloseCircleOutline size={30} />
             </button>
 
-            <button className="nav_btn left" onClick={handlePrev}>
+            <button className="nav_btn left" onClick={(e) => handlePrev(e)}>
               <FaChevronLeft size={36} />
             </button>
 
@@ -63,14 +68,13 @@ const ImagePreviewer = ({
               className="preview_image"
             />
 
-            <button className="nav_btn right" onClick={handleNext}>
+            <button className="nav_btn right" onClick={(e) => handleNext(e)}>
               <FaChevronRight size={36} />
             </button>
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>,
-    document.body
+    </AnimatePresence>
   );
 };
 
