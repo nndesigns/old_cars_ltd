@@ -74,6 +74,7 @@ const LocationChangeModal = forwardRef(
           setLocObjs={setLocObjs}
           userLocationObj={location}
           inv={inv}
+          setPreventScroll={setPreventScroll}
         />
         <CloseIcon
           onClick={(e) => {

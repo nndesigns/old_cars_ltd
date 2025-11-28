@@ -60,12 +60,25 @@ const defaultFilterState = {
 };
 
 /// TRANSITION (Framer-Motion)
-const PageTransition = ({ children }) => (
+const PageTransition = ({ children, style }) => (
   <motion.div
-    initial={{ opacity: 0, y: 50 }}
+    initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, y: -30 }}
-    transition={{ duration: 0.65 }}
+    transition={{ duration: 0.8 }}
+    style={style}
+  >
+    {children}
+  </motion.div>
+);
+
+const FadeTransition = ({ children, style }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 0.8 }}
+    style={style}
   >
     {children}
   </motion.div>
@@ -82,10 +95,11 @@ const PageWrapper = function PageWrapper({
   setOrderedFilters,
   handleClearFilters,
   setPreventScroll,
+  location,
 }) {
   const thumbNavRef = useRef(null);
   const bottomNavRef = useRef(null);
-  const location = useLocation();
+  // const location = useLocation();
 
   useEffect(() => {
     if (value != null) {
@@ -108,23 +122,35 @@ const PageWrapper = function PageWrapper({
     [location.pathname]
   );
 
+  // console.log("location.pathname", location.pathname);
+  console.log("currentRoute", currentRoute);
+  const backgroundGradient = `
+  linear-gradient(
+    to bottom,
+    rgba(9, 30, 48, 1) 0%,
+    rgba(9, 30, 48, 0) 10%
+  )
+`;
+
   return (
-    <div className="app_root">
+    <div
+      className="app_root"
+      style={{ background: !currentRoute.length ? backgroundGradient : "" }}
+    >
       {currentRoute !== "compare" && (
+        // <PageTransition key={location.pathname}>
         <Header
           currentRoute={!currentRoute.length ? "home" : currentRoute}
-          inv={inv} /// WHY DOES HEADER NEED INV
+          inv={inv}
           setAppliedFilters={setAppliedFilters}
           setOrderedFilters={setOrderedFilters}
           handleClearFilters={handleClearFilters}
           setPreventScroll={setPreventScroll}
+          PageTransition={PageTransition}
         />
+        // </PageTransition>
       )}
-      {/*      <AnimatePresence> */}
-      {/*  <PageTransition> */}
       {children}
-      {/* </PageTransition> */}
-      {/*       </AnimatePresence> */}
       <Footer inv={inv} /> {/* WHY DOES FOOTER NEED INV */}
       {showBottomNav && (
         <BottomNav ref={bottomNavRef} value={value} setValue={setValue} />
@@ -144,6 +170,7 @@ function App() {
   );
   console.log("App.js just re-rendered!!!");
 
+  const loc = useLocation();
   //FOR DISABLING APP SCROLL WHILE MODALS OPEN
   // const [showMobileFilterPanel, setShowMobileFilterPanel] = useState(false);
   const [preventScroll, setPreventScroll] = useState(false);
@@ -214,6 +241,7 @@ function App() {
 
   // Save applied filters to Redux
   useEffect(() => {
+    console.log("latest appliedFilters", appliedFilters);
     dispatch(saveFilter(appliedFilters));
   }, [appliedFilters, dispatch]);
 
@@ -279,6 +307,7 @@ function App() {
   // DISABLE SCROLLING IN /CARS WHEN
 
   useEffect(() => {
+    console.log("preventScroll", preventScroll);
     if (preventScroll) {
       const scrollY = window.scrollY;
       document.body.style.position = "fixed";
@@ -346,84 +375,88 @@ function App() {
   );
 
   return (
-    <Router>
-      <AnimatePresence mode="wait">
-        <PageTransition>
-          <PageWrapper
-            key={location.pathname}
-            inv={inventory}
-            setValue={setValue}
-            value={value}
-            showBottomNav={showBottomNav}
-            appliedFilters={appliedFilters}
-            setAppliedFilters={setAppliedFilters}
-            setOrderedFilters={setOrderedFilters}
-            handleClearFilters={handleClearFilters} // Header
-            setPreventScroll={setPreventScroll}
-            location={location}
-          >
-            <ScrollToTop />
-            <ScrollToTopButton />
+    //<Router>
+    <AnimatePresence mode="wait">
+      {/* <PageTransition> */}
+      <PageWrapper
+        // key={location.pathname}
+        inv={inventory}
+        setValue={setValue}
+        value={value}
+        showBottomNav={showBottomNav}
+        appliedFilters={appliedFilters}
+        setAppliedFilters={setAppliedFilters}
+        setOrderedFilters={setOrderedFilters}
+        handleClearFilters={handleClearFilters} // Header
+        setPreventScroll={setPreventScroll}
+        location={/* location */ loc}
+      >
+        <ScrollToTop />
+        <ScrollToTopButton />
 
-            <Routes /* location={location} */ /* key={location.pathname} */>
-              <Route
-                // path="/"
-                index
-                element={
-                  //<PageTransition>
-                  <Home {...homeProps} />
-                  //</PageTransition>
-                }
+        <Routes location={loc} key={loc.pathname}>
+          <Route
+            // path="/"
+            index
+            element={
+              // <PageTransition>
+              <Home
+                {...homeProps}
+                PageTransition={PageTransition}
+                FadeTransition={FadeTransition}
               />
+              //</PageTransition>
+            }
+          />
 
-              <Route
-                path="/favorites/*"
-                element={
-                  // <PageTransition>
-                  <Favorites hearted_cars={heartedCars} location={location} />
-                  //</PageTransition>
-                }
-              />
+          <Route
+            path="/favorites/*"
+            element={
+              <PageTransition>
+                <Favorites hearted_cars={heartedCars} location={location} />
+              </PageTransition>
+            }
+          />
 
-              <Route
-                path="/cars/*"
-                element={
-                  //<PageTransition>
-                  <Cars {...carsProps} />
-                  //</PageTransition>
-                }
-              />
+          <Route
+            path="/cars/*"
+            element={
+              <PageTransition>
+                <Cars {...carsProps} />
+              </PageTransition>
+            }
+          />
 
-              <Route
-                path="/car/:id"
-                element={
-                  // <PageTransition>
-                  <VehiclePage inventory={inventory} />
-                  // </PageTransition>
-                }
-              />
+          <Route
+            path="/car/:id"
+            element={
+              <PageTransition>
+                <VehiclePage inventory={inventory} />
+              </PageTransition>
+            }
+          />
 
-              <Route
-                path="/compare"
-                element={
-                  //<PageTransition>
-                  <Compare
-                    compareCars={compareCars}
-                    setCompareCars={setCompareCars}
-                    location={location}
-                    inventory={inventory}
-                    chosenCars={chosenCars}
-                    setChosenCars={setChosenCars}
-                    setPreventScroll={setPreventScroll}
-                  />
-                  //  </PageTransition>
-                }
-              />
-            </Routes>
-          </PageWrapper>
-        </PageTransition>
-      </AnimatePresence>
-    </Router>
+          <Route
+            path="/compare"
+            element={
+              <PageTransition>
+                <Compare
+                  compareCars={compareCars}
+                  setCompareCars={setCompareCars}
+                  location={location}
+                  inventory={inventory}
+                  chosenCars={chosenCars}
+                  setChosenCars={setChosenCars}
+                  setPreventScroll={setPreventScroll}
+                />
+              </PageTransition>
+            }
+          />
+        </Routes>
+      </PageWrapper>
+      {/* </PageTransition> */}
+    </AnimatePresence>
+    //</Router>
   );
 }
 

@@ -854,6 +854,7 @@ function YearFilter({
   const clampValue = (value, min, max) => Math.max(min, Math.min(value, max));
 
   const updateFilters = (newRange, changedKey) => {
+    console.log("updateFilters was reached in here");
     setAppliedFilters((prev) => ({
       ...prev,
       ...(changedKey === "yearFrom" ? { yearFrom: newRange[0] } : {}),
@@ -864,7 +865,9 @@ function YearFilter({
     );
   };
 
-  const handleUpdateRange = (event, newValue, placeholder, activeSelect) => {
+  const handleUpdateRange = (newValue, activeSelect) => {
+    console.log("this was run, and this is computedRange", computedRange);
+    console.log("activeSelect", activeSelect);
     if (!computedRange) return;
 
     const minYear = computedRange.min;

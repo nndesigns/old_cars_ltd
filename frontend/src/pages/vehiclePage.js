@@ -160,7 +160,16 @@ const VehiclePage = ({ inventory }) => {
         />
       </Helmet>
       <div className="page_container">
-        <Box className="center_box vehiclePage_center_box">
+        {/* <hr
+          style={{
+            position: "fixed",
+            boxShadow: "0 8px 16px -4px rgba(0, 0, 0, 0.12)",
+          }}
+        /> */}
+        <Box
+          className="center_box vehiclePage_center_box"
+          style={{ boxShadow: "inset 0 8px 16px -4px rgba(0, 0, 0, 0.12)" }}
+        >
           <Box className="middle_content">
             <SearchBackBtn page="car" />
             <Box className="mc_top">

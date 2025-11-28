@@ -10,10 +10,14 @@ const Header = ({
   setOrderedFilters,
   handleClearFilters,
   setPreventScroll,
+  PageTransition,
 }) => {
   const bottomShadow = "0 8px 16px -4px rgba(0, 0, 0, 0.12)";
   const darkRoutes = ["favorites", "cars", "car"];
   const inventoryRef = useRef(""); ////////// CHECK THIS
+
+  // console.log("Header rec'd currentRoute", currentRoute);
+
   return (
     <Box
       sx={{
@@ -27,11 +31,10 @@ const Header = ({
         paddingInline: darkRoutes.includes(currentRoute) ? "12px" : "none",
         maxWidth: darkRoutes.includes(currentRoute) ? "none" : "1200px",
         paddingBottom: "1rem",
-        boxShadow:
+        /*   boxShadow:
           darkRoutes.includes(currentRoute) && currentRoute !== "cars"
             ? bottomShadow
-            : "none",
-
+            : "none", */
         display: darkRoutes.includes(currentRoute) ? "flex" : "",
         justifyContent: darkRoutes.includes(currentRoute) ? "center" : "",
       }}
@@ -43,24 +46,26 @@ const Header = ({
           maxWidth: darkRoutes.includes(currentRoute) ? "100%" : "inherit",
         }}
       >
-        <Navbar
-          darkRoute={darkRoutes.includes(currentRoute)}
-          inv={inv}
-          setAppliedFilters={setAppliedFilters}
-          setOrderedFilters={setOrderedFilters}
-          setPreventScroll={setPreventScroll}
-        />
-        <Searchbar
-          currentRoute={currentRoute}
-          darkRoute={darkRoutes.includes(currentRoute)}
-          mode="inventory"
-          inputRef={inventoryRef} ////////// CHECK THIS
-          inv={inv}
-          setAppliedFilters={setAppliedFilters}
-          setOrderedFilters={setOrderedFilters}
-          handleClearFilters={handleClearFilters}
-          // setStringMatchesArr={setStringMatchesArr}
-        />
+        <PageTransition key={currentRoute}>
+          <Navbar
+            darkRoute={darkRoutes.includes(currentRoute)}
+            inv={inv}
+            setAppliedFilters={setAppliedFilters}
+            setOrderedFilters={setOrderedFilters}
+            setPreventScroll={setPreventScroll}
+          />
+          <Searchbar
+            currentRoute={currentRoute}
+            darkRoute={darkRoutes.includes(currentRoute)}
+            mode="inventory"
+            inputRef={inventoryRef} ////////// CHECK THIS
+            inv={inv}
+            setAppliedFilters={setAppliedFilters}
+            setOrderedFilters={setOrderedFilters}
+            handleClearFilters={handleClearFilters}
+            // setStringMatchesArr={setStringMatchesArr}
+          />
+        </PageTransition>
       </Box>
     </Box>
   );

@@ -72,7 +72,7 @@ const Cars = ({
     return saved ? JSON.parse(saved) : false;
   });
   // CHECKED CARS FROM /CARS (which 2 being compared, for 'More' tool)
-  // console.log("appliedFilters (Cars))", appliedFilters);
+  console.log("appliedFilters (Cars))", appliedFilters);
   // console.log("showCompare", showCompare);
 
   // SAVE COMPARE PANEL STATES TO LOCAL STORAGE
@@ -356,8 +356,8 @@ const Cars = ({
               : inventory),
           ]}
           setAppliedFilters={setAppliedFilters}
-          appliedFilters={appliedFilters}
           setOrderedFilters={setOrderedFilters}
+          appliedFilters={appliedFilters}
         />
       ),
 

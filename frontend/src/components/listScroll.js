@@ -63,6 +63,7 @@ const ListScroll = ({
   setLocObjs,
   userLocationObj,
   inv,
+  setPreventScroll,
 }) => {
   //Redux update (LocationChangeModal)
   // LOCATION UPDATE
@@ -197,6 +198,7 @@ const ListScroll = ({
             className="locationCard-action"
             onClick={() => {
               handleLocationUpdate(loc_obj);
+              setPreventScroll(false);
             }}
             outlineStyle2={true}
             text="SET AS LOCATION"
