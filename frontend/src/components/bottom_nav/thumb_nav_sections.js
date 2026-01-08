@@ -3,27 +3,27 @@ import "./bottom_nav.css";
 import { styled } from "@mui/material/styles";
 
 //Search Icons
-import { ReactComponent as BrowseCategory } from "./icons/BrowseCategory.svg";
-import { ReactComponent as ViewAll } from "./icons/ViewAllInv.svg";
-import { ReactComponent as NearMe } from "./icons/NearMe.svg";
-import { ReactComponent as FindStore } from "./icons/FindStore.svg";
+import { ReactComponent as BrowseCategory } from "./icons/BrowseCategory.svg"; //
+import { ReactComponent as ViewAll } from "./icons/ViewAllInv.svg"; //
+import { ReactComponent as NearMe } from "./icons/NearMe.svg"; //
+import { ReactComponent as FindStore } from "./icons/FindStore.svg"; //
 
 //Sell Icons
-import { ReactComponent as Offer } from "./icons/Offer.svg";
-import { ReactComponent as Question } from "./icons/Question.svg";
+import { ReactComponent as Offer } from "./icons/Offer.svg"; //
+import { ReactComponent as Question } from "./icons/Question.svg"; //
 
 //Finance Icons
-import { ReactComponent as Prequalified } from "./icons/Prequalified.svg";
-import { ReactComponent as Finance } from "./icons/Finance.svg";
+import { ReactComponent as Prequalified } from "./icons/Prequalified.svg"; //
+import { ReactComponent as Finance } from "./icons/Finance.svg"; //
 
 //More Icons
-import { ReactComponent as Service } from "./icons/ServiceRepairs.svg";
-import { ReactComponent as FAQ } from "./icons/FAQ.svg";
-import { ReactComponent as Why } from "./icons/Why.svg";
+import { ReactComponent as Service } from "./icons/ServiceRepairs.svg"; //
+import { ReactComponent as FAQ } from "./icons/FAQ.svg"; //
+import { ReactComponent as Why } from "./icons/Why.svg"; //
 
 //My Account Icons
-import { ReactComponent as Payment } from "./icons/Payment.svg";
-import { ReactComponent as SignIn } from "./icons/SignIn.svg";
+import { ReactComponent as Payment } from "./icons/Payment.svg"; //
+import { ReactComponent as SignIn } from "./icons/SignIn.svg"; //
 import { ReactComponent as CreateAcct } from "./icons/CreateAcct.svg";
 
 const boxStyles = {

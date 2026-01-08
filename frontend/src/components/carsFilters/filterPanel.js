@@ -8,31 +8,37 @@ import { motion, AnimatePresence } from "framer-motion";
 import { IoMdClose } from "react-icons/io";
 import MobileFilterRow from "./mobileFilterRow";
 import ClearAllBtn from "./clearAllBtn.js";
+//REDUX
+import { /* useSelector, */ useDispatch } from "react-redux";
+import { clearFilters } from "../../user/filtersSlice.js";
 
 const FilterPanel = ({
-  activeFiltersList,
-  setOrderedFilters,
+  activeFiltersList, /// orderedFilters from Cars.js
+  // setOrderedFilters,
   orderedFilterCount,
-  appliedFilters,
-  setAppliedFilters,
+  // appliedFilters,
+  // setAppliedFilters,
   closePill,
-  defaultFilterState,
+  // defaultFilterState,
   activeFilter,
   setActiveFilter,
   filterComponentsMap,
   //MOBILE-SPECIFIC ARGS
   mobile,
   setShowMobileFilterPanel,
-  setPreventScroll,
+  // setPreventScroll,
+  enableScrollLock,
+  disableScrollLock,
   matchesTotal,
 }) => {
+  const dispatch = useDispatch();
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
   // HANDLE CLEAR FILTERS (ALL)
-  const handleClearFilters = (mobile) => {
+  /*   const handleClearFilters = (mobile) => {
     const { sort, ...filtersWithoutSort } = defaultFilterState;
     const newApplied = {
       sort: appliedFilters.sort, //keep the sort filter
@@ -47,7 +53,7 @@ const FilterPanel = ({
       setPreventScroll(false);
     }
   };
-
+ */
   const compKeyToReduxKey = {
     Make: "makes",
     "Body Type": "styles",
@@ -91,7 +97,14 @@ const FilterPanel = ({
       {/* CLEAR FILTER BTN */}
       {activeFiltersList.length > 0 && (!mobile || !activeFilter) && (
         <button
-          onClick={() => handleClearFilters(mobile)}
+          onClick={() => {
+            dispatch(clearFilters());
+            if (mobile) {
+              setShowMobileFilterPanel(false);
+              // setPreventScroll(false);
+              disableScrollLock();
+            }
+          }}
           className="clearFilterBtn"
           style={mobile ? { right: "3rem" } : { right: "0" }}
         >
@@ -103,7 +116,8 @@ const FilterPanel = ({
         <IoMdClose
           onClick={() => {
             setShowMobileFilterPanel(false);
-            setPreventScroll(false);
+            // setPreventScroll(false);
+            disableScrollLock();
           }}
         />
       )}
@@ -111,17 +125,18 @@ const FilterPanel = ({
       {/* MOBILE FILTER ROW */}
       {activeFiltersList.length > 0 && mobile && !activeFilter ? (
         <MobileFilterRow
-          appliedFilters={appliedFilters}
+          // appliedFilters={appliedFilters}
           closePill={closePill}
           setActiveFilter={setActiveFilter}
           setShowMobileFilterPanel={setShowMobileFilterPanel}
-          setPreventScroll={setPreventScroll}
+          // setPreventScroll={setPreventScroll}
+          enableScrollLock={enableScrollLock}
           activeFiltersList={activeFiltersList}
         />
       ) : (
         !mobile && (
           <FilterPillsBox
-            appliedFilters={appliedFilters}
+            // appliedFilters={appliedFilters}
             activeFilter={activeFilter}
             setActiveFilter={setActiveFilter}
             closePill={closePill}
@@ -187,8 +202,8 @@ const FilterPanel = ({
                 activeFiltersList.includes(compKeyToReduxKey[activeFilter]) && (
                   <ClearAllBtn
                     currFilter={compKeyToReduxKey[activeFilter]}
-                    setAppliedFilters={setAppliedFilters}
-                    setOrderedFilters={setOrderedFilters}
+                    // setAppliedFilters={setAppliedFilters}
+                    // setOrderedFilters={setOrderedFilters}
                   />
                 )}
             </span>
@@ -230,7 +245,8 @@ const FilterPanel = ({
             text={`SEE ${matchesTotal} MATCHES`}
             onClick={() => {
               setShowMobileFilterPanel(false);
-              setPreventScroll(false);
+              // setPreventScroll(false);
+              disableScrollLock();
             }}
           />
         </div>

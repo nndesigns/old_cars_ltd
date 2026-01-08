@@ -6,8 +6,9 @@ import Button from "./buttons/button";
 import { IoCheckmarkDoneCircle } from "react-icons/io5";
 // import { getOffers } from "./utils";
 import { getDistance } from "geolib";
-import { /* useSelector,  */ useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { setManualLocation } from "../user/locationSlice";
+import { selectLocObjs, clearLocObjs } from "../user/userSlice";
 
 // Styled component (defined outside render)
 const LocDetailsBox = styled(Box)({
@@ -57,25 +58,21 @@ const LocationCard = styled(Card)(({ theme, style }) => ({
 }));
 
 //////////////// LIST SCROLL /////////////////
-const ListScroll = ({
-  hasSearchVal,
-  locObjs,
-  setLocObjs,
-  userLocationObj,
-  inv,
-  setPreventScroll,
-}) => {
+const ListScroll = ({ hasSearchVal, disableScrollLock }) => {
   //Redux update (LocationChangeModal)
   // LOCATION UPDATE
   const dispatch = useDispatch();
+  const inv = useSelector((s) => s.inventory.items);
+  const userLocationObj = useSelector((s) => s.location);
+
+  const locObjs = useSelector(selectLocObjs);
+
   const handleLocationUpdate = (loc_obj) => {
     //Update 'location' redux to new location
     //NOTE: this is listened for in App.js (to setLocalInv in location redux state)
     dispatch(setManualLocation(loc_obj));
-    setLocObjs(null);
+    dispatch(clearLocObjs());
   };
-
-  // console.log("rec'd locObjs ListScroll", locObjs);
 
   function getMiles(location) {
     const distInMeters = getDistance(
@@ -198,7 +195,8 @@ const ListScroll = ({
             className="locationCard-action"
             onClick={() => {
               handleLocationUpdate(loc_obj);
-              setPreventScroll(false);
+              // setPreventScroll(false);
+              disableScrollLock();
             }}
             outlineStyle2={true}
             text="SET AS LOCATION"

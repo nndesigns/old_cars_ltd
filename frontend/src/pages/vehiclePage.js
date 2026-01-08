@@ -8,8 +8,9 @@ import ImgScrollGallery from "../components/imgScrollGallery.js";
 import SearchBackBtn from "../components/searchBackBtn.js";
 import "../components/vehiclePage/detailSections.css";
 
-import { AnimatePresence } from "motion/react";
-import * as motion from "motion/react-client";
+// import { AnimatePresence } from "motion/react";
+// import * as motion from "motion/react-client";
+import { motion, AnimatePresence } from "framer-motion";
 
 // SECTION PARTS
 import {
@@ -29,8 +30,20 @@ import LikeCalcBox from "../components/likeCalcBox.js";
 import { formatPrice } from "../components/utils.js";
 import { TabsDropdown } from "../components/vehiclePage/sectionParts.js";
 
-const VehiclePage = ({ inventory }) => {
+const VehiclePage = ({ AnimatePresence, PageTransition }) => {
   const { id } = useParams();
+  let carData;
+  const inventory = useSelector((state) => state.inventory.items);
+  const selectedVehicle = useSelector((s) => s.selectedVehicle.vehicle);
+  // If user clicked a card normally:
+  if (selectedVehicle) {
+    carData = selectedVehicle;
+  }
+
+  // If page was refreshed or opened directly:
+  if (!carData) {
+    carData = inventory.find((car) => car.id === parseInt(id));
+  }
 
   const heartedCars = useSelector((state) => state.favorites.heartedCars);
   const [showRightPanel, setShowRightPanel] = useState(false);
@@ -95,16 +108,6 @@ const VehiclePage = ({ inventory }) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Wait for inventory to be populated
-  if (!inventory || inventory.length === 0) {
-    return <div>Loading vehicle details...</div>;
-  }
-  const carData = inventory.find((car) => car.id === parseInt(id));
-
-  if (!carData) {
-    return <div>Vehicle not found</div>;
-  }
-
   const handleCopy = (prop) => {
     navigator.clipboard
       .writeText(prop === "vin" ? carData.vin : carData.id)
@@ -159,158 +162,161 @@ const VehiclePage = ({ inventory }) => {
           }
         />
       </Helmet>
-      <div className="page_container">
-        {/* <hr
-          style={{
-            position: "fixed",
-            boxShadow: "0 8px 16px -4px rgba(0, 0, 0, 0.12)",
-          }}
-        /> */}
-        <Box
-          className="center_box vehiclePage_center_box"
-          style={{ boxShadow: "inset 0 8px 16px -4px rgba(0, 0, 0, 0.12)" }}
-        >
-          <Box className="middle_content">
-            <SearchBackBtn page="car" />
-            <Box className="mc_top">
-              <span>
-                <h1 className="carTitle">
-                  {carData.year} {carData.make} {carData.model}
-                </h1>
-                <h3 className="carSubtitle">
-                  {formatPrice(carData.price)}
-                  <span
-                    style={{
-                      display: "inline-block",
-                      color: "lightgrey",
-                      marginInline: ".65rem",
-                      fontSize: "1.2em",
-                    }}
-                  >
-                    |
+      {/* <PageTransition> */}
+      <AnimatePresence mode="wait">
+        <PageTransition>
+          <div className="page_container">
+            <Box
+              className="center_box vehiclePage_center_box"
+              style={{ boxShadow: "inset 0 8px 16px -4px rgba(0, 0, 0, 0.12)" }}
+            >
+              <Box className="middle_content">
+                <SearchBackBtn page="car" />
+                <Box className="mc_top">
+                  <span>
+                    <h1 className="carTitle">
+                      {carData.year} {carData.make} {carData.model}
+                    </h1>
+                    <h3 className="carSubtitle">
+                      {formatPrice(carData.price)}
+                      <span
+                        style={{
+                          display: "inline-block",
+                          color: "lightgrey",
+                          marginInline: ".65rem",
+                          fontSize: "1.2em",
+                        }}
+                      >
+                        |
+                      </span>
+                      {Math.floor(Number(carData.mileage) / 1000)}K miles
+                    </h3>
                   </span>
-                  {Math.floor(Number(carData.mileage) / 1000)}K miles
-                </h3>
-              </span>
-              {!below900 && (
-                <LikeCalcBox
-                  heartedCount={heartedCars.length}
-                  setShowRightPanel={setShowRightPanel}
-                  carData={carData}
-                />
-              )}
-            </Box>
-            <div className="copyBtnWrapper">
-              <button className="vinCopyBtn" onClick={() => handleCopy("vin")}>
-                <IoCopyOutline /> VIN {carData.vin}
-              </button>
-              <button className="vinCopyBtn" onClick={() => handleCopy("id")}>
-                <IoCopyOutline /> STOCK # {carData.id}
-              </button>
-            </div>
-          </Box>
-
-          <AnimatePresence>
-            {copied && (
-              <motion.span
-                className="vinCopiedSpan"
-                initial={{ opacity: 0, scale: 0.3, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.3, y: 10 }}
-                transition={{ duration: 0.25 }}
-              >
-                {copyMessage}
-              </motion.span>
-            )}
-          </AnimatePresence>
-          <RightPanel
-            mode="calcPay"
-            showRightPanel={showRightPanel}
-            setShowRightPanel={setShowRightPanel}
-          />
-
-          <ImgScrollGallery
-            model_imgs_key={carData.images.model_imgs_key}
-            below900={below900}
-          />
-
-          {/******* TABS & DROPDOWN *******/}
-          <Box className="middle_content tabs_box" ref={detailSectionRef}>
-            {below900 ? (
-              <div className="dropdown_wrapper">
-                <TabsDropdown
-                  tabs={tabs}
-                  handleTabSelect={handleTabSelect}
-                  activeTab={activeTab}
-                  // sectionRefs={sectionRefs}
-                />
-                <div className="second_child">
+                  {!below900 && (
+                    <LikeCalcBox
+                      heartedCount={heartedCars.length}
+                      setShowRightPanel={setShowRightPanel}
+                      carData={carData}
+                    />
+                  )}
+                </Box>
+                <div className="copyBtnWrapper">
+                  <button
+                    className="vinCopyBtn"
+                    onClick={() => handleCopy("vin")}
+                  >
+                    <IoCopyOutline /> VIN {carData.vin}
+                  </button>
+                  <button
+                    className="vinCopyBtn"
+                    onClick={() => handleCopy("id")}
+                  >
+                    <IoCopyOutline /> STOCK # {carData.id}
+                  </button>
+                </div>
+              </Box>
+              <AnimatePresence>
+                {copied && (
+                  <motion.span
+                    className="vinCopiedSpan"
+                    initial={{ opacity: 0, scale: 0.3, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.3, y: 10 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    {copyMessage}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+              <RightPanel
+                mode="calcPay"
+                showRightPanel={showRightPanel}
+                setShowRightPanel={setShowRightPanel}
+              />
+              <ImgScrollGallery
+                model_imgs_key={carData.images.model_imgs_key}
+                below900={below900}
+              />
+              {/******* TABS & DROPDOWN *******/}
+              <Box className="middle_content tabs_box" ref={detailSectionRef}>
+                {below900 ? (
+                  <div className="dropdown_wrapper">
+                    <TabsDropdown
+                      tabs={tabs}
+                      handleTabSelect={handleTabSelect}
+                      activeTab={activeTab}
+                      // sectionRefs={sectionRefs}
+                    />
+                    <div className="second_child">
+                      <LikeCalcBox
+                        heartedCount={heartedCars.length}
+                        setShowRightPanel={setShowRightPanel}
+                        carData={carData}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  tabs.map((label, index) => (
+                    <motion.li
+                      key={index}
+                      initial={false}
+                      animate={{
+                        backgroundColor: "transparent",
+                        color:
+                          index === activeTab ? "rgb(56,111,165)" : "#415658",
+                      }}
+                      className="tab_li"
+                      onClick={() => {
+                        setActiveTab(index);
+                        handleTabSelect(index);
+                      }}
+                    >
+                      {`${label}`}
+                      {index === activeTab ? (
+                        <motion.div
+                          style={underline}
+                          layoutId="underline"
+                          id="underline"
+                        />
+                      ) : null}
+                    </motion.li>
+                  ))
+                )}
+                {detailsAtTop && !below900 && (
                   <LikeCalcBox
                     heartedCount={heartedCars.length}
                     setShowRightPanel={setShowRightPanel}
                     carData={carData}
+                    detailSection={true}
                   />
-                </div>
-              </div>
-            ) : (
-              tabs.map((label, index) => (
-                <motion.li
-                  key={index}
-                  initial={false}
-                  animate={{
-                    backgroundColor: "transparent",
-                    color: index === activeTab ? "rgb(56,111,165)" : "#415658",
-                  }}
-                  className="tab_li"
-                  onClick={() => {
-                    setActiveTab(index);
-                    handleTabSelect(index);
-                  }}
-                >
-                  {`${label}`}
-                  {index === activeTab ? (
-                    <motion.div
-                      style={underline}
-                      layoutId="underline"
-                      id="underline"
-                    />
-                  ) : null}
-                </motion.li>
-              ))
-            )}
-            {detailsAtTop && !below900 && (
-              <LikeCalcBox
-                heartedCount={heartedCars.length}
-                setShowRightPanel={setShowRightPanel}
-                carData={carData}
-                detailSection={true}
-              />
-            )}
-          </Box>
-          <hr className="horz_line" />
-
-          <Box className="middle_content">
-            <span className="top_grid">
-              <AboutThePrice price={parseInt(carData.price)} />
-              <Overview
-                carData={carData}
-                mobile={below900}
-                sectionRefs={sectionRefs}
-              />
-              <FeaturesAndSpecs
-                sectionRefs={sectionRefs}
-                make={carData.make}
-                model={carData.model}
-              />
-              <DeliveryBox />
-            </span>
-            <GetPersonalizedTerms />
-            <HistoryAndInspection sectionRefs={sectionRefs} />
-            <Warranty sectionRefs={sectionRefs} />
-            <RatingsReviews sectionRefs={sectionRefs} />
-          </Box>
-        </Box>
-      </div>
+                )}
+              </Box>
+              <hr className="horz_line" />
+              <Box className="middle_content">
+                <span className="top_grid">
+                  <AboutThePrice price={parseInt(carData.price)} />
+                  <Overview
+                    carData={carData}
+                    mobile={below900}
+                    sectionRefs={sectionRefs}
+                  />
+                  <FeaturesAndSpecs
+                    sectionRefs={sectionRefs}
+                    make={carData.make}
+                    model={carData.model}
+                  />
+                  <DeliveryBox />
+                </span>
+                <GetPersonalizedTerms />
+                <HistoryAndInspection sectionRefs={sectionRefs} />
+                <Warranty sectionRefs={sectionRefs} />
+                <RatingsReviews sectionRefs={sectionRefs} />
+              </Box>
+            </Box>
+          </div>
+        </PageTransition>
+      </AnimatePresence>
+      {/* </PageTransition> */}
     </>
   );
 };

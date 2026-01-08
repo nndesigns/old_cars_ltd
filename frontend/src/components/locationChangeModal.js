@@ -4,6 +4,9 @@ import Box from "@mui/material/Box";
 import Searchbar from "./searchbar/searchbar";
 import { CiCircleRemove } from "react-icons/ci";
 import ListScroll from "./listScroll";
+import { useDispatch } from "react-redux";
+import { unlockScroll } from "../uiSlice.js";
+import { setLocObjs, clearLocObjs } from "../user/userSlice.js";
 
 const CloseIcon = styled(CiCircleRemove)(({ theme }) => ({
   position: "absolute",
@@ -26,7 +29,6 @@ const hr_style = {
 };
 
 const Modal = styled(Box)(({ theme }) => ({
-  // styles here
   position: "relative",
   padding: "1.5rem",
   backgroundColor: theme.palette.background.paper,
@@ -39,21 +41,9 @@ const Modal = styled(Box)(({ theme }) => ({
 
 /////////////  COMPONENT
 const LocationChangeModal = forwardRef(
-  (
-    {
-      distMode,
-      location, //user location objec
-      locationInputValue,
-      setLocationInputValue,
-      locationChangeInputRef,
-      inv,
-      locObjs,
-      setLocObjs,
-      setShowLocationChangeModal,
-      setPreventScroll,
-    },
-    ref
-  ) => {
+  ({ distMode, locationInputRef, setShowLocationChangeModal }, ref) => {
+    const dispatch = useDispatch();
+
     return (
       <Modal ref={ref}>
         <h3 style={{ marginBottom: "1rem", fontSize: "1.2em" }}>
@@ -62,29 +52,20 @@ const LocationChangeModal = forwardRef(
         <Searchbar
           darkRoute={true}
           mode="locationChange"
-          locationInputValue={locationInputValue}
-          setLocationInputValue={setLocationInputValue}
-          inputRef={/* locationInputRef */ locationChangeInputRef}
-          setLocObjs={setLocObjs}
+          inputRef={locationInputRef}
         />
         <hr style={hr_style} />
-        <ListScroll
-          hasSearchVal={!!locationChangeInputRef.current?.value}
-          locObjs={locObjs} //matching 'us_zips.csv' objs
-          setLocObjs={setLocObjs}
-          userLocationObj={location}
-          inv={inv}
-          setPreventScroll={setPreventScroll}
-        />
+        <ListScroll hasSearchVal={!!locationInputRef.current?.value} />
         <CloseIcon
           onClick={(e) => {
-            setLocObjs(distMode ? [] : null);
-            setLocationInputValue("");
             if (distMode) {
+              dispatch(setLocObjs([]));
               setShowLocationChangeModal(false);
               if (window.innerWidth >= 820) {
-                setPreventScroll(false);
+                dispatch(unlockScroll());
               }
+            } else {
+              clearLocObjs();
             }
             e.stopPropagation();
           }}

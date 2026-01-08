@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useDispatch } from "react-redux";
 import Box from "@mui/joy/Box";
 import Button from "@mui/material/Button";
 import { CustomCard } from "./customCards";
@@ -8,9 +9,9 @@ import { makeModelSearch } from "./searchbar/searchHandlers.js";
 
 const PickerGrid = ({
   models,
-  setAppliedFilters,
-  setOrderedFilters,
-  handleClearFilters,
+  // setAppliedFilters,
+  // setOrderedFilters,
+  // handleClearFilters,
 }) => {
   const [currentTab, setCurrentTab] = useState(1);
   // const [slideDirection, setSlideDirection] = useState(0); // 1 = next, -1 = prev
@@ -19,7 +20,7 @@ const PickerGrid = ({
 
   const [indicatorStyle, setIndicatorStyle] = useState({ width: 0, left: 0 });
   const buttonRefs = useRef([]);
-
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const categoryKeys = ["SUVS", "TRUCKS", "CROSSOVERS", "SEDANS"];
@@ -189,9 +190,10 @@ const PickerGrid = ({
                     makeModelSearch(
                       navigate,
                       "home",
-                      setAppliedFilters,
+                      dispatch,
+                      /*  setAppliedFilters,
                       setOrderedFilters,
-                      handleClearFilters,
+                      handleClearFilters, */
                       "Model",
                       item
                     )
@@ -226,9 +228,10 @@ const PickerGrid = ({
                   makeModelSearch(
                     navigate,
                     "home",
-                    setAppliedFilters,
+                    dispatch,
+                    /*  setAppliedFilters,
                     setOrderedFilters,
-                    handleClearFilters,
+                    handleClearFilters, */
                     "Style",
                     key === "SUVS"
                       ? "SUV / 4x4"

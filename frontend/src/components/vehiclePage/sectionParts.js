@@ -7,9 +7,10 @@ import Button from "../buttons/button";
 import { BsSpeedometer } from "react-icons/bs";
 import { PiArrowFatLinesDownBold } from "react-icons/pi"; // low miles
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
-import { AnimatePresence } from "motion/react";
-import * as motion from "motion/react-client";
+/* import { AnimatePresence } from "motion/react";
+import * as motion from "motion/react-client";*/
 import barometer from "./barometer.png";
+import { motion, AnimatePresence } from "framer-motion";
 
 const calcPerYearMiles = function (carData) {
   const currentYear = new Date().getFullYear();

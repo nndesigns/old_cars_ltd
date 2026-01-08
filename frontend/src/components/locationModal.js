@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { styled } from "@mui/material/styles";
+import { useDispatch } from "react-redux";
+import { updateFilter } from "../user/filtersSlice";
 import Box from "@mui/material/Box";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -7,31 +9,23 @@ import { IoHeart } from "react-icons/io5";
 import { MdLocalOffer } from "react-icons/md";
 import Button from "./buttons/button";
 import Searchbar from "./searchbar/searchbar";
+// import {}
 
 const LocationModal = ({
   smallNav,
   location,
-  locationInputValue,
-  setLocationInputValue,
-  locationInputRef,
-  setLocObjs,
-  setAppliedFilters,
-  setOrderedFilters,
-  setPreventScroll,
+  locationInputRef, // pass to SB
   style = {},
 }) => {
   const [favoritesNear, setFavoritesNear] = useState([]);
   const PopupBox = styled(Box)(({ theme }) => ({
     backgroundColor: "var(--tileBG)",
     position: "absolute",
-    // top: smallNav ? "4rem" : "5em",
     top: smallNav ? "37px" : "48px",
     right: -15,
     width: smallNav ? "290px" : "310px",
     borderRadius: "12px",
     boxShadow: "var(--allAroundBoxShadow)",
-    // zIndex: 50,
-
     display: "flex",
     flexDirection: "column",
     "& > *": {
@@ -44,10 +38,12 @@ const LocationModal = ({
     ...style,
   }));
   const navigate = useNavigate();
-  const locationRef = useLocation();
-
+  const locationRef = useLocation(); // for HANDLE OFFERS CLICK
+  // REDUX
+  const dispatch = useDispatch();
   const heartedCars = useSelector((state) => state.favorites.heartedCars);
 
+  //// SET FAVORITES
   useEffect(() => {
     if (location?.localInv && heartedCars.length > 0) {
       const localFavorites = location.localInv.filter((localCar) =>
@@ -59,6 +55,7 @@ const LocationModal = ({
     }
   }, [location.localInv, heartedCars]);
 
+  /// STYLES
   const spanStyle = function (side) {
     return {
       display: "block",
@@ -111,7 +108,10 @@ const LocationModal = ({
     },
   }));
 
-  const handleOffersClick = ({ nearby }) => {
+  //
+  /// HANDLE OFFERS CLICK
+  //
+  /*   const handleOffersClick = ({ nearby }) => {
     // update appliedFilters
     setAppliedFilters((prev) => ({
       ...prev,
@@ -129,6 +129,18 @@ const LocationModal = ({
 
     if (nearby && locationRef.pathname !== `/cars`) {
       navigate(`/cars`);
+    }
+  }; */
+  const handleOffersClick = ({ nearby }) => {
+    dispatch(
+      updateFilter({
+        key: "dist_radius",
+        value: nearby ? 25 : 100,
+      })
+    );
+
+    if (nearby && locationRef.pathname !== "/cars") {
+      navigate("/cars");
     }
   };
 
@@ -190,11 +202,9 @@ const LocationModal = ({
         <Searchbar
           darkRoute={true}
           mode="location"
-          locationInputValue={locationInputValue}
-          setLocationInputValue={setLocationInputValue}
+          // locationInputValue={locationInputValue}
+          // setLocationInputValue={setLocationInputValue}
           inputRef={locationInputRef}
-          setLocObjs={setLocObjs}
-          setPreventScroll={setPreventScroll}
         />
       </Box>
     </PopupBox>

@@ -52,6 +52,7 @@ const MakeCard = styled(Card, {
   height: "325px",
   minWidth: "260px",
   padding: "0px !important",
+
   fontSize: ".8rem",
   border: "none",
   boxShadow: 3,
@@ -83,7 +84,7 @@ const MakeCard = styled(Card, {
   transition: "transform 0.25s ease-out, filter 0.25s ease-in",
   "&:hover": {
     cursor: "pointer",
-    filter: "brightness(1.15) contrast(1.1)",
+    filter: lastCard ? "" : "contrast(1.1)",
     transform: "translateY(-.75rem)",
     boxShadow: "0 24px 30px -24px rgba(42,52,61,.4)",
   },

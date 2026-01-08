@@ -7,6 +7,15 @@ import Button from "./buttons/button.js";
 import { IoClose } from "react-icons/io5";
 import { GrCheckmark } from "react-icons/gr";
 import { TfiArrowCircleRight } from "react-icons/tfi";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  addChosenCar,
+  setChosenCars,
+  removeChosenCar,
+  removeFromCompare,
+  selectChosenCars,
+  selectCompareCars,
+} from "../user/userSlice.js";
 
 /// CONTAINER STYLE
 const getPanelStyle = (mobile, below1030, showCompare) => ({
@@ -135,16 +144,21 @@ const closeSVGStyle = {
   color: "red",
 };
 
+//
+// COMPARE PANEL
+//
+
 const ComparePanel = ({
-  compareCars,
-  setCompareCars,
   showCompare,
-  chosenCars,
-  setChosenCars,
+  // compareCars,
+  // chosenCars,
+  // setCompareCars,
+  // setChosenCars,
 }) => {
-  // console.log("received showCompare (ComparePanel)", showCompare);
-  // console.log("comparePanel compareCars rec'd", compareCars);
-  // console.log("comparePanel chosenCars rec'd", chosenCars);
+  // REDUX
+  const dispatch = useDispatch();
+  const chosenCars = useSelector(selectChosenCars);
+  const compareCars = useSelector(selectCompareCars);
 
   const [below1030, setBelow1030] = useState(window.innerWidth < 1030);
   const [mobile, setMobile] = useState(window.innerWidth < 820);
@@ -167,7 +181,7 @@ const ComparePanel = ({
       container.scrollBy({ left: 200, behavior: "smooth" });
     }
   };
-
+  /// RESIZE HANDLER
   useEffect(() => {
     const handleResize = () => {
       setMobile(window.innerWidth < 820);
@@ -182,6 +196,7 @@ const ComparePanel = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  /// RESIZE ARROWS
   useEffect(() => {
     checkOverflow();
     const container = scrollContainerRef.current;
@@ -203,6 +218,13 @@ const ComparePanel = ({
       container.removeEventListener("scroll", handleScroll);
     };
   }, [compareCars]);
+
+  // AUTO-ASSIGNING CHOSEN CARS
+  /*   useEffect(() => {
+    if (compareCars.length >= 2 && chosenCars.length === 0) {
+      dispatch(setChosenCars(compareCars.slice(0, 2)));
+    }
+  }, [compareCars, chosenCars]); */
 
   const navigate = useNavigate();
 
@@ -232,11 +254,15 @@ const ComparePanel = ({
   //REMOVE BTN
   const handleRemove = (id) => {
     //Remove from compareCars
-    setCompareCars((prev) => prev.filter((car) => car.id !== id));
+    // setCompareCars((prev) => prev.filter((car) => car.id !== id));
+    dispatch(removeFromCompare(id));
+
     //remove from chosenCars (if in chosenCars), and replace with other compareCars obj (if available)
+    /*if (chosenCars.length && chosenCars.some((car) => car.id === id)) {
+      setChosenCars((prev) => prev.filter((car) => car.id !== id)
+    )} */
     if (chosenCars.length && chosenCars.some((car) => car.id === id)) {
-      setChosenCars((prev) => prev.filter((car) => car.id !== id));
-      ///may need  add'l logic here to add other compareCar to 'chosenCars' (to replace the removed one). The logic opening /compare may do this automatically
+      dispatch(removeChosenCar(id));
     }
 
     //test with 3 compareCars
@@ -245,6 +271,7 @@ const ComparePanel = ({
     /// test whether removed car exists inside of 'chosenCars', and remove it from chosenCars if so, replace with another compareCars obj if available
     //so that car object's don't remain inside of 'chosenCars' after having been removed from 'compareCars' in the ComparePanel remove button.
   };
+
   const handleGo = () => {
     // Extract the IDs
     const ids = compareCars.map((car) => car.id);

@@ -39,6 +39,10 @@ import {
 } from "./customCards.js";
 import InventoryCard from "./inventoryCard.js";
 
+// REDUX
+import { useSelector, useDispatch } from "react-redux";
+import { updateFilter } from "../user/filtersSlice.js";
+
 const Carousels = ({
   // styleTypes,
   makeData,
@@ -57,6 +61,11 @@ const Carousels = ({
 
   const [fetchedModelImagesMap, setFetchedModelImagesMap] = useState([]);
   const [inventoryImagesMap, setInventoryImagesMap] = useState({});
+
+  //
+  // REDUX
+  //
+  const dispatch = useDispatch();
 
   //cars page
   const [hoveredIndex, setHoveredIndex] = useState(null);
@@ -228,7 +237,9 @@ const Carousels = ({
     fetchImages(); // <- don't forget to call it
   }, [modelData, invData]);
 
-  /**************  Setting 'data' array **************/
+  //
+  /**************  SETTING DATA ARRAY **************/
+  //
   let data;
   // <InventoryCard/>s
   if (invData) {
@@ -263,7 +274,9 @@ const Carousels = ({
       .sort((a, b) => a.title.localeCompare(b.title)); //alphabetize
   }
 
-  //UPDATING CAROUSEL SCROLL BTN VISIBILITY
+  //
+  // UPDATING CAROUSEL SCROLL BUTTON VISIBILITY
+  //
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     const updateButtonVisibility = () => {
@@ -311,17 +324,20 @@ const Carousels = ({
   }, [lifestyle]);
 
   const handleCardClick = ({ value, filterType }) => {
-    // if (filterType === "style") {
-    //   props.setAppliedFilters((prev) => ({
-    //     ...prev,
-    //     [filterType]: [value],
-    //   }));
-    //   props.setOrderedFilters((prev) => {
-    //     const filtered = prev.filter((f) => f !== filterType);
-    //     return [...filtered, filterType];
-    //   });
-    // } else {
-    props.setAppliedFilters((prev) => ({
+    /*  if (filterType === "style") {
+      props.setAppliedFilters((prev) => ({
+        ...prev,
+        [filterType]: [value],
+      }));
+      props.setOrderedFilters((prev) => {
+        const filtered = prev.filter((f) => f !== filterType);
+        return [...filtered, filterType];
+      });
+    } else { */
+
+    /*     console.log("handleCardClick rec'd value & filterType", value, filterType);
+
+        props.setAppliedFilters((prev) => ({
       ...prev,
       [filterType]: [value],
     }));
@@ -332,6 +348,16 @@ const Carousels = ({
     // }
 
     // Navigate
+    navigate("/cars"); */
+    console.log("handleCardClick rec'd", value, filterType);
+
+    dispatch(
+      updateFilter({
+        key: filterType, // "styles"
+        value: [value], // ["pickup"]
+      })
+    );
+
     navigate("/cars");
   };
 
@@ -540,7 +566,11 @@ const Carousels = ({
                 Want to see <i>all</i> of our inventory?
               </Typography>
             </Box>
-            <Button text="SEE ALL CARS" onClick={() => navigate("./cars")} />
+            <Button
+              text="SEE ALL CARS"
+              onClick={() => navigate("./cars")}
+              style={{ marginInline: "auto" }}
+            />
           </MakeCard>
         )}
         {/*************** LIFESTYLES ***************/}

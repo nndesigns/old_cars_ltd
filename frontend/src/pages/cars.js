@@ -3,12 +3,22 @@ import "./cars.css";
 import Box from "@mui/joy/Box";
 import Carousels from "../components/carousels";
 import { Helmet } from "react-helmet-async";
-import { getLocalOffers } from "../components/utils";
+import {
+  getLocalOffers,
+  sortInventoryByDistance,
+  sortInventoryByBestMatch,
+} from "../components/utils";
+
+import {
+  removeFilterValue,
+  removeModelFilter,
+  clearSingleFilter,
+} from "../user/filtersSlice.js";
 
 import CarsToolbar from "../components/carsToolbar/carsToolbar";
 import InventoryGrid from "../components/inventoryGrid/inventoryGrid";
 import ComparePanel from "../components/comparePanel.js";
-// import { useSelector, useDispatch } from "react-redux";
+
 import {
   FilterMenu,
   SortByFilter,
@@ -36,32 +46,50 @@ import FilterPanel from "../components/carsFilters/filterPanel.js";
 // import { saveFilter } from "../user/filtersSlice";
 import MobileFilterRow from "../components/carsFilters/mobileFilterRow.js";
 import ConcatH3 from "../components/concatH3.js";
-// import { processCityToZipMap } from "../components/utils.js";
 
-import {
-  sortInventoryByDistance,
-  sortInventoryByBestMatch,
-} from "../components/utils";
+import { useSelector, useDispatch } from "react-redux";
+//
+// PREVENT SCROLL (REDUX)
+//
+import { lockScroll, unlockScroll } from "../uiSlice.js";
+// import { processCityToZipMap } from "../components/utils.js";
+// import {
+//   selectChosenCars,
+//   selectCompareCars,
+// } from "../user/userSlice.js";
 
 const Cars = ({
-  location = { location }, //for dist_radius & veh_locations filters
-  inventory,
   below820,
   above375,
-  defaultFilterState,
-  appliedFilters,
-  setAppliedFilters, /// setter
-  orderedFilters,
-  setOrderedFilters, ////setter
-  compareCars,
-  setCompareCars,
-  chosenCars,
-  setChosenCars,
-  /*   showMobileFilterPanel,
-  setShowMobileFilterPanel, */
-  setPreventScroll,
+  // defaultFilterState,
+  // appliedFilters,
+  // setAppliedFilters, /// setter
+  // orderedFilters,
+  // setOrderedFilters, ////setter
+  // compareCars,
+  // setCompareCars,
+  // chosenCars,
+  // setChosenCars,
+
+  AnimatePresence,
+  PageTransition,
+  // preventScroll,
 }) => {
+  // REDUX
+  const dispatch = useDispatch();
+  const uniqueLocations = useSelector(
+    (state) => state.uniqueLocations.items ?? []
+  );
+  const inventory = useSelector((s) => s.inventory.items);
+  const location = useSelector((s) => s.location);
+  const appliedFilters = useSelector((s) => s.filters.appliedFilters);
+  const orderedFilters = useSelector((s) => s.filters.orderedFilters);
+
   const [showMobileFilterPanel, setShowMobileFilterPanel] = useState(false);
+
+  //SCROLL
+  const enableScrollLock = () => dispatch(lockScroll());
+  const disableScrollLock = () => dispatch(unlockScroll());
 
   //ACTIVE FILTER
   const [activeFilter, setActiveFilter] = useState(null); ///// setter
@@ -72,7 +100,6 @@ const Cars = ({
     return saved ? JSON.parse(saved) : false;
   });
   // CHECKED CARS FROM /CARS (which 2 being compared, for 'More' tool)
-  console.log("appliedFilters (Cars))", appliedFilters);
   // console.log("showCompare", showCompare);
 
   // SAVE COMPARE PANEL STATES TO LOCAL STORAGE
@@ -81,6 +108,7 @@ const Cars = ({
   }, [showCompare]);
 
   const hasAppliedFilters = useMemo(() => {
+    //why not just test 'orderedFilters.length' here?????
     return Object.entries(appliedFilters)
       .filter(([key]) => key !== "sort")
       .some(
@@ -140,9 +168,13 @@ const Cars = ({
     }, {});
   }, []);
 
+  // useEffect(() => {
+  //   console.log("appliedFilters (cars)", appliedFilters);
+  // }, [appliedFilters]);
+
   //////// USE MEMO VERIONS OF APPLIED & ORDERED FILTERS  /////////////
-  const stableAppliedFilters = useMemo(() => appliedFilters, [appliedFilters]);
-  const stableOrderedFilters = useMemo(() => orderedFilters, [orderedFilters]);
+  // const stableAppliedFilters = useMemo(() => appliedFilters, [appliedFilters]);
+  // const stableOrderedFilters = useMemo(() => orderedFilters, [orderedFilters]);
 
   //SETTING MATCHES ARRAY &
   const { matchesArray, filterStageArrays } = useMemo(() => {
@@ -156,14 +188,21 @@ const Cars = ({
       if (
         value == null ||
         value === "" ||
-        (Array.isArray(value) && value.length === 0)
+        (Array.isArray(value) && value.length === 0) ||
+        uniqueLocations.length === 0
       )
         return;
 
       switch (filterKey) {
         // // DISTANCE
         case "dist_radius":
-          filtered = getLocalOffers(filtered, location, value, false);
+          filtered = getLocalOffers(
+            filtered,
+            uniqueLocations,
+            location,
+            value,
+            false
+          );
           break;
         // // VEH_LOCATION
         case "veh_locations":
@@ -222,9 +261,9 @@ const Cars = ({
 
     // Sorting
     if (appliedFilters.sort === "Best match") {
-      filtered = sortInventoryByBestMatch(filtered, location);
+      filtered = sortInventoryByBestMatch(filtered, location, uniqueLocations);
     } else if (appliedFilters.sort === "Nearest distance") {
-      filtered = sortInventoryByDistance(filtered, location);
+      filtered = sortInventoryByDistance(filtered, location, uniqueLocations);
     } else if (appliedFilters.sort === "Lowest price") {
       filtered.sort((a, b) => a.price - b.price);
     } else if (appliedFilters.sort === "Highest price") {
@@ -244,29 +283,33 @@ const Cars = ({
       filterStageArrays: newFilterStageArrays,
     };
     // 👉 Stringify prevents re-run on reference-only changes
-  }, [stableAppliedFilters, stableOrderedFilters, inventory, location]);
+  }, [
+    /* stableAppliedFilters, stableOrderedFilters, */ appliedFilters,
+    orderedFilters,
+    inventory,
+    location,
+  ]);
 
-  /////////       FILTER COMPONENTS MAP      //////////
+  //
+  //  FILTER COMPONENTS MAP
+  //
   const filterComponentsMap = useMemo(() => {
     const staticComponents = {
       "Sort by": () => (
         <SortByFilter
           sortCats={sortCats}
           chosenSortCategory={appliedFilters.sort}
-          setAppliedFilters={setAppliedFilters}
         />
       ),
 
       "Distance or Location": () => (
         <DistanceLocationFilter
-          inv={inventory}
           location={location}
           currentVehLocations={appliedFilters.veh_locations}
-          appliedFilters={appliedFilters}
-          setAppliedFilters={setAppliedFilters}
-          orderedFilters={orderedFilters}
-          setOrderedFilters={setOrderedFilters}
-          setPreventScroll={setPreventScroll}
+          dist_radius={appliedFilters.dist_radius}
+          // setPreventScroll={setPreventScroll}
+          enableScrollLock={enableScrollLock}
+          disableScrollLock={disableScrollLock}
         />
       ),
 
@@ -284,17 +327,14 @@ const Cars = ({
               ? matchesArray
               : inventory),
           ]}
-          setAppliedFilters={setAppliedFilters}
           appliedFilters={appliedFilters}
           leftPanel={true}
-          setOrderedFilters={setOrderedFilters}
         />
       ),
 
       Make: () => (
         <MakeFilter
           currentMakes={appliedFilters.makes}
-          setAppliedFilters={setAppliedFilters}
           options={
             filterStageArrays["makes"]
               ? getCountsObj(filterStageArrays["makes"], "make")
@@ -302,16 +342,16 @@ const Cars = ({
               ? getCountsObj(matchesArray, "make")
               : getCountsObj(inventory, "make")
           }
-          orderedFilters={orderedFilters}
-          setOrderedFilters={setOrderedFilters}
         />
       ),
 
       Model: () => (
         <ModelFilter
           currentMakes={appliedFilters.makes}
-          currentModels={Object.values(appliedFilters.models || {}).flat()}
-          setAppliedFilters={setAppliedFilters}
+          currentModels={appliedFilters.models}
+          currentModelsStrings={Object.values(
+            appliedFilters.models || {}
+          ).flat()}
           options={
             filterStageArrays["models"]
               ? getCountsObj(filterStageArrays["models"], "model")
@@ -319,15 +359,14 @@ const Cars = ({
               ? getCountsObj(matchesArray, "model")
               : getCountsObj(inventory, "model")
           }
-          orderedFilters={orderedFilters}
-          setOrderedFilters={setOrderedFilters}
+          //setAppliedFilters = {setAppliedFilters}
+          // setOrderedFilters={setOrderedFilters}
         />
       ),
 
       "Body Type": () => (
         <BodyTypeFilter
           currentBodyTypes={appliedFilters.styles}
-          setAppliedFilters={setAppliedFilters}
           options={
             filterStageArrays["styles"]
               ? getCountsObj(filterStageArrays["styles"], "style")
@@ -335,14 +374,11 @@ const Cars = ({
               ? getCountsObj(matchesArray, "style")
               : getCountsObj(inventory, "style")
           }
-          orderedFilters={orderedFilters}
-          setOrderedFilters={setOrderedFilters}
         />
       ),
 
       Year: () => (
         <YearFilter
-          // options={inventory}
           options={[
             ...(filterStageArrays["yearFrom"]
               ? filterStageArrays["yearFrom"]
@@ -355,16 +391,13 @@ const Cars = ({
               ? matchesArray
               : inventory),
           ]}
-          setAppliedFilters={setAppliedFilters}
-          setOrderedFilters={setOrderedFilters}
-          appliedFilters={appliedFilters}
+          currYearFrom={appliedFilters.yearFrom}
+          currYearTo={appliedFilters.yearTo}
         />
       ),
 
       Mileage: () => (
         <MileageFilter
-          setAppliedFilters={setAppliedFilters}
-          appliedFilters={appliedFilters}
           options={
             filterStageArrays["mileage"]
               ? filterStageArrays["mileage"]
@@ -372,37 +405,43 @@ const Cars = ({
               ? matchesArray
               : inventory
           }
-          setOrderedFilters={setOrderedFilters}
+          currentMileage={appliedFilters.mileage}
         />
       ),
 
       "Fuel Type": () => (
-        <FuelTypeFilter setAppliedFilters={setAppliedFilters} />
+        <FuelTypeFilter /* setAppliedFilters={setAppliedFilters} */ />
       ),
       "Used EV Tax Credit": () => (
-        <TaxCreditFilter setAppliedFilters={setAppliedFilters} />
+        <TaxCreditFilter /*setAppliedFilters={setAppliedFilters} */ />
       ),
-      Features: () => <FeaturesFilter setAppliedFilters={setAppliedFilters} />,
-      "Car Size": () => <CarSizeFilter setAppliedFilters={setAppliedFilters} />,
-      Doors: () => <DoorsFilter setAppliedFilters={setAppliedFilters} />,
+      Features: () => (
+        <FeaturesFilter /* setAppliedFilters={setAppliedFilters}  */ />
+      ),
+      "Car Size": () => (
+        <CarSizeFilter /* setAppliedFilters={setAppliedFilters} */ />
+      ),
+      Doors: () => <DoorsFilter /* setAppliedFilters={setAppliedFilters}  */ />,
       "Exterior Color": () => (
-        <ExteriorColorFilter setAppliedFilters={setAppliedFilters} />
+        <ExteriorColorFilter /* setAppliedFilters={setAppliedFilters} */ />
       ),
       "Interior Color": () => (
-        <InteriorColorFilter setAppliedFilters={setAppliedFilters} />
+        <InteriorColorFilter /* setAppliedFilters={setAppliedFilters}  */ />
       ),
       Drivetrain: () => (
-        <DrivetrainFilter setAppliedFilters={setAppliedFilters} />
+        <DrivetrainFilter /*setAppliedFilters={setAppliedFilters}  */ />
       ),
       Transmission: () => (
-        <TransmissionFilter setAppliedFilters={setAppliedFilters} />
+        <TransmissionFilter /* setAppliedFilters={setAppliedFilters}  */ />
       ),
       Cylinders: () => (
-        <CylindersFilter setAppliedFilters={setAppliedFilters} />
+        <CylindersFilter /* setAppliedFilters={setAppliedFilters} */ />
       ),
-      "MPG Highway": () => <MPGFilter setAppliedFilters={setAppliedFilters} />,
+      "MPG Highway": () => (
+        <MPGFilter /* setAppliedFilters={setAppliedFilters} */ />
+      ),
       "Advanced Search": () => (
-        <AdvancedSearchFilter setAppliedFilters={setAppliedFilters} />
+        <AdvancedSearchFilter /*  setAppliedFilters={setAppliedFilters} */ />
       ),
     };
 
@@ -413,8 +452,10 @@ const Cars = ({
         return (
           <FilterMenu
             setActiveFilter={setActiveFilter}
-            filters={filterNames}
-            appliedFilters={appliedFilters}
+            filters={filterNames} /*  */
+            sort={appliedFilters.sort}
+            currentMakes={appliedFilters.makes}
+            // appliedFilters={appliedFilters}
           />
         );
       },
@@ -423,7 +464,7 @@ const Cars = ({
   }, [appliedFilters, orderedFilters, inventory, location]);
 
   /// CLOSE PILL
-  const closePill = useCallback(
+  /*   const closePill = useCallback(
     (key, value) => {
       // console.log("received key & value", key, value);
       // console.log("current appliedFilters", appliedFilters);
@@ -496,6 +537,46 @@ const Cars = ({
       }
     },
     [setAppliedFilters, setOrderedFilters, appliedFilters.makes, activeFilter]
+  ); */
+
+  const closePill = useCallback(
+    (key, value) => {
+      // ARRAY FILTERS (makes, styles, veh_locations, etc)
+      if (Array.isArray(appliedFilters[key])) {
+        dispatch(removeFilterValue({ key, value }));
+
+        // Special case: removing a make also clears its models
+        if (key === "makes" && appliedFilters.models?.hasOwnProperty(value)) {
+          const modelsForMake = appliedFilters.models[value] || [];
+          modelsForMake.forEach((model) => {
+            dispatch(removeModelFilter({ make: value, model }));
+          });
+        }
+      }
+
+      // MODELS (nested object)
+      else if (key === "models") {
+        const make = Object.keys(value)[0];
+        const model = value[make][0];
+
+        dispatch(removeModelFilter({ make, model }));
+      }
+
+      // SCALAR FILTERS (price, year, mileage, etc)
+      else {
+        dispatch(clearSingleFilter(key));
+      }
+
+      // UI-only logic stays local
+      if (
+        appliedFilters.makes.length === 1 &&
+        key === "makes" &&
+        activeFilter === "Model"
+      ) {
+        setActiveFilter(null);
+      }
+    },
+    [dispatch, appliedFilters, activeFilter]
   );
 
   useEffect(() => {
@@ -511,117 +592,124 @@ const Cars = ({
         <title>Inventory | Old Cars Ltd</title>
         <meta name="description" content="Welcome to Inventory" />
       </Helmet>
-      <div className="page_container cars_container">
-        {/* FULL PAGE FILTER PANEL (from .mobileFilterRow btn click) */}
-        {showMobileFilterPanel && below820 && (
-          <FilterPanel
-            activeFiltersList={orderedFilters}
-            setOrderedFilters={setOrderedFilters}
-            orderedFilterCount={orderedFilters.length}
-            appliedFilters={appliedFilters}
-            setAppliedFilters={setAppliedFilters}
-            closePill={closePill}
-            defaultFilterState={defaultFilterState}
-            activeFilter={activeFilter}
-            setActiveFilter={setActiveFilter}
-            filterComponentsMap={filterComponentsMap}
-            //EXTRA MOBILE ARGS
-            mobile={true}
-            setShowMobileFilterPanel={setShowMobileFilterPanel}
-            setPreventScroll={setPreventScroll}
-            matchesTotal={matchesArray.length}
-          />
-        )}
-        <Box className="center_box">
-          {" "}
-          {/* flex row (index.css) for centering .middle_content*/}
-          <div className="middle_content cars_content">
-            {/********* LEFT PANEL **********/}
 
-            {!below820 && (
-              //container to hold 'sticky' (left_panel) to  top of page (just like .right_panel holds child section (sticky) to its top)
-
+      <AnimatePresence mode="wait">
+        <PageTransition key="cars">
+          <div className="page_container cars_container">
+            {/* FULL PAGE FILTER PANEL (from .mobileFilterRow btn click) */}
+            {showMobileFilterPanel && below820 && (
               <FilterPanel
                 activeFiltersList={orderedFilters}
-                setOrderedFilters={setOrderedFilters}
+                // setOrderedFilters={setOrderedFilters}
                 orderedFilterCount={orderedFilters.length}
-                appliedFilters={appliedFilters}
-                setAppliedFilters={setAppliedFilters}
+                // appliedFilters={appliedFilters}
+                // setAppliedFilters={setAppliedFilters}
                 closePill={closePill}
-                defaultFilterState={defaultFilterState}
+                // defaultFilterState={defaultFilterState}
                 activeFilter={activeFilter}
                 setActiveFilter={setActiveFilter}
                 filterComponentsMap={filterComponentsMap}
+                //EXTRA MOBILE ARGS
+                mobile={true}
+                setShowMobileFilterPanel={setShowMobileFilterPanel}
+                // setPreventScroll={setPreventScroll}
+                enableScrollLock={enableScrollLock}
+                disableScrollLock={disableScrollLock}
+                matchesTotal={matchesArray.length}
               />
             )}
-            {/***************RIGHT PANEL *************/}
+            <Box className="center_box">
+              {" "}
+              {/* flex row (index.css) for centering .middle_content*/}
+              <div className="middle_content cars_content">
+                {/********* LEFT PANEL **********/}
+                {!below820 && (
+                  //container to hold 'sticky' (left_panel) to  top of page (just like .right_panel holds child section (sticky) to its top)
+                  <FilterPanel
+                    activeFiltersList={orderedFilters}
+                    // setOrderedFilters={setOrderedFilters}
+                    orderedFilterCount={orderedFilters.length}
+                    // appliedFilters={appliedFilters}
+                    // setAppliedFilters={setAppliedFilters}
+                    closePill={closePill}
+                    // defaultFilterState={defaultFilterState}
+                    activeFilter={activeFilter}
+                    setActiveFilter={setActiveFilter}
+                    filterComponentsMap={filterComponentsMap}
+                  />
+                )}
+                {/***************RIGHT PANEL *************/}
+                <div
+                  className="right_panel"
+                  style={{
+                    width: "1600px",
+                  }}
+                >
+                  {below820 && orderedFilters.length > 0 && (
+                    <MobileFilterRow
+                      appliedFilters={appliedFilters}
+                      closePill={closePill}
+                      setActiveFilter={setActiveFilter}
+                      setShowMobileFilterPanel={setShowMobileFilterPanel}
+                      // setPreventScroll={setPreventScroll}
+                      enableScrollLock={enableScrollLock}
+                      disableScrollLock={disableScrollLock}
+                      activeFiltersList={orderedFilters}
+                    />
+                  )}
+                  <ConcatH3 appliedFilters={appliedFilters} />
+                  {!hasAppliedFilters && (
+                    <Carousels
+                      carStyles={true}
+                      carsPage={true}
+                      // setAppliedFilters={setAppliedFilters}
+                      // setOrderedFilters={setOrderedFilters}
+                    />
+                  )}
+                  <CarsToolbar
+                    matchesTotal={matchesArray.length}
+                    below820={below820}
+                    above375={above375}
+                    setShowMobileFilterPanel={setShowMobileFilterPanel}
+                    // setPreventScroll={setPreventScroll}
+                    enableScrollLock={enableScrollLock}
+                    orderedFilterCount={orderedFilters.length}
+                    setActiveFilter={setActiveFilter}
+                    sortCats={sortCats}
+                    // appliedFilters={appliedFilters}
+                    // setAppliedFilters={setAppliedFilters}
+                    setShowCompare={setShowCompare}
+                    showCompare={showCompare}
+                    // setCompareCars={setCompareCars}
+                    // setChosenCars={setChosenCars}
+                  />
+                  <ComparePanel
+                    showCompare={showCompare}
+                    // compareCars={compareCars}
+                    // chosenCars={chosenCars}
+                  />
+                  <InventoryGrid
+                    cars={matchesArray}
+                    below820={below820}
+                    // appliedFilters={appliedFilters}
+                    showCompare={showCompare}
+                    setShowCompare={setShowCompare}
+                    // addToCompareCars={addToCompareCars}
+                    // removeFromCompareCars={removeFromCompareCars}
 
-            <div
-              className="right_panel"
-              style={{
-                width: "1600px",
-              }}
-            >
-              {below820 && orderedFilters.length > 0 && (
-                <MobileFilterRow
-                  appliedFilters={appliedFilters}
-                  closePill={closePill}
-                  setActiveFilter={setActiveFilter}
-                  setShowMobileFilterPanel={setShowMobileFilterPanel}
-                  setPreventScroll={setPreventScroll}
-                  activeFiltersList={orderedFilters}
-                />
-              )}
-              <ConcatH3 appliedFilters={appliedFilters} />
-              {!hasAppliedFilters && (
-                <Carousels
-                  carStyles={true}
-                  carsPage={true}
-                  setAppliedFilters={setAppliedFilters}
-                  setOrderedFilters={setOrderedFilters}
-                />
-              )}
-              <CarsToolbar
-                matchesTotal={matchesArray.length}
-                below820={below820}
-                above375={above375}
-                setShowMobileFilterPanel={setShowMobileFilterPanel}
-                setPreventScroll={setPreventScroll}
-                orderedFilterCount={orderedFilters.length}
-                setActiveFilter={setActiveFilter}
-                sortCats={sortCats}
-                appliedFilters={appliedFilters}
-                setAppliedFilters={setAppliedFilters}
-                setShowCompare={setShowCompare}
-                showCompare={showCompare}
-                setCompareCars={setCompareCars}
-                setChosenCars={setChosenCars}
-              />
+                    // setCompareCars={setCompareCars}
 
-              <ComparePanel
-                compareCars={compareCars}
-                setCompareCars={setCompareCars}
-                showCompare={showCompare}
-                chosenCars={chosenCars}
-                setChosenCars={setChosenCars}
-              />
-
-              <InventoryGrid
-                cars={matchesArray}
-                below820={below820}
-                appliedFilters={appliedFilters}
-                showCompare={showCompare}
-                setShowCompare={setShowCompare}
-                setCompareCars={setCompareCars}
-                compareCars={compareCars}
-                setPreventScroll={setPreventScroll}
-
-                // send 'showCompare' here to change InvCards' <MoreButton/> to 'select' btn when true
-              />
-            </div>
+                    // setPreventScroll={setPreventScroll}
+                    // enableScrollLock={enableScrollLock}
+                    // disableScrollLock={disableScrollLock}
+                    // send 'showCompare' here to change InvCards' <MoreButton/> to 'select' btn when true
+                  />
+                </div>
+              </div>
+            </Box>
           </div>
-        </Box>
-      </div>
+        </PageTransition>
+      </AnimatePresence>
     </>
   );
 };

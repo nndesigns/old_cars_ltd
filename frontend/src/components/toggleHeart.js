@@ -3,8 +3,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleHeart /* , cleanupHeartedCars */ } from "../user/favoritesSlice";
 import Heart from "./heart";
 
-import { AnimatePresence } from "motion/react";
-import * as motion from "motion/react-client";
+// import { AnimatePresence } from "motion/react";
+// import * as motion from "motion/react-client";
+import { motion, AnimatePresence } from "framer-motion";
 
 const toggleSpanStyle = {
   position: "fixed",

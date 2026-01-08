@@ -130,13 +130,22 @@ code {
 }
 
 .app_root{
-  /* border: 3px solid green; */
+  /* border: 2px solid blue; */
+    min-height: 200vh;
+    display:flex; /* HERE */
+    flex-direction: column;
+    justify-content: space-between;
   scrollbar-width: none !important;
     -ms-overflow-style: none !important;
   
     &::-webkit-scrollbar {
       display: none !important;
     }
+}
+
+
+.page_container{
+  min-height: 80vh !important;
 }
 
 

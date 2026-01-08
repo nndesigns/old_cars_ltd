@@ -1,34 +1,33 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Box from "@mui/material/Box";
-
+import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import InventoryCard from "../components/inventoryCard";
 import { getModelImageURLs } from "../components/axiosCalls";
 import { useSearchParams } from "react-router-dom";
-import { LoadingWave } from "../components/inventoryGrid/loadingWave";
+// import { LoadingWave } from "../components/inventoryGrid/loadingWave";
 import "../components/inventoryGrid/invGrid.css";
+import InventoryCardSkeleton from "../components/inventoryCardSkeleton";
 
-const Favorites = ({ hearted_cars, location }) => {
+const Favorites = ({ AnimatePresence, PageTransition }) => {
+  // REDUX
+  const hearted_cars = useSelector((s) => s.favorites.heartedCars);
+  const location = useSelector((s) => s.location);
+
   const [searchParams] = useSearchParams();
   const fromLocModal = searchParams.get("fromLocModal") === "true";
   const [favoritesImagesMap, setFavoritesImagesMap] = useState({});
   // const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
-  const [loadingCars, setLoadingCars] = useState(true);
+  const [loadingCars, setLoadingCars] = useState(
+    !hearted_cars.length ? false : true
+  );
 
-  console.log("Favorites rec'd hearted_cars", hearted_cars);
-
-  // useEffect(() => {
-  //   const handleResize = () => {
-  //     setIsMobile(window.innerWidth < 640);
-  //   };
-
-  //   window.addEventListener("resize", handleResize);
-  //   handleResize();
-
-  //   return () => {
-  //     window.removeEventListener("resize", handleResize);
-  //   };
-  // }, []);
+  const noFavoritesH1 = {
+    textAlign: "center",
+    fontSize: "2em",
+    opacity: 0.5,
+    marginBlock: "auto",
+  };
 
   useEffect(() => {
     if (!hearted_cars || hearted_cars.length === 0) return;
@@ -79,46 +78,55 @@ const Favorites = ({ hearted_cars, location }) => {
   };
 
   return (
-    <div className="page_container favorites_container">
-      <Box className="center_box">
-        <div className="middle_content">
-          <h2 className="favorites_h2">Your Favorites</h2>
-
-          {loadingCars ? (
-            <div className="loading-message">
-              <LoadingWave />
+    <AnimatePresence mode="wait">
+      <PageTransition>
+        <div className="page_container favorites_container">
+          <Box className="center_box">
+            <div className="middle_content">
+              <h2 className="favorites_h2">Your Favorites</h2>
+              {loadingCars ? (
+                <div className="grid_root">
+                  {Array(15)
+                    .fill(null)
+                    .map((_, i) => (
+                      <InventoryCardSkeleton key={i} />
+                    ))}
+                </div>
+              ) : !hearted_cars.length ? (
+                <h1 style={noFavoritesH1}>No favorites</h1>
+              ) : (
+                <div className="grid_root">
+                  {readyCars.map((car, index) => (
+                    <motion.div
+                      key={car.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.3,
+                        delay: Math.min(index, 6) * 0.05,
+                      }}
+                    >
+                      <InventoryCard
+                        carData={car}
+                        favorites={true}
+                        nearYou={true}
+                        style={{
+                          boxShadow: fromLocModal
+                            ? getsLocShadow(car.city)
+                              ? "var(--allAroundBtnBGShadow)"
+                              : ""
+                            : "",
+                        }}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="grid_root">
-              {readyCars.map((car, index) => (
-                <motion.div
-                  key={car.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.3,
-                    delay: Math.min(index, 6) * 0.05,
-                  }}
-                >
-                  <InventoryCard
-                    carData={car}
-                    favorites={true}
-                    nearYou={true}
-                    style={{
-                      boxShadow: fromLocModal
-                        ? getsLocShadow(car.city)
-                          ? "var(--allAroundBtnBGShadow)"
-                          : ""
-                        : "",
-                    }}
-                  />
-                </motion.div>
-              ))}
-            </div>
-          )}
+          </Box>
         </div>
-      </Box>
-    </div>
+      </PageTransition>
+    </AnimatePresence>
   );
 };
 

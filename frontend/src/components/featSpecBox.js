@@ -5,9 +5,10 @@ import { IoClose } from "react-icons/io5";
 import { IoCopyOutline } from "react-icons/io5";
 import { styled } from "@mui/material/styles";
 
-import { AnimatePresence } from "motion/react";
+// import { AnimatePresence } from "motion/react";
 // import { createPortal } from "react-dom";
-import * as motion from "motion/react-client";
+// import * as motion from "motion/react-client";
+import { motion, AnimatePresence } from "framer-motion";
 import "./invCard.css";
 
 import { mileageFormatter, stateToStateMap } from "./utils";
@@ -144,7 +145,8 @@ const FeatSpecBox = ({
   showFeatSpec,
   setShowFeatSpec,
   featBoxRef,
-  setPreventScroll,
+  // setPreventScroll,
+  disableScrollLock,
 }) => {
   const [copied, setCopied] = useState(false);
   const [keyFeaturesArray, setKeyFeaturesArray] = useState([]);
@@ -273,7 +275,8 @@ const FeatSpecBox = ({
 
   const close = (e) => {
     setShowFeatSpec(false);
-    setPreventScroll(false);
+    // setPreventScroll(false);
+    disableScrollLock();
     e.stopPropagation();
   };
 

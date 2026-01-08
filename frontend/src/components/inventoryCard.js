@@ -2,9 +2,10 @@ import React, { useRef, useMemo, useEffect, useState } from "react";
 import { keyframes, styled } from "@mui/material/styles";
 import Card from "@mui/joy/Card";
 import Box from "@mui/material/Box";
-import { useDispatch, useSelector } from "react-redux";
+
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { selectVehicle } from "../pages/selectedVehicleSlice.js";
 import FeatSpecBox from "./featSpecBox.js";
 import ShareModal from "./shareModal.js";
 
@@ -19,14 +20,22 @@ import { CiMenuKebab } from "react-icons/ci";
 import { GrCheckmark } from "react-icons/gr";
 import noImage_img from "../images/no_image.webp";
 import ImgSlider from "./imgSlider";
-import Heart from "./heart.js";
 import { toggleHeart } from "../user/favoritesSlice";
 import ToggleHeartBtn from "./toggleHeart.js";
 import { formatPrice } from "./utils.js";
 import "./invCard.css";
+//REDUX
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addToCompare,
+  removeFromCompare,
+  selectCompareCars,
+} from "../user/userSlice.js";
+//
+import { lockScroll, unlockScroll } from "../uiSlice.js";
 
 // CONTAINER
-const StyledCard = styled(Card, {
+export const StyledCard = styled(Card, {
   shouldForwardProp: (prop) => prop !== "nearYou" && prop !== "style",
 })(({ theme, nearYou, style }) => ({
   padding: "0px",
@@ -133,7 +142,24 @@ const BottomBox = styled(Box)(({ theme, ...props }) => ({
 }));
 
 // MORE DROPDOWN
-const MotionMoreDropdown = motion.create(
+/* const MotionMoreDropdown = motion.create(
+  styled(Box)(({ theme }) => ({
+    position: "absolute",
+    paddingBlock: ".25rem",
+    backgroundColor: "white",
+    bottom: "-2rem",
+    right: ".5rem",
+    height: "192px",
+    width: "250px",
+    borderRadius: "8px",
+    boxShadow: "var(--boxShadow2)",
+    display: "flex",
+    flexDirection: "column",
+    zIndex: "3",
+    overflow: "hidden",
+  }))
+); */
+const MotionMoreDropdown = motion(
   styled(Box)(({ theme }) => ({
     position: "absolute",
     paddingBlock: ".25rem",
@@ -158,9 +184,9 @@ const InventoryCard = ({
   style,
   showCompare,
   setShowCompare,
-  setCompareCars,
-  compareCars,
-  setPreventScroll,
+  // setCompareCars,
+  // compareCars,
+  // setPreventScroll,
 }) => {
   const dispatch = useDispatch();
   const heartedCars = useSelector((state) => state.favorites.heartedCars);
@@ -169,30 +195,29 @@ const InventoryCard = ({
   const cardRef = useRef();
   const [moreClicked, setMoreClicked] = useState(false);
 
+  // SCROLL
+  const enableScrollLock = () => dispatch(lockScroll());
+  const disableScrollLock = () => dispatch(unlockScroll());
+
   const [showShareModal, setShowShareModal] = useState(false);
 
   //Features & Specs
   const [showFeatSpec, setShowFeatSpec] = useState(false);
 
-  //SELECTED COMPARE
-  const [selectedCompare, setSelectedCompare] = useState(false);
+  // const [selectedCompare, setSelectedCompare] = useState(false);
+  // ALL COMPARE CARS (REDUX)
+  const compareCars = useSelector(selectCompareCars);
+  const selectedCompare = compareCars.some((c) => c.id === carData.id);
 
   // REFS
   const dropdownRef = useRef(null);
   const buttonRef = useRef();
   const featBoxRef = useRef();
-  // const shareModalRef = useRef();
 
-  // const closeShare = (e) => {
-  //   setShowShareModal(false);
-  //   setPreventScroll(false);
-  //   e.stopPropagation();
-  // };
-
-  useEffect(() => {
-    if (favorites || !Array.isArray(compareCars)) return;
-    setSelectedCompare(compareCars.some((car) => car.id === carData.id));
-  }, [carData, compareCars, favorites]);
+  // useEffect(() => {
+  //   if (favorites || !Array.isArray(compareCars)) return;
+  //   setSelectedCompare(compareCars.some((car) => car.id === carData.id));
+  // }, [carData, compareCars, favorites]);
 
   const navigate = useNavigate();
 
@@ -227,12 +252,13 @@ const InventoryCard = ({
   };
 
   // SELECT CAR (COMPARE PANEL)
-  const handleSelect = (e) => {
+  /*   const handleSelect = (e) => {
     setSelectedCompare((prev) => !prev);
+    if(compareCars.includes(carData)){}
+
     setCompareCars((prev) => {
       // check if this car is already in the array (using id or unique key)
       const exists = prev.some((car) => car.id === carData.id);
-
       if (exists) {
         // remove it
         return prev.filter((car) => car.id !== carData.id);
@@ -242,12 +268,22 @@ const InventoryCard = ({
       }
     });
     e.stopPropagation();
+  }; */
+
+  const handleSelect = (e) => {
+    e.stopPropagation();
+    const exists = compareCars.some((c) => c.id === carData.id);
+    if (exists) {
+      dispatch(removeFromCompare(carData.id));
+    } else {
+      dispatch(addToCompare(carData));
+    }
   };
 
   //OPEN COMPARE PANEL FROM MORE DROP DOWN
   const handleOpenCompare = (carObj) => {
     setShowCompare(true);
-    setCompareCars((prev) => [...prev, carObj]);
+    // setCompareCars((prev) => [...prev, carObj]);
     setMoreClicked(false);
   };
 
@@ -278,6 +314,7 @@ const InventoryCard = ({
       onClick={(e) => {
         // If FeatSpecBox is open AND the click was inside it, skip navigation
         if (!featBoxRef.current && !dropdownRef.current) {
+          dispatch(selectVehicle(carData));
           navigate(`/car/${carData.id}`);
         }
       }}
@@ -288,6 +325,7 @@ const InventoryCard = ({
       <ToggleHeartBtn carObj={carData} />
       <MoreAddCompWrapper>
         {showCompare ? (
+          // COMPARE CHECK
           <MoreAddCompButton
             comp={true}
             onClick={(e) => handleSelect(e)}
@@ -335,7 +373,8 @@ const InventoryCard = ({
               className="moreItem"
               onClick={() => {
                 setShowShareModal(true);
-                setPreventScroll(true);
+                // dispatch(setPreventScroll(true));
+                enableScrollLock();
               }}
             >
               <LuShare />
@@ -345,7 +384,8 @@ const InventoryCard = ({
               className="moreItem"
               onClick={() => {
                 setShowFeatSpec(true);
-                setPreventScroll(true);
+                // dispatch(setPreventScroll(true));
+                enableScrollLock();
               }}
             >
               <FaCar />
@@ -358,7 +398,7 @@ const InventoryCard = ({
         car={carData}
         showShareModal={showShareModal}
         setShowShareModal={setShowShareModal}
-        setPreventScroll={setPreventScroll}
+        // setPreventScroll={setPreventScroll}
         compare={false}
       />
 
@@ -367,7 +407,8 @@ const InventoryCard = ({
         setShowFeatSpec={setShowFeatSpec}
         featBoxRef={featBoxRef}
         showFeatSpec={showFeatSpec}
-        setPreventScroll={setPreventScroll}
+        // setPreventScroll={setPreventScroll}
+        disableScrollLock={disableScrollLock}
         onClick={(e) => e.stopPropagation()}
       />
 

@@ -6,8 +6,10 @@ import {
   mileageFormatter,
 } from "./utils";
 
-import * as motion from "motion/react-client";
-import { AnimatePresence } from "motion/react";
+/* import * as motion from "motion/react-client";
+import { AnimatePresence } from "motion/react"; */
+import { motion, AnimatePresence } from "framer-motion";
+
 import { CiLocationOn } from "react-icons/ci";
 import { FaStar } from "react-icons/fa6"; // FULL STAR
 import { FaRegStarHalfStroke } from "react-icons/fa6"; //HALF STAR
@@ -36,6 +38,9 @@ const DetailsTool = ({ chosenCars, location }) => {
   const detailSectionRef = useRef(null);
   const tabsContainerRef = useRef(null);
   const [activeTab, setActiveTab] = useState(0);
+
+  // console.log("DetailsTool rec'd chosenCars", chosenCars);
+  // console.log("DetailsTool rec'd location", location);
 
   //DISTANCES
   const [distances, setDistances] = useState([null, null]);

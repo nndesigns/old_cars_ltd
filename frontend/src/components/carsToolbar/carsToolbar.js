@@ -7,23 +7,28 @@ import { BsSliders } from "react-icons/bs";
 import { FiCheck } from "react-icons/fi";
 // import { AnimatePresence } from "motion/react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSelector, useDispatch } from "react-redux";
 import "./carsToolbar.css";
+
+import { updateFilter } from "../../user/filtersSlice";
+import { clearCompare, clearChosenCars } from "../../user/userSlice";
 
 const CarsToolbar = ({
   matchesTotal,
   below820,
   above375,
   setShowMobileFilterPanel,
-  setPreventScroll,
+  // setPreventScroll,
+  enableScrollLock,
   orderedFilterCount,
   setActiveFilter,
   sortCats,
-  appliedFilters,
-  setAppliedFilters,
+  // appliedFilters,
+  // setAppliedFilters,
   setShowCompare,
   showCompare,
-  setCompareCars,
-  setChosenCars,
+  // setCompareCars,
+  // setChosenCars,
 }) => {
   const hasMounted = useRef(false);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
@@ -32,6 +37,9 @@ const CarsToolbar = ({
   // const [hovered, setHovered] = useState(false);
 
   // console.log("received showCompare (CarsToolbar)", showCompare);
+  //REDUX
+  const dispatch = useDispatch();
+  const appliedFilters = useSelector((s) => s.filters.appliedFilters);
 
   useEffect(() => {
     if (!hasMounted.current) {
@@ -127,13 +135,15 @@ const CarsToolbar = ({
 
   const handleOpenMobileFilters = () => {
     setShowMobileFilterPanel(true);
-    setPreventScroll(true);
+    // setPreventScroll(true);
+    enableScrollLock();
   };
 
   const handleOpenSort = () => {
     if (below820) {
       setShowMobileFilterPanel(true);
-      setPreventScroll(true);
+      // setPreventScroll(true);
+      enableScrollLock();
       setActiveFilter("Sort by");
     } else {
       console.log("this far was reached");
@@ -142,20 +152,58 @@ const CarsToolbar = ({
   };
 
   /// SORT DROP DOWN
-  const MotionDropdownUL = motion.create(
+  // const MotionDropdownUL = motion.create(
+  //   styled("ul")(({ theme }) => ({
+  //     position: "absolute",
+  //     border: "1px solid var(--greyBorder)",
+  //     top: 65,
+  //     width: "max-content",
+  //     right: 140,
+
+  //     backgroundColor: "white",
+  //     borderRadius: "4px",
+  //     boxShadow:
+  //       "0 7px 8px -4px rgba(0, 38, 77, .14), 0 12px 17px 2px rgba(0, 38, 77, .1), 0 5px 22px 4px rgba(0, 38, 77, .08);",
+  //     paddingTop: "0.5rem",
+  //     // zIndex: 50,
+
+  //     ".dropdownItem": {
+  //       height: "2.5rem",
+  //       fontSize: ".975em",
+  //       padding: ".25rem 2.2rem",
+  //       paddingLeft: "0",
+  //       display: "flex",
+  //       alignItems: "center",
+  //       cursor: "pointer",
+  //       transition: "background-color 0.2s ease",
+
+  //       "&:hover": {
+  //         backgroundColor: "var(--tileBG)",
+  //       },
+  //     },
+
+  //     ".checkmarkSpace": {
+  //       width: "1.25rem",
+  //       fontSize: "1.25em",
+  //       display: "flex",
+  //       justifyContent: "center",
+  //       alignItems: "center",
+  //       marginInline: ".5rem",
+  //     },
+  //   }))
+  // );
+  const MotionDropdownUL = motion(
     styled("ul")(({ theme }) => ({
       position: "absolute",
       border: "1px solid var(--greyBorder)",
       top: 65,
       width: "max-content",
       right: 140,
-
       backgroundColor: "white",
       borderRadius: "4px",
       boxShadow:
         "0 7px 8px -4px rgba(0, 38, 77, .14), 0 12px 17px 2px rgba(0, 38, 77, .1), 0 5px 22px 4px rgba(0, 38, 77, .08);",
       paddingTop: "0.5rem",
-      // zIndex: 50,
 
       ".dropdownItem": {
         height: "2.5rem",
@@ -188,7 +236,7 @@ const CarsToolbar = ({
       {
         sortCats,
         appliedSort,
-        setAppliedFilters,
+        // setAppliedFilters,
         setShowSortDropdown,
         ...motionProps // 👈 capture motion props here
       },
@@ -203,10 +251,17 @@ const CarsToolbar = ({
               key={cat}
               className="dropdownItem"
               onClick={() => {
-                setAppliedFilters((prev) => ({
-                  ...prev,
-                  sort: cat,
-                }));
+                dispatch(
+                  updateFilter({
+                    key: "sort",
+                    value: cat,
+                  })
+                );
+
+                // setAppliedFilters((prev) => ({
+                //   ...prev,
+                //   sort: cat,
+                // }));
                 setShowSortDropdown(false);
               }}
             >
@@ -265,7 +320,7 @@ const CarsToolbar = ({
             setShowSortDropdown={setShowSortDropdown}
             sortCats={sortCats}
             appliedSort={appliedFilters.sort}
-            setAppliedFilters={setAppliedFilters}
+            // setAppliedFilters={setAppliedFilters}
           />
         )}
       </AnimatePresence>
@@ -292,8 +347,11 @@ const CarsToolbar = ({
               checked={showCompare}
               onChange={() => {
                 if (showCompare) {
-                  setCompareCars([]);
-                  setChosenCars([]);
+                  // setCompareCars([]);
+                  // setChosenCars([]);
+                  // clearChosen();
+                  dispatch(clearChosenCars());
+                  dispatch(clearCompare());
                 }
                 setShowCompare((prev) => !prev);
               }}

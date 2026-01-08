@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 import Button from "./buttons/button";
-import { AnimatePresence } from "motion/react";
-import * as motion from "motion/react-client";
+// import { AnimatePresence } from "motion/react";
+// import * as motion from "motion/react-client";
 // import ShareModal from "./shareModal";
+import { lockScroll /* , unlockScroll */ } from "../uiSlice";
+import { useDispatch } from "react-redux";
+
+import { motion, AnimatePresence } from "framer-motion";
 
 const Dropdown = ({ options, btnStyle, ...props }) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const dispatch = useDispatch();
   const dropdownRef = useRef(null);
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -148,7 +153,8 @@ const Dropdown = ({ options, btnStyle, ...props }) => {
                   onClick={() => {
                     if (text === "Share") {
                       props.setShowShareModal(true);
-                      props.setPreventScroll(true);
+                      // props.setPreventScroll(true);
+                      dispatch(lockScroll());
                     } else if (text === "Print") {
                       window.print();
                     }

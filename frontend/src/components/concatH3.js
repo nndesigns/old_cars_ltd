@@ -18,6 +18,8 @@ const pluralize = (word) => {
 };
 
 const ConcatH3 = ({ appliedFilters, noResults }) => {
+  console.log("ConcatH3 rec'd appliedFilters", appliedFilters);
+
   const {
     carSize,
     yearFrom,

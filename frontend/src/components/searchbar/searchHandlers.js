@@ -1,5 +1,14 @@
 import { searchInventory } from "../axiosCalls.js";
 
+/* import {
+  selectActiveInventory,
+  selectMakesModelsStyles,
+  selectUniqueMakes,
+  selectActiveMakeCounts,
+} from "../../inventorySlice"; */
+
+import { clearFilters, updateFilter } from "../../user/filtersSlice.js";
+
 //LOCATION SEARCH
 export const handleLocationSearch = async (loc, distFilter = false) => {
   const isZip = /^\d{5}$/.test(loc.trim());
@@ -24,13 +33,14 @@ export const handleLocationSearch = async (loc, distFilter = false) => {
 };
 
 ////////  INV STRING SEARCH (hitting 'enter')
-export const invStringSearch = async (
+/* export const invStringSearch = async (
   navigate,
   currentRoute,
-  setAppliedFilters,
-  setOrderedFilters,
-  handleClearFilters,
-  string
+  // setAppliedFilters,
+  // setOrderedFilters,
+  // handleClearFilters,
+  string,
+  dispatch
 ) => {
   const allStyles = [
     "convertible",
@@ -49,7 +59,7 @@ export const invStringSearch = async (
 
   if (currentRoute !== "cars") navigate("/cars");
 
-  handleClearFilters();
+  dispatch(clearFilters());
 
   const lower = string.toLowerCase().trim();
 
@@ -173,23 +183,177 @@ export const invStringSearch = async (
   } catch (err) {
     console.error("Error searching inventory:", err);
   }
+}; */
+export const invStringSearch = async (
+  navigate,
+  currentRoute,
+  string,
+  dispatch
+) => {
+  const allStyles = [
+    "convertible",
+    "coupe",
+    "hatchback",
+    "luxury",
+    "muscle car",
+    "pickup",
+    "sedan",
+    "station wagon",
+    "SUV / 4x4",
+    "van",
+  ];
+
+  if (!string) return;
+
+  if (currentRoute !== "cars") navigate("/cars");
+
+  dispatch(clearFilters());
+
+  const lower = string.toLowerCase().trim();
+
+  try {
+    const filteredCars = await searchInventory(lower);
+    if (!filteredCars || filteredCars.length === 0) return;
+
+    const matchFlags = {};
+
+    for (const car of filteredCars) {
+      const { year, make, model, style, vin } = car;
+
+      const lowerStyle = style?.toLowerCase();
+      const lowerMake = make?.toLowerCase();
+      const lowerModel = model?.toLowerCase();
+      const lowerVin = vin?.toLowerCase();
+
+      // --- STYLE (highest priority) ---
+      const styleMatch =
+        lowerStyle &&
+        (lowerStyle.includes(lower) ||
+          (lower === "truck" && lowerStyle.includes("pickup")));
+
+      if (styleMatch) {
+        const matchedStyle = allStyles.find(
+          (s) =>
+            s.toLowerCase().includes(lower) ||
+            (lower === "truck" && s.toLowerCase() === "pickup")
+        );
+
+        if (matchedStyle) {
+          matchFlags.style = matchedStyle;
+          break; // style overrides everything
+        }
+      }
+
+      // --- MAKE ---
+      if (lowerMake === lower) {
+        matchFlags.make = make;
+      }
+
+      // --- MODEL ---
+      let modelSearch = lower;
+      if (lowerMake && lower.startsWith(lowerMake + " ")) {
+        modelSearch = lower.replace(lowerMake + " ", "");
+      }
+
+      if (lowerModel && lowerModel.includes(modelSearch)) {
+        matchFlags.make = make;
+        if (!matchFlags.models) matchFlags.models = {};
+        if (!matchFlags.models[make]) matchFlags.models[make] = [];
+        if (!matchFlags.models[make].includes(model)) {
+          matchFlags.models[make].push(model);
+        }
+      }
+
+      // --- YEAR ---
+      if (String(year) === string) {
+        matchFlags.year = year;
+      }
+
+      // --- VIN ---
+      if (lowerVin === lower) {
+        matchFlags.vin = vin;
+      }
+    }
+
+    if (Object.keys(matchFlags).length === 0) return;
+
+    // 🔹 APPLY FILTERS VIA REDUX
+
+    if (matchFlags.make) {
+      dispatch(
+        updateFilter({
+          key: "makes",
+          value: [matchFlags.make],
+        })
+      );
+    }
+
+    if (matchFlags.models) {
+      dispatch(
+        updateFilter({
+          key: "models",
+          value: matchFlags.models,
+        })
+      );
+    }
+
+    if (matchFlags.style) {
+      dispatch(
+        updateFilter({
+          key: "styles",
+          value: [matchFlags.style],
+        })
+      );
+    }
+
+    if (matchFlags.year) {
+      dispatch(
+        updateFilter({
+          key: "yearFrom",
+          value: matchFlags.year,
+        })
+      );
+      dispatch(
+        updateFilter({
+          key: "yearTo",
+          value: matchFlags.year,
+        })
+      );
+    }
+
+    if (matchFlags.vin) {
+      dispatch(
+        updateFilter({
+          key: "vin",
+          value: matchFlags.vin,
+        })
+      );
+    }
+  } catch (err) {
+    console.error("Error searching inventory:", err);
+  }
 };
 
 ///////// MAKE MODEL SEARCH (clicking a droplist item)
 export const makeModelSearch = (
   navigate,
   currentRoute,
-  setAppliedFilters,
-  setOrderedFilters,
-  handleClearFilters,
+  dispatch,
+  // setAppliedFilters,
+  // setOrderedFilters,
+  // handleClearFilters,
   key,
   item,
   inputRef,
   setInvSearch,
   lastArg
 ) => {
-  handleClearFilters();
-  if (currentRoute !== "cars") {
+  dispatch(clearFilters());
+
+  console.log("makeModelSearch rec'd item", item);
+  console.log("makeModelSearch rec'd key", key);
+
+  /*if (currentRoute !== "cars") {
     navigate("/cars");
   }
   if (key === "Make") {
@@ -241,6 +405,80 @@ export const makeModelSearch = (
   if (inputRef?.current) {
     inputRef.current.value =
       key === "Model" ? item.display : key === "Year" ? item.display : item;
+  }
+
+  lastArg && console.log("lastArg", lastArg); */
+  if (currentRoute !== "cars") {
+    navigate("/cars");
+  }
+
+  if (key === "Make") {
+    dispatch(
+      updateFilter({
+        key: "makes",
+        value: [item],
+      })
+    );
+  } else if (key === "Model") {
+    dispatch(
+      updateFilter({
+        key: "makes",
+        value: [item.make],
+      })
+    );
+
+    dispatch(
+      updateFilter({
+        key: "models",
+        value: { [item.make]: [item.model] },
+      })
+    );
+  } else if (key === "Style") {
+    dispatch(
+      updateFilter({
+        key: "styles",
+        value: Array.isArray(item) ? item : [item],
+      })
+    );
+  } else if (key === "Year") {
+    dispatch(
+      updateFilter({
+        key: "makes",
+        value: [item.make],
+      })
+    );
+
+    dispatch(
+      updateFilter({
+        key: "models",
+        value: { [item.make]: [item.model] },
+      })
+    );
+
+    dispatch(
+      updateFilter({
+        key: "yearFrom",
+        value: Number(item.year),
+      })
+    );
+
+    dispatch(
+      updateFilter({
+        key: "yearTo",
+        value: Number(item.year),
+      })
+    );
+  }
+
+  // Update search input text
+  const displayValue = key === "Model" || key === "Year" ? item.display : item;
+
+  if (setInvSearch) {
+    setInvSearch(displayValue);
+  }
+
+  if (inputRef?.current) {
+    inputRef.current.value = displayValue;
   }
 
   lastArg && console.log("lastArg", lastArg);

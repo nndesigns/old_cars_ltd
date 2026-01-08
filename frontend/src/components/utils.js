@@ -1,7 +1,8 @@
-import zipcodes from "zipcodes";
+// import zipcodes from "zipcodes";
 import { getDistance } from "geolib";
 import { useLocation } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import FullPageLoader from "../pages/fullpageLoader";
 
 export function handleScroll(scrollContainerRef, direction, mobileRow) {
   const scrollContainer = scrollContainerRef.current;
@@ -269,7 +270,26 @@ export const cityToZipMap = {
 //uses provided 'radius', location.latitude & .longitude, to
 //// OFFER COUNT //
 //each 'location' is a matching us_zip.csv obj
-export function getLocalOffers(inventory, location, radiusInMiles, countOnly) {
+
+// async function lookupZip(zip) {
+//   const response = await fetch(`https://api.zippopotam.us/us/${zip}`);
+//   if (!response.ok) return null;
+
+//   const data = await response.json();
+//   return {
+//     latitude: parseFloat(data.places[0].latitude),
+//     longitude: parseFloat(data.places[0].longitude),
+//     city: data.places[0]["place name"],
+//     state: data.places[0]["state abbreviation"],
+//   };
+// }
+
+//////// GET LOCAL
+/* export function getLocalOffers(inventory, location, radiusInMiles, countOnly) {
+  console.log("getLocalOffers rec'd location", location);
+  console.log("getlocalOffers rec'd inventory", inventory);
+  console.log("getlocalOffers rec'd radiusInMiles", radiusInMiles);
+  console.log("getlocalOffers rec'd countOnly", countOnly);
   //create array of uniq  city + state strings from inv
   const inv_cities = Array.from(
     new Set(inventory.map((item) => `${item.city}, ${item.state}`))
@@ -281,7 +301,9 @@ export function getLocalOffers(inventory, location, radiusInMiles, countOnly) {
       const zip = cityToZipMap[inv_cities]; //get zip for city
       if (!zip) return false;
 
-      const loc = zipcodes.lookup(zip); //retrieve a full location obj using zip
+      // const loc = zipcodes.lookup(zip); //retrieve a full location obj using zip
+      const loc = await lookupZip(zip);
+      console.log("loc (getLocalOffers", loc);
       if (!loc || !loc.latitude || !loc.longitude) return false;
 
       if (!location || location.latitude == null || location.longitude == null)
@@ -304,41 +326,95 @@ export function getLocalOffers(inventory, location, radiusInMiles, countOnly) {
   const finalArray = inventory.filter((veh) => cities.includes(veh.city));
 
   return countOnly ? finalArray.length : finalArray;
-}
+} */
 
-// SORT INV BY DISTANCE
-export function sortInventoryByDistance(inventory, userLocation) {
-  if (!userLocation || !userLocation.latitude || !userLocation.longitude) {
-    return inventory; // return unsorted if no user location
+// take zip from location,
+//get zips for all 'activeInv' (using 'cityToStateMap')
+//get 'lat' & 'lng' for each of the 'activeInv' zips
+// put 'activeInv' lat, lng into 'getDistance()' w/ location.lat/lng, to  determine if w/in  'radiusInMiles' (ex; 100)
+//if is, push 'activeInv' obj into 'nearbyCities'
+export function getLocalOffers(
+  inventory,
+  uniqueLocs,
+  location,
+  radiusInMiles,
+  countOnly
+) {
+  // console.log("getlocalOffers rec'd inventory", inventory);
+  // console.log("getLocalOffers rec'd location", location);
+  // console.log("getlocalOffers rec'd radiusInMiles", radiusInMiles);
+  // console.log("getlocalOffers rec'd countOnly", countOnly);
+
+  if (!location || location.latitude == null || location.longitude == null) {
+    return countOnly ? 0 : [];
   }
 
-  return [...inventory]
-    .map((item) => {
-      const cityKey = `${item.city}, ${item.state}`;
-      const zip = cityToZipMap[cityKey];
-      const loc = zip && zipcodes.lookup(zip);
+  // Create array of unique city + state strings from inventory
+  const nearbyCities = [];
 
-      let distance = Infinity; // default if we can't compute distance
-      if (loc && loc.latitude && loc.longitude) {
-        distance = getDistance(
-          {
-            latitude: userLocation.latitude,
-            longitude: userLocation.longitude,
-          },
-          {
-            latitude: loc.latitude,
-            longitude: loc.longitude,
-          }
-        );
-      }
+  for (const loc of uniqueLocs) {
+    // Calculate distance in miles
+    const distInMeters = getDistance(
+      { latitude: location.latitude, longitude: location.longitude },
+      { latitude: loc.latitude, longitude: loc.longitude }
+    );
 
-      return { ...item, distance }; // temporarily store distance
-    })
-    .sort((a, b) => a.distance - b.distance) // sort by proximity
-    .map(({ distance, ...rest }) => rest); // remove distance before returning
+    const distInMiles = distInMeters / 1609.34;
+
+    if (distInMiles <= radiusInMiles) {
+      nearbyCities.push(loc.city);
+    }
+  }
+
+  // Filter inventory based on nearby cities
+  const finalArray = inventory.filter((veh) => nearbyCities.includes(veh.city));
+
+  return countOnly ? finalArray.length : finalArray;
 }
-// SORT INV BY BEST MATCH
-export function sortInventoryByBestMatch(inventory, userLocation) {
+
+/////////////// SORT INV BY DISTANCE
+export function sortInventoryByDistance(
+  inventory,
+  userLocation,
+  uniqueLocationsMap
+) {
+  if (!userLocation?.latitude || !userLocation?.longitude) {
+    return inventory;
+  }
+
+  const enriched = [];
+
+  for (const item of inventory) {
+    const key = `${item.city}|${item.state}`;
+    const loc = uniqueLocationsMap[key];
+
+    if (!loc) {
+      // No coordinates found, keep item unsorted at bottom
+      enriched.push({ ...item, distance: Infinity });
+      continue;
+    }
+
+    const distance = getDistance(
+      {
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+      },
+      {
+        latitude: Number(loc.latitude),
+        longitude: Number(loc.longitude),
+      }
+    );
+
+    enriched.push({ ...item, distance });
+  }
+
+  enriched.sort((a, b) => a.distance - b.distance);
+
+  return enriched.map(({ distance, ...rest }) => rest);
+}
+
+///////////////.  SORT INV BY BEST MATCH
+/* export function sortInventoryByBestMatch(inventory, userLocation) {
   if (!userLocation?.latitude || !userLocation?.longitude) return inventory;
 
   const userLat = parseFloat(userLocation.latitude);
@@ -347,7 +423,8 @@ export function sortInventoryByBestMatch(inventory, userLocation) {
   const enriched = inventory.map((car) => {
     const cityKey = `${car.city}, ${car.state}`;
     const zip = cityToZipMap[cityKey];
-    const loc = zipcodes.lookup(zip);
+    // const loc = zipcodes.lookup(zip);
+    const loc = lookupZip(zip);
 
     let distance = Number.MAX_SAFE_INTEGER;
     if (loc?.latitude && loc?.longitude) {
@@ -373,7 +450,49 @@ export function sortInventoryByBestMatch(inventory, userLocation) {
   });
 
   return enriched.map(({ _distance, ...rest }) => rest); // remove _distance after sorting
+} */
+export function sortInventoryByBestMatch(
+  inventory,
+  userLocation,
+  uniqueLocationsMap
+) {
+  if (!userLocation?.latitude || !userLocation?.longitude) return inventory;
+
+  const userLat = parseFloat(userLocation.latitude);
+  const userLon = parseFloat(userLocation.longitude);
+
+  // Convert array → key-value map
+  const locMap = Object.fromEntries(
+    uniqueLocationsMap.map((item) => [item.city_state, item])
+  );
+  const enriched = [];
+
+  for (const item of inventory) {
+    const key = `${item.city}|${item.state}`;
+    const loc = locMap[key];
+
+    let distance = Number.MAX_SAFE_INTEGER;
+
+    distance = getDistance(
+      { latitude: userLat, longitude: userLon },
+      { latitude: loc.latitude, longitude: loc.longitude }
+    );
+
+    enriched.push({ ...item, _distance: distance });
+  }
+
+  // Sort by distance first, then price
+  enriched.sort((a, b) => {
+    if (a._distance !== b._distance) {
+      return a._distance - b._distance;
+    } else {
+      return parseFloat(a.price) - parseFloat(b.price);
+    }
+  });
+
+  return enriched.map(({ _distance, ...rest }) => rest); // remove _distance
 }
+
 // SCROLL TO TOP
 export function ScrollToTop() {
   const { pathname } = useLocation();
@@ -469,4 +588,21 @@ export function getDistanceMiles(lat1, lon1, lat2, lon2) {
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return Math.round(R * c);
+}
+
+//DELAY RENDER (FOR <SUSPENSE/>, APP.JS)
+export function DelayedRender({ delay = 400, children }) {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setReady(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+
+  return ready ? children : <FullPageLoader />;
+}
+
+/// TEST INPUT FOCUS STATE
+export function isInputFocused(ref) {
+  return ref.current === document.activeElement;
 }

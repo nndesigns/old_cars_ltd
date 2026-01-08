@@ -15,17 +15,31 @@ import { motion, AnimatePresence } from "framer-motion";
 import Button from "../buttons/button.js";
 import Searchbar from "../searchbar/searchbar.js";
 import { LoadingSpinner } from "../inventoryGrid/loadingSpinner.js";
+// REDUX
+import { useDispatch } from "react-redux";
+import {
+  updateFilter,
+  addFilterValue,
+  removeFilterValue,
+  clearSingleFilter,
+  removeModelsByMake,
+} from "../../user/filtersSlice.js";
+
+import { selectActiveInventory } from "../../inventorySlice.js";
 
 // import useFilterHistory from "./useFilterHistory";
 //EMBEDDED COMPONENTS
 import PriceSlider from "../price_slider";
 import RangeSelect from "../rangeSelect";
 
-function FilterMenu({ setActiveFilter, filters, appliedFilters }) {
+// const dispatch = useDispatch();
+
+function FilterMenu({ setActiveFilter, filters, sort, currentMakes }) {
   // Create a filtered list before rendering
+
   const visibleFilters = filters.filter((filter) => {
     if (filter === "Model") {
-      return appliedFilters.makes && appliedFilters.makes.length > 0;
+      return currentMakes && currentMakes.length > 0;
     }
     return true; // keep all other filters
   });
@@ -39,8 +53,7 @@ function FilterMenu({ setActiveFilter, filters, appliedFilters }) {
           onClick={() => setActiveFilter(filter)}
         >
           <span>
-            {filter}{" "}
-            {filter === "Sort by" && <span>{appliedFilters.sort}</span>}
+            {filter} {filter === "Sort by" && <span>{sort}</span>}
           </span>
           <RiArrowRightSLine />
         </button>
@@ -49,7 +62,11 @@ function FilterMenu({ setActiveFilter, filters, appliedFilters }) {
   );
 }
 
-function SortByFilter({ sortCats, chosenSortCategory, setAppliedFilters }) {
+function SortByFilter({
+  sortCats,
+  chosenSortCategory /* setAppliedFilters */,
+}) {
+  const dispatch = useDispatch();
   return (
     <div className="filter_root">
       <form>
@@ -61,10 +78,11 @@ function SortByFilter({ sortCats, chosenSortCategory, setAppliedFilters }) {
               value={cat}
               checked={chosenSortCategory === cat}
               onChange={() =>
-                setAppliedFilters((prevState) => ({
+                /*  setAppliedFilters((prevState) => ({
                   ...prevState,
                   sort: cat,
-                }))
+                })) */
+                dispatch(updateFilter({ key: "sort", value: cat }))
               }
               className="radioInputHidden"
             />
@@ -78,17 +96,24 @@ function SortByFilter({ sortCats, chosenSortCategory, setAppliedFilters }) {
 }
 
 function DistanceLocationFilter({
-  inv,
+  // inv,
   location,
   currentVehLocations, //appliedFilters.veh_locations
-  appliedFilters,
-  setAppliedFilters,
-  orderedFilters,
-  setOrderedFilters,
-  setPreventScroll,
+
+  // appliedFilters,
+  dist_radius,
+  // setAppliedFilters,
+  // orderedFilters,
+
+  // setOrderedFilters,
+  // setPreventScroll,
+  enableScrollLock,
+  disableScrollLock,
 }) {
   // console.log("received appliedFilters", appliedFilters);
   // console.log("received orderedFilters", orderedFilters);
+
+  const dispatch = useDispatch();
   /// DISTANCE (.dist_radius)
   const custStyle = {
     fontSize: "1rem",
@@ -106,7 +131,9 @@ function DistanceLocationFilter({
   ];
   //APPLIED FILTERS .DIST_RADIUS STATE
   const [selectedDistance, setSelectedDistance] = useState(
-    appliedFilters.dist_radius ? appliedFilters.dist_radius : dist_amts[0]
+    /*  appliedFilters. */ dist_radius
+      ? /* appliedFilters. */ dist_radius
+      : dist_amts[0]
   );
   //SHOP NEARBY STATE
   const [nearbyList, setNearbyList] = useState([]);
@@ -133,15 +160,17 @@ function DistanceLocationFilter({
         fullName.toLowerCase().includes(shopByValue.toLowerCase())
     )?.[0];
 
-    const filteredInv = inv
-      .filter((obj) => {
-        const stateMatches = matchAbbrev ? obj.state === matchAbbrev : false;
-        const cityMatches = obj.city
-          .toLowerCase()
-          .includes(shopByValue.toLowerCase());
-        return stateMatches || cityMatches;
-      })
-      .sort((a, b) => a.state.localeCompare(b.state));
+    const filteredInv =
+      /* inv */
+      selectActiveInventory
+        .filter((obj) => {
+          const stateMatches = matchAbbrev ? obj.state === matchAbbrev : false;
+          const cityMatches = obj.city
+            .toLowerCase()
+            .includes(shopByValue.toLowerCase());
+          return stateMatches || cityMatches;
+        })
+        .sort((a, b) => a.state.localeCompare(b.state));
 
     const filteredLocs = [
       ...new Map(
@@ -163,19 +192,20 @@ function DistanceLocationFilter({
     ) {
       setShowLocationChangeModal(false);
       if (window.innerWidth >= 820) {
-        setPreventScroll(false);
+        // setPreventScroll(false);
+        disableScrollLock();
       }
       locationChangeInputRef.current = "";
     }
   });
   // SET SELECTED DISTANCE & NEARBY LIST STATE
   useEffect(() => {
-    if (!appliedFilters.dist_radius) {
+    if (!(/* appliedFilters. */ dist_radius)) {
       // if changed TO 'nationwide' (so 'null' now)
       setSelectedDistance(dist_amts[0]); //'Nationwide' default
     } else {
       setSelectedDistance(() => {
-        const stringified = `${appliedFilters.dist_radius} miles`;
+        const stringified = `${/* appliedFilters. */ dist_radius} miles`;
         return stringified;
       });
     }
@@ -183,7 +213,6 @@ function DistanceLocationFilter({
     const fetchPlaces = async () => {
       const returnedPlaces = await handleLocationSearch(location.zip, true);
       const placesWithOffers = returnedPlaces.filter((obj) => obj.offerCt > 0);
-
       // Add distance field to each place
       //calculate distance btwn user & 'place w/ offer' obj
       const placesWithDistance = placesWithOffers.map((obj) => ({
@@ -195,20 +224,17 @@ function DistanceLocationFilter({
           parseFloat(obj.longitude)
         ),
       }));
-
       // Sort by distance ascending
       const sortedPlaces = placesWithDistance.sort(
         (a, b) => a.distance - b.distance
       );
-
       setNearbyList(sortedPlaces); // save if you want to use later in UI
     };
-
     fetchPlaces();
-  }, [appliedFilters.dist_radius, location]);
+  }, [/* appliedFilters. */ dist_radius, location]);
 
   // SET APPLIED FILTERS .DIST_RADIUS STATE (drop down handler)
-  const handleDistChange = (value) => {
+  /*  const handleDistChange = (value) => {
     if (value === "Nationwide") {
       setAppliedFilters((prev) => ({
         ...prev,
@@ -226,9 +252,24 @@ function DistanceLocationFilter({
           prev.includes("dist_radius") ? prev : [...prev, "dist_radius"] // add it if not present
       );
     }
+  }; */
+  const handleDistChange = (value) => {
+    if (value === "Nationwide") {
+      dispatch(clearSingleFilter("dist_radius")); //make null again
+    } else {
+      const valNum = Number(value.slice(0, -6)); // "25 miles" → 25
+
+      dispatch(
+        updateFilter({
+          key: "dist_radius",
+          value: valNum,
+        })
+      );
+    }
   };
+
   /// LOCATION  CHECKBOXES (.veh_locations state)
-  const handleVehLocChange = (city) => {
+  /*  const handleVehLocChange = (city) => {
     setAppliedFilters((prev) => {
       let newVehLocations = [...prev.veh_locations];
 
@@ -255,9 +296,27 @@ function DistanceLocationFilter({
         veh_locations: newVehLocations,
       };
     });
+  }; */
+  const handleVehLocChange = (city) => {
+    let newVehLocations;
+
+    if (currentVehLocations.includes(city)) {
+      // remove
+      newVehLocations = currentVehLocations.filter((c) => c !== city);
+    } else {
+      // add
+      newVehLocations = [...currentVehLocations, city];
+    }
+
+    // Dispatch once — reducer decides orderedFilters behavior
+    dispatch(
+      updateFilter({
+        key: "veh_locations",
+        value: newVehLocations.length > 0 ? newVehLocations : [],
+      })
+    );
   };
 
-  //
   const [showAllNearby, setShowAllNearby] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   // const visibleNearby = showAllNearby ? nearbyList : nearbyList.slice(0, 5);
@@ -284,13 +343,15 @@ function DistanceLocationFilter({
                 <LocationChangeModal
                   distMode={true}
                   ref={locationChangeRef}
-                  location={location}
+                  // location={location}
                   locationInputValue={locationInputValue}
                   setLocationInputValue={setLocationInputValue}
                   locationChangeInputRef={locationChangeInputRef}
                   setShowLocationChangeModal={setShowLocationChangeModal}
-                  setPreventScroll={setPreventScroll}
-                  inv={inv}
+                  // setPreventScroll={setPreventScroll}
+                  // enableScrollLock={enableScrollLock}
+                  disableScrollLock={disableScrollLock}
+                  // inv={inv}
                   locObjs={locObjs}
                   setLocObjs={setLocObjs}
                 />
@@ -317,7 +378,8 @@ function DistanceLocationFilter({
           className="changeBtn"
           onClick={() => {
             setShowLocationChangeModal(true);
-            setPreventScroll(true);
+            // setPreventScroll(true);
+            enableScrollLock();
           }} // 👈 open modal
         >
           Change
@@ -513,20 +575,20 @@ function DistanceLocationFilter({
 
 function PriceFilter({
   options,
-  setAppliedFilters,
+  // setAppliedFilters,
   appliedFilters,
   leftPanel,
-  setOrderedFilters,
+  // setOrderedFilters,
 }) {
   console.log("received appliedFilters", appliedFilters);
   return (
     <div className="filter_root">
       <PriceSlider
         inventory={options}
-        setAppliedFilters={setAppliedFilters}
+        // setAppliedFilters={setAppliedFilters}
         appliedFilters={appliedFilters}
         leftPanel={leftPanel}
-        setOrderedFilters={setOrderedFilters}
+        // setOrderedFilters={setOrderedFilters}
       />
     </div>
   );
@@ -534,50 +596,61 @@ function PriceFilter({
 
 function MakeFilter({
   currentMakes,
-  setAppliedFilters,
+  // setAppliedFilters,
   options,
-  orderedFilters,
-  setOrderedFilters,
+  // orderedFilters,
+  // setOrderedFilters,
 }) {
-  //click handler took 292ms
+  const dispatch = useDispatch();
+
+  // const handleCheckboxChange = (make) => {
+  //   setAppliedFilters((prev) => {
+  //     let newMakes = [...prev.makes];
+  //     let newModels = { ...prev.Models };
+  //     let newStyles = [...prev.styles];
+  //     //if prev AF.makes already includes rec'd 'make'
+  //     if (prev.makes.includes(make)) {
+  //       //then clicking meant 'remove', filter it out, reassign filtered out
+  //       newMakes = prev.makes.filter((m) => m !== make);
+  //       //if the removed make is a 'key' in prev.models obj
+  //       if (prev.models.hasOwnProperty(make)) {
+  //         const { [make]: _, ...modelsWithoutMake } = prev.models;
+  //         //reassign prev.models obj excluding that 'make' key entry
+  //         newModels = modelsWithoutMake;
+  //         //if removal made prev.models obj empty, remove 'models' from orderedFilters
+  //         if (Object.keys(modelsWithoutMake).length === 0) {
+  //           setOrderedFilters((prevOrdered) =>
+  //             prevOrdered.filter((item) => item !== "models")
+  //           );
+  //         }
+  //       }
+  //     } else {
+  //       //otherwise if it AF.makes didn't include 'make", add it in, reassign added in
+  //       newMakes = [...prev.makes, make];
+  //     }
+  //     //if taken out & now it's empty, remove 'makes' orderedFilter
+  //     if (newMakes.length === 0) {
+  //       setOrderedFilters((prevOrdered) =>
+  //         prevOrdered.filter((filter) => filter !== "makes")
+  //       );
+  //       //otherwise if it's not empty & orderedFilters doesn't yet include 'makes', incude it
+  //     } else if (!orderedFilters.includes("makes")) {
+  //       setOrderedFilters([...orderedFilters, "makes"]);
+  //     }
+  //     //RETURN ( for appliedFilters )
+  //     return { ...prev, makes: newMakes, models: newModels, styles: newStyles };
+  //   });
+  // };
+
   const handleCheckboxChange = (make) => {
-    setAppliedFilters((prev) => {
-      let newMakes = [...prev.makes];
-      let newModels = { ...prev.Models };
-      let newStyles = [...prev.styles];
-      //if prev AF.makes already includes rec'd 'make'
-      if (prev.makes.includes(make)) {
-        //then clicking meant 'remove', filter it out, reassign filtered out
-        newMakes = prev.makes.filter((m) => m !== make);
-        //if the removed make is a 'key' in prev.models obj
-        if (prev.models.hasOwnProperty(make)) {
-          const { [make]: _, ...modelsWithoutMake } = prev.models;
-          //reassign prev.models obj excluding that 'make' key entry
-          newModels = modelsWithoutMake;
-          //if removal made prev.models obj empty, remove 'models' from orderedFilters
-          if (Object.keys(modelsWithoutMake).length === 0) {
-            setOrderedFilters((prevOrdered) =>
-              prevOrdered.filter((item) => item !== "models")
-            );
-          }
-        }
-      } else {
-        //otherwise if it didn't, add it in, reassign added in
-        newMakes = [...prev.makes, make];
-      }
-
-      //if taken out & now it's empty, remove 'makes' orderedFilter
-      if (newMakes.length === 0) {
-        setOrderedFilters((prevOrdered) =>
-          prevOrdered.filter((filter) => filter !== "makes")
-        );
-        //otherwise if it's not empty & orderedFilters doesn't yet include 'makes', incude it
-      } else if (!orderedFilters.includes("makes")) {
-        setOrderedFilters([...orderedFilters, "makes"]);
-      }
-
-      return { ...prev, makes: newMakes, models: newModels, styles: newStyles };
-    });
+    if (currentMakes.includes(make)) {
+      // 🔹 Removing a make
+      dispatch(removeFilterValue({ key: "makes", value: make }));
+      dispatch(removeModelsByMake(make));
+    } else {
+      // 🔹 Adding a make
+      dispatch(updateFilter({ key: "makes", value: [...currentMakes, make] }));
+    }
   };
 
   return (
@@ -605,12 +678,14 @@ function MakeFilter({
 }
 
 function ModelFilter({
-  currentMakes,
-  currentModels,
-  setAppliedFilters,
+  currentMakes, //appliedFilters.makes
+  currentModels, //appliedFilters.models
+  currentModelsStrings, //array of all model names in AF.models
   options,
-  setOrderedFilters,
+  // setAppliedFilters,
+  // setOrderedFilters,
 }) {
+  const dispatch = useDispatch();
   // OVERFLOW SCROLL
   const wrapperRef = useRef(null);
   const tabHeadersRef = useRef(null);
@@ -662,56 +737,91 @@ function ModelFilter({
 
   useEffect(() => setActiveTab(currentMakes[0]), [currentMakes]);
 
-  const handleCheckboxChange = (model) => {
-    // Step 1: Find the make (key) for the given model by scanning the 'options' object
-    const make = Object.keys(options).find((makeKey) =>
-      options[makeKey]?.some((entry) => entry.model === model)
-    );
+  // const handleCheckboxChange = (model) => {
+  //   // Step 1: Find the make (key) for the given model by scanning the 'options' object
+  //   const make = Object.keys(options).find((makeKey) =>
+  //     options[makeKey]?.some((entry) => entry.model === model)
+  //   );
 
-    if (!make) return; // fail-safe, model not found
+  //   if (!make) return; // fail-safe, model not found
 
-    // Step 2: Update appliedFilters.models as a nested object
-    setAppliedFilters((prev) => {
-      const prevModels = prev.models || {};
-      const makeModels = prevModels[make] || [];
+  //   // Step 2: Update appliedFilters.models as a nested object
+  //   setAppliedFilters((prev) => {
+  //     const prevModels = prev.models || {};
+  //     const makeModels = prevModels[make] || [];
 
-      let newModelsForMake;
-      if (makeModels.includes(model)) {
-        newModelsForMake = makeModels.filter((m) => m !== model);
+  //     let newModelsForMake;
+  //     if (makeModels.includes(model)) {
+  //       newModelsForMake = makeModels.filter((m) => m !== model);
+  //     } else {
+  //       newModelsForMake = [...makeModels, model];
+  //     }
+
+  //     const updatedModels = {
+  //       ...prevModels,
+  //       [make]: newModelsForMake,
+  //     };
+
+  //     if (updatedModels[make].length === 0) {
+  //       delete updatedModels[make];
+  //     }
+
+  //     // Decide if any models exist across all makes
+  //     const anyModelsSelected = Object.values(updatedModels).some(
+  //       (arr) => arr.length > 0
+  //     );
+
+  //     // Update orderedFilters accordingly
+  //     setOrderedFilters((prevOrdered) => {
+  //       if (anyModelsSelected) {
+  //         return prevOrdered.includes("models")
+  //           ? prevOrdered
+  //           : [...prevOrdered, "models"];
+  //       } else {
+  //         return prevOrdered.filter((f) => f !== "models");
+  //       }
+  //     });
+
+  //     return {
+  //       ...prev,
+  //       models: updatedModels,
+  //     };
+  //   });
+  // };
+  const handleCheckboxChange = (model, make) => {
+    if (!make) return;
+
+    // Step 2: read current models from Redux
+    const makeModels = currentModels[make] || [];
+
+    const modelExists = makeModels.includes(model);
+
+    let updatedModels;
+
+    if (modelExists) {
+      // remove model
+      const newModelsForMake = makeModels.filter((m) => m !== model);
+
+      if (newModelsForMake.length > 0) {
+        updatedModels = {
+          ...currentModels,
+          [make]: newModelsForMake,
+        };
       } else {
-        newModelsForMake = [...makeModels, model];
+        // remove entire make key
+        const { [make]: _, ...rest } = currentModels;
+        updatedModels = rest;
       }
-
-      const updatedModels = {
-        ...prevModels,
-        [make]: newModelsForMake,
+    } else {
+      // add model
+      updatedModels = {
+        ...currentModels,
+        [make]: [...makeModels, model],
       };
+    }
 
-      if (updatedModels[make].length === 0) {
-        delete updatedModels[make];
-      }
-
-      // Decide if any models exist across all makes
-      const anyModelsSelected = Object.values(updatedModels).some(
-        (arr) => arr.length > 0
-      );
-
-      // Update orderedFilters accordingly
-      setOrderedFilters((prevOrdered) => {
-        if (anyModelsSelected) {
-          return prevOrdered.includes("models")
-            ? prevOrdered
-            : [...prevOrdered, "models"];
-        } else {
-          return prevOrdered.filter((f) => f !== "models");
-        }
-      });
-
-      return {
-        ...prev,
-        models: updatedModels,
-      };
-    });
+    // Step 3: single Redux update
+    dispatch(updateFilter({ key: "models", value: updatedModels }));
   };
 
   return (
@@ -729,6 +839,7 @@ function ModelFilter({
             <IoIosArrowBack />
           </button>
         )}
+        {/* MAKE TABS */}
         {currentMakes.map((make) => (
           <button
             key={make}
@@ -757,9 +868,10 @@ function ModelFilter({
                 className="custom_checkbox_input"
                 type="checkbox"
                 checked={
-                  Array.isArray(currentModels) && currentModels.includes(model)
+                  Array.isArray(currentModelsStrings) &&
+                  currentModelsStrings.includes(model)
                 }
-                onChange={() => handleCheckboxChange(model)}
+                onChange={() => handleCheckboxChange(model, activeTab)}
               />
               <span className="custom_checkbox_visual" />
               <span className="checkbox_text">
@@ -775,12 +887,14 @@ function ModelFilter({
 //// BODY  TYPE FILTER
 function BodyTypeFilter({
   currentBodyTypes,
-  setAppliedFilters,
+  // setAppliedFilters,
   options,
-  orderedFilters,
-  setOrderedFilters,
+  // orderedFilters,
+  // setOrderedFilters,
 }) {
-  const handleCheckboxChange = (style) => {
+  const dispatch = useDispatch();
+
+  /*   const handleCheckboxChange = (style) => {
     setAppliedFilters((prevState) => {
       const newStyles = prevState.styles.includes(style)
         ? prevState.styles.filter((m) => m !== style)
@@ -796,7 +910,19 @@ function BodyTypeFilter({
 
       return { ...prevState, styles: newStyles };
     });
+  }; */
+
+  // add second arg to 'handleCheckboxChange' ('remove' boolean), use 'currentBodyTypes.includes(style)' for it, if 'true', run 'removeFilterValue()', if false, run 'updateFilter()'. These design pattern means always figuring out if checkbox click is for add or remove in the FILTER (and not Redux reducer)
+
+  // Otherwise, could just invoke 'updateFilter()' and have Redux reducer figure out if needs to be added or removed... might allow you to also get rid of 'removeFilter()' reducer too. No need for multiple separate filter logic figuring out if clicked checkbox value is already included or not on frontend (reduces code)
+  const handleCheckboxChange = (style) => {
+    if (currentBodyTypes.includes(style)) {
+      dispatch(removeFilterValue({ key: "styles", value: style }));
+    } else {
+      dispatch(addFilterValue({ key: "styles", value: style }));
+    }
   };
+
   return (
     <div className="filter_root">
       <div className="checkboxes_container">
@@ -825,10 +951,13 @@ function BodyTypeFilter({
 /// YEAR FILTER /////
 function YearFilter({
   options,
-  setAppliedFilters,
-  setOrderedFilters,
-  appliedFilters,
+  // setAppliedFilters,
+  // setOrderedFilters,
+  // appliedFilters,
+  currYearFrom,
+  currYearTo,
 }) {
+  const dispatch = useDispatch();
   const years = options.map((option) => option.year);
   // console.log("years", years);
   const [range, setRange] = useState([Math.min(...years), Math.max(...years)]);
@@ -853,7 +982,8 @@ function YearFilter({
 
   const clampValue = (value, min, max) => Math.max(min, Math.min(value, max));
 
-  const updateFilters = (newRange, changedKey) => {
+  // UPDATE FILTERS
+  /*  const updateFilters = (newRange, changedKey) => {
     console.log("updateFilters was reached in here");
     setAppliedFilters((prev) => ({
       ...prev,
@@ -863,6 +993,13 @@ function YearFilter({
     setOrderedFilters((prev) =>
       prev.includes(changedKey) ? prev : [...prev, changedKey]
     );
+  }; */
+  const updateFilters = (newRange, changedKey) => {
+    if (changedKey === "yearFrom") {
+      dispatch(updateFilter({ key: "yearFrom", value: newRange[0] }));
+    } else {
+      dispatch(updateFilter({ key: "yearTo", value: newRange[1] }));
+    }
   };
 
   const handleUpdateRange = (newValue, activeSelect) => {
@@ -891,11 +1028,11 @@ function YearFilter({
   useEffect(() => {
     if (!computedRange) return;
 
-    const minYear = appliedFilters.yearFrom ?? computedRange.min;
-    const maxYear = appliedFilters.yearTo ?? computedRange.max;
+    const minYear = currYearFrom ?? computedRange.min;
+    const maxYear = currYearTo ?? computedRange.max;
 
     setRange([minYear, maxYear]);
-  }, [appliedFilters.yearFrom, appliedFilters.yearTo, computedRange]);
+  }, [currYearFrom, currYearTo, computedRange]);
 
   return (
     <div className="filter_root">
@@ -914,11 +1051,13 @@ function YearFilter({
 
 function MileageFilter({
   options,
-  setAppliedFilters,
-  appliedFilters,
+  // setAppliedFilters,
+  // appliedFilters,
+  currentMileage,
   // leftPanel,
-  setOrderedFilters,
+  // setOrderedFilters,
 }) {
+  const dispatch = useDispatch();
   const mileageValues = options
     .map((vehicle) => vehicle.mileage)
     .filter((m) => typeof m === "number");
@@ -939,12 +1078,10 @@ function MileageFilter({
   }
 
   const [selectedMileage, setSelectedMileage] = useState(
-    appliedFilters.mileage
-      ? `${appliedFilters.mileage.toLocaleString()} or less`
-      : ""
+    currentMileage ? `${currentMileage.toLocaleString()} or less` : ""
   );
-
-  const handleUpdateMiles = (value) => {
+  /// HANDLE UPDATE MILEAGE
+  /*   const handleUpdateMiles = (value) => {
     if (value === "Any") {
       // Remove mileage filter if 'Any' is selected
       setAppliedFilters((prev) => {
@@ -962,6 +1099,17 @@ function MileageFilter({
         prev.includes("mileage") ? prev : [...prev, "mileage"]
       );
     }
+  }; */
+  const handleUpdateMiles = (value) => {
+    if (value === "Any") {
+      {
+        dispatch(clearSingleFilter({ key: "mileage" }));
+      }
+    } else {
+      // Parse "50,000 and less" into 50000
+      const numericValue = parseInt(value.replace(/[^0-9]/g, ""), 10);
+      dispatch(updateFilter({ key: "mileage", value: numericValue }));
+    }
   };
 
   return (
@@ -977,7 +1125,7 @@ function MileageFilter({
   );
 }
 
-function FuelTypeFilter({ setAppliedFilters }) {
+function FuelTypeFilter({}) {
   return (
     <div className="filter_root">
       <h3>Fuel Type Filter</h3>
@@ -985,7 +1133,7 @@ function FuelTypeFilter({ setAppliedFilters }) {
   );
 }
 
-function TaxCreditFilter({ setAppliedFilters }) {
+function TaxCreditFilter({}) {
   return (
     <div className="filter_root">
       <h3>Tax Credit Filter</h3>
@@ -993,7 +1141,7 @@ function TaxCreditFilter({ setAppliedFilters }) {
   );
 }
 
-function FeaturesFilter({ setAppliedFilters }) {
+function FeaturesFilter({}) {
   return (
     <div className="filter_root">
       <h3>Features Filter</h3>
@@ -1001,7 +1149,7 @@ function FeaturesFilter({ setAppliedFilters }) {
   );
 }
 
-function CarSizeFilter({ setAppliedFilters }) {
+function CarSizeFilter({}) {
   return (
     <div className="filter_root">
       <h3>Car Size Filter</h3>
@@ -1009,7 +1157,7 @@ function CarSizeFilter({ setAppliedFilters }) {
   );
 }
 
-function DoorsFilter({ setAppliedFilters }) {
+function DoorsFilter({}) {
   return (
     <div className="filter_root">
       <h3>Doors Filter</h3>
@@ -1017,7 +1165,7 @@ function DoorsFilter({ setAppliedFilters }) {
   );
 }
 
-function ExteriorColorFilter({ setAppliedFilters }) {
+function ExteriorColorFilter({}) {
   return (
     <div className="filter_root">
       <h3>Exterior Color Filter</h3>
@@ -1025,7 +1173,7 @@ function ExteriorColorFilter({ setAppliedFilters }) {
   );
 }
 
-function InteriorColorFilter({ setAppliedFilters }) {
+function InteriorColorFilter({}) {
   return (
     <div className="filter_root">
       <h3>Interior Color Filter</h3>
@@ -1033,7 +1181,7 @@ function InteriorColorFilter({ setAppliedFilters }) {
   );
 }
 
-function DrivetrainFilter({ setAppliedFilters }) {
+function DrivetrainFilter({}) {
   return (
     <div className="filter_root">
       <h3>DriveTrain Filter</h3>
@@ -1041,7 +1189,7 @@ function DrivetrainFilter({ setAppliedFilters }) {
   );
 }
 
-function TransmissionFilter({ setAppliedFilters }) {
+function TransmissionFilter({}) {
   return (
     <div className="filter_root">
       <h3>Transmission Filter</h3>
@@ -1049,7 +1197,7 @@ function TransmissionFilter({ setAppliedFilters }) {
   );
 }
 
-function CylindersFilter({ setAppliedFilters }) {
+function CylindersFilter({}) {
   return (
     <div className="filter_root">
       <h3>Cylinders Filter</h3>
@@ -1057,7 +1205,7 @@ function CylindersFilter({ setAppliedFilters }) {
   );
 }
 
-function MPGFilter({ setAppliedFilters }) {
+function MPGFilter({}) {
   return (
     <div className="filter_root">
       <h3>MPG Filter</h3>
@@ -1065,7 +1213,7 @@ function MPGFilter({ setAppliedFilters }) {
   );
 }
 
-function AdvancedSearchFilter({ setAppliedFilters }) {
+function AdvancedSearchFilter({}) {
   return (
     <div className="filter_root">
       <h3>Advanced Search Filter</h3>

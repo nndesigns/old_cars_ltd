@@ -18,7 +18,10 @@ import RightPanel from "../components/rightPanel/rightPanel";
 import ShareModal from "../components/shareModal";
 
 import Heart from "../components/heart";
+// REDUX
 import { useDispatch, useSelector } from "react-redux";
+import { selectCompareCars, selectChosenCars } from "../user/userSlice.js";
+
 import { toggleHeart } from "../user/favoritesSlice";
 
 ///DETAILS TOOL
@@ -27,8 +30,9 @@ import DetailsTool from "../components/detailsTool";
 import { Link } from "react-router-dom";
 import Button from "../components/buttons/button";
 
-import { AnimatePresence } from "motion/react";
-import * as motion from "motion/react-client";
+// import { AnimatePresence } from "motion/react";
+// import * as motion from "motion/react-client";
+import { motion, AnimatePresence } from "framer-motion";
 
 ///BUTTON BOX BTNS
 const btnStyle = {
@@ -82,6 +86,9 @@ const TitleBoxWrapper = styled("div")(({ theme }) => ({
   paddingBlock: "16px",
 }));
 
+//
+// TITLE BOX
+//
 const TitleBox = ({
   car,
   mobileMenuWidth,
@@ -91,7 +98,7 @@ const TitleBox = ({
   const navigate = useNavigate();
   const optionsArray = ["Reserve this car", "View car Details", "Change car"];
 
-  //   console.log("originCar in TitleBox", originCar);
+  console.log("car in TitleBox", car);
 
   const handleChangeCar = (car) => {
     setOriginCar(car);
@@ -155,7 +162,9 @@ const ImagesWrapper = styled("div")(() => ({
   flex: 1,
 }));
 
+//
 ///// IMAGES CONTAINER
+//
 const ImagesContainer = ({
   srcArr,
   allPhotos,
@@ -234,7 +243,9 @@ const PhotosToolWrapper = styled(Box)(() => ({
   gap: ".25rem",
 }));
 
+//
 /// PHOTOS TOOL
+//
 const PhotosTool = ({
   allPhotos,
   setAllPhotos,
@@ -251,6 +262,10 @@ const PhotosTool = ({
     marginLeft: mobile ? (mobile2 ? "-15px" : "-24px") : "0",
     width: mobile ? "100vw" : "100%",
   };
+
+  if (!chosenCars.length) {
+    return null; // or loading skeleton
+  }
 
   return (
     <div style={photoRootStyle}>
@@ -292,16 +307,18 @@ const moreOptObj = {
 
 //////// COMPARE COMPONENT  (ROOT) ///////
 const Compare = ({
-  compareCars,
-  setCompareCars,
-  location,
-  inventory,
-  chosenCars,
-  setChosenCars,
-  setPreventScroll,
+  /* setPreventScroll, */ AnimatePresence,
+  PageTransition,
 }) => {
+  // REDUX
   const dispatch = useDispatch();
+  // COMPARE CARS
+  const compareCars = useSelector(selectCompareCars);
+  // CHOSEN CARS
+  const chosenCars = useSelector(selectChosenCars);
   const heartedCars = useSelector((state) => state.favorites.heartedCars);
+  const inventory = useSelector((state) => state.inventory.items);
+  const location = useSelector((s) => s.location);
   //      const isHearted = heartedCars.some((car) => car.id === carData.id);
   const [toggleLike, setToggleLike] = useState(false);
   const [isHearted, setIsHearted] = useState();
@@ -353,6 +370,8 @@ const Compare = ({
     boxShadow: "0 2px 6px rgba(0, 0, 0, 0.4)",
   };
 
+  // console.log("heartedCars", heartedCars);
+
   const toggleLikeLinkStyle = {
     color: "white",
     textDecoration: "none",
@@ -361,6 +380,9 @@ const Compare = ({
 
   //// FETCH 'INV' IMAGES (getModelImageURLs - axiosCalls.js)
   useEffect(() => {
+    console.log("chosenCars ALL", chosenCars);
+    console.log("chosenCars[0]", chosenCars[0]);
+    console.log("chosenCars[1]", chosenCars[1]);
     const fetchImages = async () => {
       try {
         const imagesMap = await getModelImageURLs(
@@ -398,151 +420,153 @@ const Compare = ({
   }, []);
 
   return (
-    <div className="page_container">
-      <Box
-        className="center_box compare_center_box"
-        style={{ marginBottom: "0px" }}
-      >
-        <RightPanel
-          mode="compareCars"
-          showRightPanel={showRightPanel}
-          setShowRightPanel={setShowRightPanel}
-          originCar={originCar} /// the car whose 'Change Car' btn was clicked
-          setOriginCar={setOriginCar}
-          compareCars={compareCars} /// all  selected 'compareCars' objects so far
-          setCompareCars={setCompareCars}
-          setChosenCars={setChosenCars} //reset which two 'compareCars' objs display
-          chosenCars={chosenCars}
-          heartedCars={heartedCars}
-          toggleHeartClick={toggleHeartClick}
-          inventory={inventory}
-        />
-        <AnimatePresence>
-          {toggleLike && (
-            <motion.span
-              style={toggleLikeSpanStyle}
-              initial={{ opacity: 0, scale: 0.3, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.3, y: 10 }}
-              transition={{ duration: 0.25 }}
-            >
-              {!isHearted ? (
-                <>
-                  Added to your favorites!{" "}
-                  <a href="/favorites" style={toggleLikeLinkStyle}>
-                    VIEW
-                  </a>
-                </>
-              ) : (
-                "Removed from your favorites"
-              )}
-            </motion.span>
-          )}
-        </AnimatePresence>
-        <div
-          className="top_row"
-          style={{ paddingInline: mobilePicWidth2 ? "10px" : "" }}
-        >
-          {/* BACK TO SEARCH (CARS) (if !allPhotos)  OR  BACK TO  COMPARE W/DETAILS (default: if allPhotos) */}
-          <div className="innerTopRow">
-            {!allPhotos ? (
-              <SearchBackBtn
-                mobile={mobilePicWidth2}
-                page="compare"
-                style={{
-                  marginBlock: ".5rem",
-                  border: "none",
-                  padding: ".6rem",
-                }}
-              />
-            ) : (
-              <Button
-                page="compare"
-                text="Back to Details"
-                outlineStyle2={true}
-                onClick={() => setAllPhotos(false)}
-                svg={<ImArrowLeft />}
-                style={compareBtnStyle}
-              />
-            )}
-            <Link
-              to="/"
-              style={{
-                position: "absolute",
-                left: "50%",
-                transform: "translateX(-50%)",
-                width: mobilePicWidth2 ? "36vw" : "220px",
-                height: "auto",
-              }}
-            >
-              <Logo
-                style={{
-                  fill: "var(--invCardTitle)",
-                }}
-              />
-            </Link>
-            {/* MORE BTN / DROPDOWN */}
-            <Dropdown
-              text="More"
-              svg={<HiOutlineDotsVertical />}
-              outlineStyle2={true}
-              style={compareBtnStyle}
-              compare={true}
-              options={moreOptObj}
-              setShowShareModal={setShowShareModal}
-              setPreventScroll={setPreventScroll}
+    <AnimatePresence mode="wait">
+      <PageTransition>
+        <div className="page_container">
+          <Box
+            className="center_box compare_center_box"
+            style={{ marginBottom: "0px" }}
+          >
+            <RightPanel
+              mode="compareCars"
+              showRightPanel={showRightPanel}
+              setShowRightPanel={setShowRightPanel}
+              originCar={originCar} /// the car whose 'Change Car' btn was clicked
+              setOriginCar={setOriginCar}
+              compareCars={compareCars}
+              chosenCars={chosenCars}
+              heartedCars={heartedCars}
+              toggleHeartClick={toggleHeartClick}
+              inventory={inventory}
             />
-          </div>
+            <AnimatePresence>
+              {toggleLike && (
+                <motion.span
+                  style={toggleLikeSpanStyle}
+                  initial={{ opacity: 0, scale: 0.3, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.3, y: 10 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  {!isHearted ? (
+                    <>
+                      Added to your favorites!{" "}
+                      <a href="/favorites" style={toggleLikeLinkStyle}>
+                        VIEW
+                      </a>
+                    </>
+                  ) : (
+                    "Removed from your favorites"
+                  )}
+                </motion.span>
+              )}
+            </AnimatePresence>
+            <div
+              className="top_row"
+              style={{ paddingInline: mobilePicWidth2 ? "10px" : "" }}
+            >
+              {/* BACK TO SEARCH (CARS) (if !allPhotos)  OR  BACK TO  COMPARE W/DETAILS (default: if allPhotos) */}
+              <div className="innerTopRow">
+                {!allPhotos ? (
+                  <SearchBackBtn
+                    mobile={mobilePicWidth2}
+                    page="compare"
+                    style={{
+                      marginBlock: ".5rem",
+                      border: "none",
+                      padding: ".6rem",
+                    }}
+                  />
+                ) : (
+                  <Button
+                    page="compare"
+                    text="Back to Details"
+                    outlineStyle2={true}
+                    onClick={() => setAllPhotos(false)}
+                    svg={<ImArrowLeft />}
+                    style={compareBtnStyle}
+                  />
+                )}
+                <Link
+                  to="/"
+                  style={{
+                    position: "absolute",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: mobilePicWidth2 ? "36vw" : "220px",
+                    height: "auto",
+                  }}
+                >
+                  <Logo
+                    style={{
+                      fill: "var(--invCardTitle)",
+                    }}
+                  />
+                </Link>
+                {/* MORE BTN / DROPDOWN */}
+                <Dropdown
+                  text="More"
+                  svg={<HiOutlineDotsVertical />}
+                  outlineStyle2={true}
+                  style={compareBtnStyle}
+                  compare={true}
+                  options={moreOptObj}
+                  setShowShareModal={setShowShareModal}
+                  // setPreventScroll={setPreventScroll}
+                />
+              </div>
+            </div>
+            <Box
+              className="middle_content compare_middle_content"
+              style={{ marginBottom: allPhotos ? "3rem" : "" }}
+            >
+              <TitleBar>
+                <TitleBoxContainer>
+                  <TitleBox
+                    car={chosenCars[0]}
+                    mobileMenuWidth={mobileMenuWidth}
+                    setShowRightPanel={setShowRightPanel}
+                    setOriginCar={setOriginCar}
+                  />
+                  <div className="gapBox" />
+                  <TitleBox
+                    car={chosenCars[1]}
+                    mobileMenuWidth={mobileMenuWidth}
+                    setShowRightPanel={setShowRightPanel}
+                    setOriginCar={setOriginCar}
+                  />
+                </TitleBoxContainer>
+              </TitleBar>
+              <PhotosTool
+                allPhotos={allPhotos}
+                setAllPhotos={setAllPhotos} //for btn inside PhotosTool
+                mobile={mobilePicWidth} // 1200 (margin-left: -24px)
+                mobile2={mobilePicWidth2} //600 (margin-left: -15px)
+                srcArrays={srcArrays}
+                chosenCars={chosenCars} ///here empty
+                heartedCars={heartedCars}
+                toggleHeartClick={toggleHeartClick}
+              />
+              {/* DETAILS TOOL */}
+            </Box>{" "}
+            {/* centered by .center_box still, add a separate .middle_content_details with same .middle_content settings */}
+            <ShareModal
+              // car={carData}
+              chosenCars={chosenCars}
+              showShareModal={showShareModal}
+              setShowShareModal={setShowShareModal}
+              // setPreventScroll={setPreventScroll}
+              compare={true}
+            />
+          </Box>
+          {!allPhotos && (
+            <Box className="center_box details_center_box">
+              <DetailsTool chosenCars={chosenCars} location={location} />
+            </Box>
+          )}
         </div>
-        <Box
-          className="middle_content compare_middle_content"
-          style={{ marginBottom: allPhotos ? "3rem" : "" }}
-        >
-          <TitleBar>
-            <TitleBoxContainer>
-              <TitleBox
-                car={chosenCars[0]}
-                mobileMenuWidth={mobileMenuWidth}
-                setShowRightPanel={setShowRightPanel}
-                setOriginCar={setOriginCar}
-              />
-              <div className="gapBox" />
-              <TitleBox
-                car={chosenCars[1]}
-                mobileMenuWidth={mobileMenuWidth}
-                setShowRightPanel={setShowRightPanel}
-                setOriginCar={setOriginCar}
-              />
-            </TitleBoxContainer>
-          </TitleBar>
-          <PhotosTool
-            allPhotos={allPhotos}
-            setAllPhotos={setAllPhotos} //for btn inside PhotosTool
-            mobile={mobilePicWidth} // 1200 (margin-left: -24px)
-            mobile2={mobilePicWidth2} //600 (margin-left: -15px)
-            srcArrays={srcArrays}
-            chosenCars={chosenCars}
-            heartedCars={heartedCars}
-            toggleHeartClick={toggleHeartClick}
-          />
-          {/* DETAILS TOOL */}
-        </Box>{" "}
-        {/* centered by .center_box still, add a separate .middle_content_details with same .middle_content settings */}
-        <ShareModal
-          // car={carData}
-          chosenCars={chosenCars}
-          showShareModal={showShareModal}
-          setShowShareModal={setShowShareModal}
-          setPreventScroll={setPreventScroll}
-          compare={true}
-        />
-      </Box>
-      {!allPhotos && (
-        <Box className="center_box details_center_box">
-          <DetailsTool chosenCars={chosenCars} location={location} />
-        </Box>
-      )}
-    </div>
+      </PageTransition>
+    </AnimatePresence>
   );
 };
 

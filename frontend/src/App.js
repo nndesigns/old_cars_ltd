@@ -1,40 +1,54 @@
 import React, {
   useState,
   useEffect,
-  useRef,
   useMemo,
-  useCallback,
+  // useCallback,
+  Suspense,
 } from "react";
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  useLocation,
-} from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import _ from "lodash";
-import { getInventory } from "./components/axiosCalls.js";
-import { getLocationFromBrowser, setLocalInv } from "./user/locationSlice";
+import { Routes, Route, useLocation } from "react-router-dom";
+
+import PageWrapper from "./PageWrapper";
 import ScrollToTopButton from "./components/scrollToTopBtn.js";
+// import FullPageLoader from "./components/FullPageLoader";
+import FullPageLoader from "./pages/fullpageLoader.js";
+
+import _ from "lodash";
+
+// import { saveFilter } from "./user/filtersSlice";
+
+// FRAMER
+import { AnimatePresence } from "framer-motion";
+import { PageTransition, FadeTransition } from "./animations";
+
+// HELPERS
+// import { getUniqueLocations } from "./components/axiosCalls.js";
 import { getLocalOffers, ScrollToTop } from "./components/utils.js";
-import Header from "./components/header.js";
-import BottomNav from "./components/bottom_nav/bottom_nav.js";
-import ThumbNav from "./components/bottom_nav/ThumbNav.js";
-//ROUTES
-import Home from "./pages/home.js";
-import Favorites from "./pages/favorites.js";
-import Cars from "./pages/cars.js";
-import VehiclePage from "./pages/vehiclePage.js";
-import Compare from "./pages/compare.js";
 
-import Footer from "./components/footer.js";
-import "./index.css";
-import { saveFilter } from "./user/filtersSlice";
+/// REDUX
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectUniqueLocationsStatus,
+  selectUniqueLocations,
+  fetchUniqueLocations,
+} from "./uniqueLocationsSlice.js";
+import {
+  selectInventoryStatus,
+  selectInventoryItems,
+  fetchInventory,
+} from "./inventorySlice";
+import { getLocationFromBrowser, setLocalInv } from "./user/locationSlice";
+// LOCK SCROLL
+// import { lockScroll, unlockScroll } from "./uiSlice.js";
+// COMPARE CARS & CHOSEN CARS
+import {
+  selectCompareCars,
+  selectChosenCars,
+  setChosenCars,
+} from "./user/userSlice.js";
 
-import { AnimatePresence, motion } from "framer-motion";
+// import { clearFilters } from "./user/filtersSlice.js";
 
-// ----------------- CONSTANTS -----------------
-const defaultFilterState = {
+/* const defaultFilterState = {
   sort: "Best match",
   dist_radius: null, //DISTANCE FILTER
   veh_locations: [], //DISTANCE FILTER
@@ -57,195 +71,204 @@ const defaultFilterState = {
   cylinders: null,
   MPGHwy: null,
   vin: null,
-};
+}; */
 
-/// TRANSITION (Framer-Motion)
-const PageTransition = ({ children, style }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 30 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -30 }}
-    transition={{ duration: 0.8 }}
-    style={style}
-  >
-    {children}
-  </motion.div>
-);
+// PAGE IMPORTS
+const Home = React.lazy(() => import("./pages/home"));
+const Favorites = React.lazy(() => import("./pages/favorites"));
+const Cars = React.lazy(() => import("./pages/cars"));
+const VehiclePage = React.lazy(() => import("./pages/vehiclePage"));
+const Compare = React.lazy(() => import("./pages/compare"));
 
-const FadeTransition = ({ children, style }) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    transition={{ duration: 0.8 }}
-    style={style}
-  >
-    {children}
-  </motion.div>
-);
-
-// ----------------- PAGE WRAPPER -----------------
-const PageWrapper = function PageWrapper({
-  children,
-  inv,
-  setValue,
-  value,
-  showBottomNav,
-  setAppliedFilters,
-  setOrderedFilters,
-  handleClearFilters,
-  setPreventScroll,
-  location,
-}) {
-  const thumbNavRef = useRef(null);
-  const bottomNavRef = useRef(null);
-  // const location = useLocation();
-
-  useEffect(() => {
-    if (value != null) {
-      const handleClickOutside = (event) => {
-        if (
-          thumbNavRef.current &&
-          !thumbNavRef.current.contains(event.target) &&
-          !bottomNavRef.current.contains(event.target)
-        ) {
-          setValue(null);
-        }
-      };
-      document.addEventListener("click", handleClickOutside);
-      return () => document.removeEventListener("click", handleClickOutside);
-    }
-  }, [value, setValue]);
-
-  const currentRoute = useMemo(
-    () => location.pathname.split("/")[1],
-    [location.pathname]
-  );
-
-  // console.log("location.pathname", location.pathname);
-  console.log("currentRoute", currentRoute);
-  const backgroundGradient = `
-  linear-gradient(
-    to bottom,
-    rgba(9, 30, 48, 1) 0%,
-    rgba(9, 30, 48, 0) 10%
-  )
-`;
-
-  return (
-    <div
-      className="app_root"
-      style={{ background: !currentRoute.length ? backgroundGradient : "" }}
-    >
-      {currentRoute !== "compare" && (
-        // <PageTransition key={location.pathname}>
-        <Header
-          currentRoute={!currentRoute.length ? "home" : currentRoute}
-          inv={inv}
-          setAppliedFilters={setAppliedFilters}
-          setOrderedFilters={setOrderedFilters}
-          handleClearFilters={handleClearFilters}
-          setPreventScroll={setPreventScroll}
-          PageTransition={PageTransition}
-        />
-        // </PageTransition>
-      )}
-      {children}
-      <Footer inv={inv} /> {/* WHY DOES FOOTER NEED INV */}
-      {showBottomNav && (
-        <BottomNav ref={bottomNavRef} value={value} setValue={setValue} />
-      )}
-      {showBottomNav && (
-        <ThumbNav ref={thumbNavRef} navItem={value} setValue={setValue} />
-      )}
-    </div>
-  );
-};
-
-// ----------------- MAIN APP -----------------
 function App() {
+  // REDUX
   const dispatch = useDispatch();
-  const reduxSavedFilters = useSelector(
-    (state) => state.filters.appliedFilters || {}
-  );
-  console.log("App.js just re-rendered!!!");
+  const inventory = useSelector(selectInventoryItems);
+  const inventoryStatus = useSelector(selectInventoryStatus);
+  // const reduxSavedFilters = useSelector((s) => s.filters?.appliedFilters ?? {});
+  const reduxUniqueLocations = useSelector(selectUniqueLocations);
+  const locationsStatus = useSelector(selectUniqueLocationsStatus);
+
+  const locationRedux = useSelector((s) => s.location);
+
+  // COMPARE & CHOSEN CARS
+  const compareCars = useSelector(selectCompareCars);
+  const chosenCars = useSelector(selectChosenCars);
 
   const loc = useLocation();
-  //FOR DISABLING APP SCROLL WHILE MODALS OPEN
-  // const [showMobileFilterPanel, setShowMobileFilterPanel] = useState(false);
-  const [preventScroll, setPreventScroll] = useState(false);
+  const pathname = loc.pathname; // use only stable primitive
 
-  const location = useSelector((state) => state.location);
-  const heartedCars = useSelector((state) => state.favorites.heartedCars);
+  useEffect(() => {
+    console.log("LATEST COMPARE CARS", compareCars);
+    console.log("LATEST CHOSEN CARS", chosenCars);
 
-  //APPLIED FILTERS
-  const [appliedFilters, setAppliedFilters] = useState(
-    Object.keys(reduxSavedFilters).length > 0
-      ? reduxSavedFilters
-      : defaultFilterState
-  );
-  //ORDERED FILTERS
-  const [orderedFilters, setOrderedFilters] = useState(() => {
-    const stored = localStorage.getItem("orderedFilters"); ///runs on mount only
-    return stored ? JSON.parse(stored) : [];
-  });
+    // nothing to do if no compare cars exist
+    if (!compareCars?.length) {
+      if (chosenCars.length) dispatch(setChosenCars([]));
+      return;
+    }
+
+    // ---- CASE 1: no chosen cars yet → auto select first two ----
+    if (chosenCars.length === 0 && compareCars.length >= 2) {
+      dispatch(setChosenCars(compareCars.slice(0, 2)));
+      return;
+    }
+
+    // ---- CASE 2: only one chosen car → auto-append another ----
+    if (chosenCars.length === 1 && compareCars.length >= 2) {
+      const existing = chosenCars[0];
+
+      const nextCar = compareCars.find((c) => c.id !== existing.id);
+
+      if (nextCar) {
+        dispatch(setChosenCars([existing, nextCar]));
+        return;
+      }
+    }
+    // ============================================================
+    //   CORE SYNC LOGIC:
+    //   remove missing chosenCars + replace when possible
+    // ============================================================
+    const compareIds = new Set(compareCars.map((c) => c.id));
+
+    // cars still valid (exist in compareCars)
+    const stillValid = chosenCars.filter((c) => compareIds.has(c.id));
+
+    // cars that were removed from compareCars
+    const removed = chosenCars.filter((c) => !compareIds.has(c.id));
+
+    // no drift → stop
+    if (removed.length === 0) return;
+
+    // find potential replacements (not already chosen)
+    const replacements = compareCars.filter(
+      (c) => !stillValid.some((sc) => sc.id === c.id)
+    );
+
+    const updated = [...stillValid];
+
+    // replace each removed car if possible
+    for (const removedCar of removed) {
+      const replacement = replacements.shift(); // take first unused
+      if (replacement) updated.push(replacement);
+      // otherwise → simply omit it
+    }
+
+    // only dispatch if something changed
+    if (
+      updated.length !== chosenCars.length ||
+      JSON.stringify(updated) !== JSON.stringify(chosenCars)
+    ) {
+      dispatch(setChosenCars(updated));
+    }
+  }, [compareCars, chosenCars, dispatch]);
+
+  // PREVENT SCROLL STATE (redux)
+  const preventScroll = useSelector((state) => state.ui.preventScroll);
+
+  useEffect(() => {
+    console.log("latest preventScroll", preventScroll);
+    // document.body.style.overflow = preventScroll ? "hidden" : "";
+    // if (preventScroll) {
+    //   document.body.style.overflow = "hidden";
+    // } else {
+    //   document.body.style.overflow = "";
+    // }
+    if (preventScroll) {
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+    } else {
+      document.body.style.position = "";
+      document.body.style.width = "";
+    }
+  }, [preventScroll]);
+
   const [value, setValue] = useState(null);
   const [showBottomNav, setShowBottomNav] = useState(window.innerWidth < 768);
   const [below820, setBelow820] = useState(window.innerWidth < 820);
   const [above375, setAbove375] = useState(window.innerWidth > 375);
-  const [inventory, setInventory] = useState([]);
-  //COMPARE CARS
-  const [compareCars, setCompareCars] = useState(() => {
-    const saved = localStorage.getItem("compareCars");
-    return saved ? JSON.parse(saved) : [];
-  });
-  //CHOSEN CARS (displayed in Compare)
-  // const [chosenCars, setChosenCars] = useState([]);
-  const [chosenCars, setChosenCars] = useState(() => {
-    const saved = localStorage.getItem("chosenCars");
-    return saved ? JSON.parse(saved) : [];
-  });
 
+  //
+  // 1. LOAD INVENTORY — always runs, no dependencies
+  //
   useEffect(() => {
-    localStorage.setItem("compareCars", JSON.stringify(compareCars));
-    localStorage.setItem("chosenCars", JSON.stringify(chosenCars));
-    // console.log("compareCars (app.js)", compareCars);
-    // console.log("chosenCars (app.js)", chosenCars);
-
-    if (compareCars.length >= 2 && !chosenCars.length) {
-      setChosenCars([compareCars[0], compareCars[1]]);
-    } else if (compareCars.length >= 2 && chosenCars.length === 1) {
-      //if use ralready went into 'Compare' (setting 'chosenCars'), then came back to ComparePanel and removed one of the 'chosenCars' objects from the 'handleRemove' of the ComparePanel, resulting in there only being 1 'chosenCars' object
-      const existing = chosenCars[0];
-      //auto-append that single chosenCar obj with another 'compareCar' obj whose .id differs from the remainig 'chosenCars' obj
-      const nextCar = compareCars.find((car) => car.id !== existing.id);
-
-      if (nextCar) {
-        console.log("this part here ran");
-        setChosenCars([existing, nextCar]);
-      }
+    if (inventoryStatus === "idle") {
+      dispatch(fetchInventory());
     }
-  }, [compareCars, chosenCars]);
+  }, [inventoryStatus, dispatch]);
 
-  // ✅ Moved handleClearFilters here so it can be shared
-  const handleClearFilters = useCallback(() => {
-    const { sort, ...filtersWithoutSort } = defaultFilterState;
-    setAppliedFilters({ sort: appliedFilters.sort, ...filtersWithoutSort });
-    setOrderedFilters([]);
-  }, [appliedFilters.sort, setAppliedFilters, setOrderedFilters]);
-
-  // SAVE ORDERED FILTERS TO LOCAL STORAGE
+  //
+  // 2. LOAD UNIQUE LOCATIONS (all unique .city + .state from Inv, in AWS table)— use redux if present, fallback to fetch
+  //
   useEffect(() => {
-    localStorage.setItem("orderedFilters", JSON.stringify(orderedFilters));
-  }, [orderedFilters]);
+    if (locationsStatus === "idle") {
+      dispatch(fetchUniqueLocations());
+    }
+  }, [locationsStatus, dispatch]);
 
-  // Save applied filters to Redux
+  //
+  // GET USER LOCATION
+  //
   useEffect(() => {
-    console.log("latest appliedFilters", appliedFilters);
-    dispatch(saveFilter(appliedFilters));
-  }, [appliedFilters, dispatch]);
+    console.log("received locationRedux in useEffect", locationRedux);
+    // does it exist already?
+    const isLocationValid =
+      locationRedux &&
+      locationRedux.zip &&
+      locationRedux.city &&
+      locationRedux.state &&
+      locationRedux.latitude &&
+      locationRedux.longitude;
 
-  //RESIZE HANDLER
+    if (!isLocationValid) {
+      console.log("this part was reached");
+      dispatch(getLocationFromBrowser()) //sets redux w/browser locaiton
+        .unwrap()
+        .then((result) => {
+          console.log("Location from browser:", result);
+        })
+        .catch((error) => {
+          console.error("Error getting location:", error);
+        });
+    }
+  }, [dispatch, locationRedux]);
+
+  //
+  // 3. ACTIVE INVENTORY
+  //
+  const activeInv = useMemo(() => {
+    return inventory.filter((car) => car.status);
+  }, [inventory]);
+
+  //
+  // 4. LOCAL INVENTORY DERIVATION
+  //
+  const localInventory = useMemo(() => {
+    if (!locationRedux?.latitude || !locationRedux?.longitude) return [];
+    if (reduxUniqueLocations.length === 0 || activeInv.length === 0) return [];
+
+    return getLocalOffers(
+      activeInv,
+      reduxUniqueLocations,
+      locationRedux,
+      100,
+      false
+    );
+  }, [activeInv, reduxUniqueLocations, locationRedux]);
+
+  //
+  // 5. UPDATE REDUX WITH LOCALINV
+  //
+  useEffect(() => {
+    if (!locationRedux || inventory.length === 0) return;
+    if (!_.isEqual(locationRedux.localInv, localInventory)) {
+      dispatch(setLocalInv(localInventory));
+    }
+  }, [localInventory, locationRedux, inventory, dispatch]);
+
+  //
+  //   //RESIZE HANDLER
+  //
   useEffect(() => {
     let timeout;
     const handleResize = () => {
@@ -264,199 +287,131 @@ function App() {
     };
   }, []);
 
-  // FETCH INVENTORY
-  useEffect(() => {
-    if (inventory.length > 0) return;
-    (async () => {
-      try {
-        const fetchedInventory = await getInventory();
-        setInventory(fetchedInventory);
-      } catch (err) {
-        console.error("Error loading inventory:", err);
-      }
-    })();
-  }, [inventory.length]);
+  //
+  // STABLE FUNCTIONS
+  //
 
-  // GET USER LOCATION
-  useEffect(() => {
-    // check if redux location obj has location values
-    const isLocationValid =
-      location &&
-      location.zip &&
-      location.city &&
-      location.state &&
-      location.latitude &&
-      location.longitude;
-    if (!isLocationValid) {
-      // get user location
-      dispatch(getLocationFromBrowser());
-    }
-  }, [dispatch, location]);
-
-  // MEMOIZED FILTERED INVENTORY
-  const activeInv = useMemo(
-    () => inventory.filter((car) => car.status),
-    [inventory]
+  //
+  // MEMOIZED ACTIONS PASSED TO PageWrapper
+  //
+  const actions = useMemo(
+    () => ({
+      setValue,
+      PageTransition,
+    }),
+    []
   );
 
-  const localInventory = useMemo(() => {
-    if (!location) return [];
-    return getLocalOffers(activeInv, location, 100, false);
-  }, [activeInv, location]);
-
-  // DISABLE SCROLLING IN /CARS WHEN
-
-  useEffect(() => {
-    console.log("preventScroll", preventScroll);
-    if (preventScroll) {
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
-    } else {
-      const scrollY = parseInt(document.body.style.top || "0") * -1;
-      document.body.style.position = "";
-      document.body.style.top = "";
-      window.scrollTo(0, scrollY);
-    }
-  }, [preventScroll]);
-
-  // Update Redux with local inventory (location.localInv)
-  useEffect(() => {
-    if (!location || inventory.length === 0) return;
-    if (!_.isEqual(location.localInv, localInventory)) {
-      dispatch(setLocalInv(localInventory));
-    }
-  }, [localInventory, location, inventory.length, dispatch]);
-
-  // CARS PROPS
-  const carsProps = useMemo(
+  //
+  // LAYOUT STATE FOR PageWrapper
+  //
+  const layoutState = useMemo(
     () => ({
-      location,
-      inventory,
-      below820,
-      above375,
-      defaultFilterState,
-      appliedFilters,
-      setAppliedFilters,
-      orderedFilters,
-      setOrderedFilters,
-      compareCars, /// NEW
-      setCompareCars, ////NEW
-      chosenCars,
-      setChosenCars,
-      // showMobileFilterPanel,
-      // setShowMobileFilterPanel,
-      setPreventScroll,
+      value, // RESIZE
+      showBottomNav,
     }),
+    [value, showBottomNav]
+  );
+
+  //
+  // ROUTE ELEMENTS
+  //
+  const HomeElement = useMemo(
+    () => (
+      <Suspense fallback={<FullPageLoader home />}>
+        <Home
+          PageTransition={PageTransition}
+          FadeTransition={FadeTransition}
+          AnimatePresence={AnimatePresence}
+        />
+      </Suspense>
+    ),
+    []
+  );
+
+  const FavoritesElement = useMemo(
+    () => (
+      <Suspense fallback={<FullPageLoader />}>
+        <Favorites
+          PageTransition={PageTransition}
+          AnimatePresence={AnimatePresence}
+        />
+      </Suspense>
+    ),
+    []
+  );
+
+  const CarsElement = useMemo(
+    () => (
+      <Suspense fallback={<FullPageLoader />}>
+        <Cars
+          below820={below820}
+          above375={above375}
+          PageTransition={PageTransition}
+          FadeTransition={FadeTransition}
+          AnimatePresence={AnimatePresence}
+        />
+      </Suspense>
+    ),
+    [below820, above375]
+  );
+
+  const VehiclePageElement = useMemo(
+    () => (
+      <Suspense fallback={<FullPageLoader />}>
+        <VehiclePage
+          PageTransition={PageTransition}
+          AnimatePresence={AnimatePresence}
+        />
+      </Suspense>
+    ),
+    []
+  );
+
+  const CompareElement = useMemo(
+    () => (
+      <Suspense fallback={<FullPageLoader />}>
+        <Compare
+          PageTransition={PageTransition}
+          AnimatePresence={AnimatePresence}
+        />
+      </Suspense>
+    ),
+    []
+  );
+
+  //
+  // FINAL ROUTES — STABLE
+  //
+  const routes = useMemo(
+    () => (
+      <Routes>
+        <Route index element={HomeElement} />
+        <Route path="/favorites/*" element={FavoritesElement} />
+        <Route path="/cars/*" element={CarsElement} />
+        <Route path="/car/:id" element={VehiclePageElement} />
+        <Route path="/compare" element={CompareElement} />
+      </Routes>
+    ),
     [
-      inventory,
-      location,
-      below820,
-      above375,
-      appliedFilters,
-      orderedFilters,
-      compareCars,
-      chosenCars,
-      // showMobileFilterPanel,
+      HomeElement,
+      FavoritesElement,
+      CarsElement,
+      VehiclePageElement,
+      CompareElement,
     ]
-  );
-  //HOME PROPS
-  const homeProps = useMemo(
-    () => ({
-      inventory,
-      location,
-      appliedFilters,
-      handleClearFilters, // for makeModelSearch() Picker/Carousels
-      setOrderedFilters,
-      setAppliedFilters,
-    }),
-    [inventory, location, appliedFilters, handleClearFilters]
   );
 
   return (
-    //<Router>
-    <AnimatePresence mode="wait">
-      {/* <PageTransition> */}
-      <PageWrapper
-        // key={location.pathname}
-        inv={inventory}
-        setValue={setValue}
-        value={value}
-        showBottomNav={showBottomNav}
-        appliedFilters={appliedFilters}
-        setAppliedFilters={setAppliedFilters}
-        setOrderedFilters={setOrderedFilters}
-        handleClearFilters={handleClearFilters} // Header
-        setPreventScroll={setPreventScroll}
-        location={/* location */ loc}
-      >
-        <ScrollToTop />
-        <ScrollToTopButton />
-
-        <Routes location={loc} key={loc.pathname}>
-          <Route
-            // path="/"
-            index
-            element={
-              // <PageTransition>
-              <Home
-                {...homeProps}
-                PageTransition={PageTransition}
-                FadeTransition={FadeTransition}
-              />
-              //</PageTransition>
-            }
-          />
-
-          <Route
-            path="/favorites/*"
-            element={
-              <PageTransition>
-                <Favorites hearted_cars={heartedCars} location={location} />
-              </PageTransition>
-            }
-          />
-
-          <Route
-            path="/cars/*"
-            element={
-              <PageTransition>
-                <Cars {...carsProps} />
-              </PageTransition>
-            }
-          />
-
-          <Route
-            path="/car/:id"
-            element={
-              <PageTransition>
-                <VehiclePage inventory={inventory} />
-              </PageTransition>
-            }
-          />
-
-          <Route
-            path="/compare"
-            element={
-              <PageTransition>
-                <Compare
-                  compareCars={compareCars}
-                  setCompareCars={setCompareCars}
-                  location={location}
-                  inventory={inventory}
-                  chosenCars={chosenCars}
-                  setChosenCars={setChosenCars}
-                  setPreventScroll={setPreventScroll}
-                />
-              </PageTransition>
-            }
-          />
-        </Routes>
-      </PageWrapper>
-      {/* </PageTransition> */}
-    </AnimatePresence>
-    //</Router>
+    <PageWrapper
+      actions={actions}
+      layoutState={layoutState}
+      pathname={pathname}
+    >
+      {routes}
+      <ScrollToTop />
+      <ScrollToTopButton />
+    </PageWrapper>
   );
 }
 

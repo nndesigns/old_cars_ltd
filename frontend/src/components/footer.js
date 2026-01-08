@@ -15,15 +15,26 @@ import { createPortal } from "react-dom";
 import LocationChangeModal from "./locationChangeModal.js";
 import { Link } from "react-router-dom";
 
-const Footer = ({ inv }) => {
+const Footer = ({
+  // inv,
+  setAppliedFilters,
+  setOrderedFilters,
+  setPreventScroll,
+}) => {
+  // REDUX
+  const location = useSelector((state) => state.location);
+  const inv = useSelector((state) => state.inventory.items);
+
+  //  USE STATE
   const [above900, setAbove900] = useState(window.innerWidth > 900);
   const [above1200, setAbove1200] = useState(window.innerWidth > 1200);
   const [below767, setBelow767] = useState(window.innerWidth < 767);
-
   const [locationHovered, setLocationHovered] = useState(false);
-  const location = useSelector((state) => state.location);
   const [showLocationChangeModal, setShowLocationChangeModal] = useState(false);
-  const [locObjs, setLocObjs] = useState(null);
+  const [locationInputValue, setLocationInputValue] = useState("");
+  // const [locObjs, setLocObjs] = useState(null);
+
+  //USE REF
   const locationRef = useRef(null);
   const locationChangeRef = useRef(null);
   const locationValueRef = useRef("");
@@ -42,20 +53,8 @@ const Footer = ({ inv }) => {
     };
   }, []);
 
-  const PageWrapper = styled("div")(({ theme }) => ({
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100vw",
-    height: "100vh",
-    backgroundColor: "rgba(0,0,0,.4)",
-    zIndex: "20",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  }));
-
   const Footer = styled("footer")(({ theme }) => ({
+    marginTop: "auto",
     display: "flex",
     flexDirection: "column",
     backgroundColor: "var(--iconColor)",
@@ -71,6 +70,19 @@ const Footer = ({ inv }) => {
       alignSelf: "center",
       // margin: "0 auto",
     },
+  }));
+
+  const PageWrapper = styled("div")(({ theme }) => ({
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "rgba(0,0,0,.4)",
+    zIndex: "20",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
   }));
 
   const IconBox = styled(Box)(({ theme }) => ({
@@ -223,8 +235,8 @@ const Footer = ({ inv }) => {
               locationValueRef={locationValueRef}
               setShowLocationChangeModal={setShowLocationChangeModal}
               inv={inv}
-              locObjs={locObjs}
-              setLocObjs={setLocObjs}
+              // locObjs={locObjs}
+              // setLocObjs={setLocObjs}
             />
           </PageWrapper>,
           document.body
@@ -277,16 +289,22 @@ const Footer = ({ inv }) => {
             <LocationModal
               location={location}
               setShowLocationChangeModal={setShowLocationChangeModal}
-              locationValueRef={locationValueRef}
-              setLocObjs={setLocObjs}
+              locationInputValue={locationInputValue}
+              setLocationInputValue={setLocationInputValue}
+              locationInputRef={locationValueRef}
+              // setLocObjs={setLocObjs}
+              // setAppliedFilters={setAppliedFilters}
+              // setOrderedFilters={setOrderedFilters}
+              setPreventScroll={setPreventScroll}
               style={{
-                top: "-23rem",
+                top: "-22.7rem",
                 left: above900 ? "unset" : "0",
                 right: above900 ? "0" : "unset",
                 zIndex: "3",
               }}
             />
           )}
+
           <button style={locationBtn}>
             <CiLocationOn style={{ height: "1.75em", width: "1.75em" }} />
             {location.city}

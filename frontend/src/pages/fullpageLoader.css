@@ -1,0 +1,56 @@
+.loader-overlay {
+          /* position: fixed; */
+          height: 100vh;
+          margin-top: 0px;
+          /* inset: 0; */
+          display: flex;
+          justify-content: center;
+          align-items: center;
+}
+
+.loader-content {
+          display: flex;
+          flex-direction: column;
+          gap: 1.2rem;
+          align-items: center;
+          animation: fadeIn 1.2s ease forwards;
+}
+
+.loader-logo {
+          width: 230px;
+          height: auto;
+          opacity: 1;
+          animation: drawLogo 2.2s ease forwards;
+}
+
+
+/* FADE */
+@keyframes fadeIn {
+          from {
+                    opacity: 0
+          }
+
+          to {
+                    opacity: 1
+          }
+}
+
+/* STROKE DRAW SIMULATION (opacity fade since png) */
+@keyframes drawLogo {
+          0% {
+                    opacity: 0;
+                    transform: scale(0.95);
+                    filter: blur(3px);
+          }
+
+          50% {
+                    opacity: 0.5;
+                    transform: scale(1);
+                    filter: blur(1px);
+          }
+
+          100% {
+                    opacity: 1;
+                    filter: blur(0);
+          }
+}

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useSelector /* , useDispatch */ } from "react-redux";
 import { IoCloseCircleSharp } from "react-icons/io5";
 import { HiMiniPlusCircle } from "react-icons/hi2";
 import { AiFillMinusCircle } from "react-icons/ai";
@@ -11,10 +12,12 @@ const capitalizeWords = (str) =>
     .join(" ");
 
 //////// FILTER PILLS BOX
-const FilterPillsBox = ({ appliedFilters, closePill, mobile }) => {
+const FilterPillsBox = ({ /* appliedFilters */ closePill, mobile }) => {
   const [showAll, setShowAll] = useState(false);
 
   // console.log("appliedFilters rec'd (FilterPillsBox)", appliedFilters);
+
+  const appliedFilters = useSelector((s) => s.filters.appliedFilters);
 
   ////////////// ADJUST 'CLOSE PILL'  TO ACCOUNT FOR CLOSING A MODEL PILL CORRECTLY
 

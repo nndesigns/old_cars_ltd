@@ -5,18 +5,22 @@ import "./invGrid.css";
 import Button from "../buttons/button.js";
 import { getModelImageURLs } from "../axiosCalls.js"; // adjust import
 import ConcatH3 from "../concatH3.js";
-import { LoadingWave } from "./loadingWave.js";
-import NoImage from "../../images/no_image.webp";
+// import { LoadingWave } from "./loadingWave.js";
+import InventoryCardSkeleton from "../inventoryCardSkeleton.js";
+import { useSelector, useDispatch } from "react-redux";
+import { selectCompareCars } from "../../user/userSlice.js";
 
 const InventoryGrid = ({
-  cars,
+  cars, //matchesArray
   below820,
   appliedFilters,
   showCompare,
   setShowCompare,
-  setCompareCars,
-  compareCars,
-  setPreventScroll,
+  // setCompareCars,
+  // compareCars,
+  // setPreventScroll,
+  //   enableScrollLock,
+  // disableScrollLock
 }) => {
   const [invImagesMap, setInvImagesMap] = useState({});
   const [visibleCars, setVisibleCars] = useState([]);
@@ -24,6 +28,8 @@ const InventoryGrid = ({
   const [loadingImages, setLoadingImages] = useState(true);
   const [loadingCars, setLoadingCars] = useState(true);
   const [allowNoResults, setAllowNoResults] = useState(false); // new flag
+  const dispatch = useDispatch();
+  const compareCars = useSelector(selectCompareCars);
 
   // INITIALIZE visibleCars
   useEffect(() => {
@@ -132,8 +138,12 @@ const InventoryGrid = ({
     >
       {below820 && <div style={{ margin: "1rem" }}>{cars.length} Matches</div>}
       {loadingCars || (cars.length > 0 && readyCars.length === 0) ? (
-        <div className="loading-message">
-          <LoadingWave />
+        <div className="grid_root">
+          {Array(22)
+            .fill(null)
+            .map((_, i) => (
+              <InventoryCardSkeleton key={i} />
+            ))}
         </div>
       ) : cars.length === 0 && allowNoResults ? (
         <div className="no_results">
@@ -153,9 +163,9 @@ const InventoryGrid = ({
                 below820={below820}
                 showCompare={showCompare}
                 setShowCompare={setShowCompare}
-                setCompareCars={setCompareCars}
-                compareCars={compareCars}
-                setPreventScroll={setPreventScroll}
+                // setCompareCars={setCompareCars}
+                // compareCars={compareCars}
+                // setPreventScroll={setPreventScroll}
               />
             </motion.div>
           ))}

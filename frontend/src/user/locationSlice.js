@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { fetchZipFromCoords, fetchCityStateFromZip } from "../googleAPIs"; // adjust as needed
+import { fetchLocObjFromCoords } from "../fetchLocObjAPI"; // adjust as needed
 
 const initialState = {
   zip: null,
@@ -9,7 +9,7 @@ const initialState = {
   longitude: null,
   localInv: [],
 };
-//create object {city, state, zip} of user w/ Google API's
+//create object {city, state, zip} of user
 //for initial location state set
 export const getLocationFromBrowser = createAsyncThunk(
   "location/getLocationFromBrowser",
@@ -19,16 +19,13 @@ export const getLocationFromBrowser = createAsyncThunk(
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
+          console.log("lat & long", latitude, longitude);
           try {
-            //get zip from browser using 1st free Google API call
-            const zip = await fetchZipFromCoords(latitude, longitude);
-            if (zip) {
-              //Use response to get City & State from 2nd free Google API call
-              const { city, state } = await fetchCityStateFromZip(zip);
-              resolve({ zip, city, state, latitude, longitude }); //GLFB return obj
-            } else {
-              reject("Unable to resolve ZIP");
-            }
+            const resultObj = await fetchLocObjFromCoords(latitude, longitude);
+
+            console.log("resultObj", resultObj);
+
+            resolve(resultObj); //GLFB return obj
           } catch (err) {
             reject(err);
           }

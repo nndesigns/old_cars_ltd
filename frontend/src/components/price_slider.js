@@ -4,14 +4,21 @@ import { styled } from "@mui/material/styles";
 import MenuLines from "../icons/Menu_lines.svg";
 import RangeSelect from "./rangeSelect";
 import Button from "./buttons/button";
+import { updateFilter, clearSingleFilter } from "../user/filtersSlice";
+import { useSelector, useDispatch } from "react-redux";
 
 const PriceSlider = ({
-  inventory,
-  appliedFilters,
-  setAppliedFilters,
-  setOrderedFilters,
+  inventory, //KEEP (carsFilters/Cars "options", )
+  // appliedFilters,
+  // setAppliedFilters,
+  // setOrderedFilters,
   leftPanel, // false = /home only
 }) => {
+  // REDUX
+  const dispatch = useDispatch();
+  const minPrice = useSelector((s) => s.filters.appliedFilters.minPrice);
+  const maxPrice = useSelector((s) => s.filters.appliedFilters.maxPrice);
+
   const [range, setRange] = useState([]);
   const [prevRange, setPrevRange] = useState([]);
   const [grabbing, setGrabbing] = useState(false);
@@ -61,23 +68,31 @@ const PriceSlider = ({
     };
   }, [inventory]);
 
-  // Initialize range on load or when data changes
+  //
+  // SET RANGE
+  //
   useEffect(() => {
     if (!computedRange) return;
 
     setRange([
-      appliedFilters.minPrice ?? computedRange.min,
-      appliedFilters.maxPrice ?? computedRange.max,
+      /* appliedFilters. */ minPrice ?? computedRange.min,
+      /* appliedFilters. */ maxPrice ?? computedRange.max,
     ]);
-  }, [computedRange, appliedFilters.minPrice, appliedFilters.maxPrice]);
+  }, [
+    computedRange,
+    /* appliedFilters. */ minPrice,
+    /* appliedFilters. */ maxPrice,
+  ]);
 
+  //
   // CLAMP VALUE
+  //
   const clampValue = (value, min, max) => Math.max(min, Math.min(value, max));
 
-  // console.log("clampValue", clampValue);
-
-  //////////  UPDATE FILTERS   //////
-  const updateFilters = (newRange, changedKey, clear) => {
+  //
+  // UPDATE FILTERS
+  //
+  /* const updateFilters = (newRange, changedKey, clear) => {
     if (clear) {
       // clear both filters
       setAppliedFilters((prev) => ({
@@ -101,11 +116,25 @@ const PriceSlider = ({
     setOrderedFilters((prev) =>
       prev.includes(changedKey) ? prev : [...prev, changedKey]
     );
+  }; */
+
+  const updateFilters = (newRange, changedKey, clear) => {
+    if (clear) {
+      dispatch(clearSingleFilter("minPrice"));
+      dispatch(clearSingleFilter("maxPrice"));
+      return;
+    } else {
+      if (changedKey === "minPrice") {
+        dispatch(updateFilter({ key: "minPrice", value: newRange[0] }));
+      } else if (changedKey === "maxPrice") {
+        dispatch(updateFilter({ key: "maxPrice", value: newRange[1] }));
+      }
+    }
   };
 
+  //
   // HANDLE UPDATE RANGE
-
-  /// RANGE SELECT HANDLER
+  //
   const handleUpdateRange1 = (newValue, activeSelect) => {
     console.log("received activeSelect", activeSelect);
     const minPrice = computedRange.min;
@@ -155,14 +184,17 @@ const PriceSlider = ({
   };
 
   const handleClear = () => {
-    setAppliedFilters((prev) => ({
+    /*  setAppliedFilters((prev) => ({
       ...prev,
       minPrice: null,
       maxPrice: null,
     }));
     setOrderedFilters((prev) =>
       prev.filter((key) => key !== "minPrice" && key !== "maxPrice")
-    );
+    ); */
+
+    dispatch(clearSingleFilter("minPrice"));
+    dispatch(clearSingleFilter("maxPrice"));
     if (computedRange) setRange([computedRange.min, computedRange.max]);
     setPrevRange([]);
   };
@@ -288,7 +320,10 @@ const PriceSlider = ({
 
       {leftPanel && (
         <Button
-          disabled={!appliedFilters.minPrice && !appliedFilters.maxPrice}
+          disabled={
+            !(/* appliedFilters. */ minPrice) &&
+            !(/* appliedFilters. */ maxPrice)
+          }
           text="RESET PRICE RANGE"
           onClick={handleClear}
           style={{

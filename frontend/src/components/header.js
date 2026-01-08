@@ -1,28 +1,22 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import Navbar from "./navbar.js";
 import Searchbar from "./searchbar/searchbar.js";
 import Box from "@mui/material/Box";
+// import { useSelector } from "react-redux";
 
-const Header = ({
-  currentRoute,
-  inv,
-  setAppliedFilters,
-  setOrderedFilters,
-  handleClearFilters,
-  setPreventScroll,
-  PageTransition,
-}) => {
-  const bottomShadow = "0 8px 16px -4px rgba(0, 0, 0, 0.12)";
+const Header = ({ currentRoute, PageTransition }) => {
+  // REDUX
+  // const inv = useSelector((state) => state.inventory.items);
+  // USE REF
+  const inventoryRef = useRef("");
+
   const darkRoutes = ["favorites", "cars", "car"];
-  const inventoryRef = useRef(""); ////////// CHECK THIS
-
-  // console.log("Header rec'd currentRoute", currentRoute);
 
   return (
     <Box
       sx={{
         position: darkRoutes.includes(currentRoute) ? "" : "absolute",
-        zIndex: "1",
+        zIndex: darkRoutes.includes(currentRoute) ? "" : "1",
         left: darkRoutes.includes(currentRoute) ? "unset" : "50%",
         transform: darkRoutes.includes(currentRoute)
           ? "none"
@@ -37,6 +31,7 @@ const Header = ({
             : "none", */
         display: darkRoutes.includes(currentRoute) ? "flex" : "",
         justifyContent: darkRoutes.includes(currentRoute) ? "center" : "",
+        backgroundColor: darkRoutes.includes(currentRoute) ? "white" : "",
       }}
     >
       <Box
@@ -46,26 +41,29 @@ const Header = ({
           maxWidth: darkRoutes.includes(currentRoute) ? "100%" : "inherit",
         }}
       >
-        <PageTransition key={currentRoute}>
-          <Navbar
-            darkRoute={darkRoutes.includes(currentRoute)}
-            inv={inv}
-            setAppliedFilters={setAppliedFilters}
-            setOrderedFilters={setOrderedFilters}
-            setPreventScroll={setPreventScroll}
-          />
-          <Searchbar
-            currentRoute={currentRoute}
-            darkRoute={darkRoutes.includes(currentRoute)}
-            mode="inventory"
-            inputRef={inventoryRef} ////////// CHECK THIS
-            inv={inv}
-            setAppliedFilters={setAppliedFilters}
-            setOrderedFilters={setOrderedFilters}
-            handleClearFilters={handleClearFilters}
-            // setStringMatchesArr={setStringMatchesArr}
-          />
-        </PageTransition>
+        {/* {currentRoute === "home" ? (
+          <PageTransition>
+            <Navbar
+              darkRoute={darkRoutes.includes(currentRoute)}
+            />
+            <Searchbar
+              currentRoute={currentRoute}
+              darkRoute={darkRoutes.includes(currentRoute)}
+              mode="inventory"
+              inputRef={inventoryRef}
+            />
+          </PageTransition>
+        ) : (
+          <> */}
+        <Navbar darkRoute={darkRoutes.includes(currentRoute)} />
+        <Searchbar
+          currentRoute={currentRoute}
+          darkRoute={darkRoutes.includes(currentRoute)}
+          mode="inventory"
+          inputRef={inventoryRef}
+        />
+        {/* </>
+        )} */}
       </Box>
     </Box>
   );

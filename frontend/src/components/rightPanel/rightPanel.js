@@ -10,6 +10,13 @@ import Heart from "../heart";
 import Searchbar from "../searchbar/searchbar";
 import Button from "../buttons/button";
 import { getModelImageURLs } from "../axiosCalls";
+// REDUX
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addToCompare,
+  removeFromCompare,
+  setChosenCars,
+} from "../../user/userSlice";
 
 const panelRootStyle = {
   position: "fixed",
@@ -55,11 +62,12 @@ const panelVariants = {
     transition: { type: "tween", duration: 0.375 },
   },
 };
-
+//
 // COMPARE CARD
+//
 const CompareCard = ({
-  setCompareCars, //changing list from /cars
-  setChosenCars,
+  // setCompareCars, //changing list from /cars
+  // setChosenCars,
   carObj,
   isChosen, //is in the 'chosenCars' array
   originCar,
@@ -67,9 +75,16 @@ const CompareCard = ({
   otherSelectedCar,
   heartedCars,
   toggleHeartClick,
+  chosenCars,
 }) => {
+  console.log("CompareCard isChosen", isChosen);
+  console.log("CompareCard originCar", originCar);
+  console.log("CompareCard carObject", carObj);
+
+  const dispatch = useDispatch();
+
   const changeCar = (incomingCarObj, outgoingID) => {
-    setChosenCars((prev) => {
+    /* setChosenCars((prev) => {
       const chosenPosition = prev.findIndex((car) => car.id === outgoingID);
 
       if (chosenPosition === 0) {
@@ -79,7 +94,24 @@ const CompareCard = ({
       }
     });
 
-    setOriginCar(incomingCarObj);
+    setOriginCar(incomingCarObj); */
+    const chosenPosition = chosenCars.findIndex((car) => car.id === outgoingID);
+
+    let newChosenCars;
+
+    if (chosenPosition === 0) {
+      newChosenCars = [
+        incomingCarObj,
+        ...chosenCars.filter((car) => car.id !== outgoingID),
+      ];
+    } else {
+      newChosenCars = [
+        ...chosenCars.filter((car) => car.id !== outgoingID),
+        incomingCarObj,
+      ];
+    }
+
+    dispatch(setChosenCars(newChosenCars));
   };
 
   return (
@@ -118,9 +150,10 @@ const CompareCard = ({
           {!isChosen && (
             <IoTrashSharp
               onClick={() => {
-                setCompareCars((prev) =>
-                  prev.filter((car) => car.id !== carObj.id)
-                );
+                // setCompareCars((prev) =>
+                //   prev.filter((car) => car.id !== carObj.id)
+                // );
+                dispatch(removeFromCompare(carObj.id));
               }}
             />
           )}
@@ -130,20 +163,28 @@ const CompareCard = ({
   );
 };
 
+//
+// RIGHT PANEL
+//
 const RightPanel = ({
   mode,
   showRightPanel,
   setShowRightPanel,
   originCar,
   setOriginCar,
-  compareCars,
-  setCompareCars, //for adding or trashing one of the received 'compareCars'
-  chosenCars,
-  setChosenCars,
+  // compareCars,
+  // setCompareCars, //for adding or trashing one of the received 'compareCars'
+  // chosenCars,
+  // setChosenCars,
   heartedCars,
   toggleHeartClick,
   inventory,
 }) => {
+  const compareCars = useSelector((state) => state.compare.compareCars);
+  const chosenCars = useSelector((state) => state.compare.chosenCars);
+
+  const dispatch = useDispatch();
+
   ///RESIZING
   const [under900, setUnder900] = useState(window.innerWidth < 900);
   useEffect(() => {
@@ -245,13 +286,62 @@ const RightPanel = ({
         setMatchId(matchingID);
       }
     };
+    //
+    /*****   HANDLE ADD CAR  ******/
+    //
+    // handleAddCar = async function () {
+    //   let imagesMap;
 
-    //// HANDLE ADD CAR /////
+    //   const matchingInvCar = inventory.find((car) => car.id === matchId);
+    //   //inventory obj not fed from <InventoryCard/> & <InventoryGrid/> so still missing .imageArray, fetch img URLs & assign here
+
+    //   console.log("matchingInvCar", matchingInvCar);
+
+    //   try {
+    //     imagesMap = await getModelImageURLs(
+    //       [matchingInvCar.images.model_imgs_key],
+    //       true,
+    //       true
+    //     );
+    //   } catch (err) {
+    //     console.error("Error fetching model image URLs:", err);
+    //   }
+
+    //   console.log("returned imagesMap", imagesMap);
+
+    //   const [imageArray] = Object.values(imagesMap[]);
+    //   console.log("imageArray", imageArray);
+    //   // ✅ Get array of all values from the imagesMap object
+    //   const imageValues = Object.values(imagesMap);
+
+    //   console.log("imageValues", imageValues);
+
+    //   // ✅ Append to matchingInvCar
+    //   matchingInvCar.imageArray = imageValues[0];
+    //   // UPDATE COMPARE CARS
+    //   // setCompareCars((prev) => [...prev, matchingInvCar]);
+    //   setInputValue(""); //clear the input (disables btn too)
+    //   inputRef.current.value = "";
+    // };
     handleAddCar = async function () {
+      if (!matchId) return;
+
+      // find car in inventory
+      const matchingInvCar = inventory.find((car) => car.id === matchId);
+
+      if (!matchingInvCar) {
+        console.warn("No matching inventory car for id:", matchId);
+        return;
+      }
+
+      // 🚫 prevent adding same car twice
+      const alreadyInCompare = compareCars.some(
+        (car) => car.id === matchingInvCar.id
+      );
+      if (alreadyInCompare) return;
+
       let imagesMap;
 
-      const matchingInvCar = inventory.find((car) => car.id === matchId);
-      //inventory obj not fed from <InventoryCard/> & <InventoryGrid/> so still missing .imageArray, fetch img URLs & assign here
       try {
         imagesMap = await getModelImageURLs(
           [matchingInvCar.images.model_imgs_key],
@@ -260,19 +350,30 @@ const RightPanel = ({
         );
       } catch (err) {
         console.error("Error fetching model image URLs:", err);
+        return;
       }
 
-      console.log("returned imagesMap", imagesMap);
-      // ✅ Get array of all values from the imagesMap object
-      const imageValues = Object.values(imagesMap);
+      // ✔️ correct syntax — get first array from map
+      const [imageArray] = Object.values(imagesMap);
 
-      console.log("imageValues", imageValues);
+      // ❌ DO NOT mutate Redux / frozen object
+      // matchingInvCar.imageArray = imageArray;
 
-      // ✅ Append to matchingInvCar
-      matchingInvCar.imageArray = imageValues[0];
-      setCompareCars((prev) => [...prev, matchingInvCar]);
-      setInputValue(""); //clear the input (disables btn too)
+      // ✅ create a NEW extensible object
+      const carWithImages = {
+        ...matchingInvCar,
+        imageArray,
+      };
+
+      // ✅ add to compareCars (Redux)
+      // (replace with your slice action if you have one)
+      dispatch(addToCompare(carWithImages));
+
+      // reset UI state
+      setInputValue("");
       inputRef.current.value = "";
+      setSelectedError(false);
+      setInvNotFoundError(false);
     };
   }
 
@@ -313,8 +414,8 @@ const RightPanel = ({
                       return (
                         <CompareCard
                           key={carObj.id}
-                          setCompareCars={setCompareCars}
-                          setChosenCars={setChosenCars}
+                          // setCompareCars={setCompareCars}
+                          // setChosenCars={setChosenCars}
                           carObj={carObj}
                           isChosen={chosenCars.some(
                             (car) => car.id === carObj.id
@@ -327,6 +428,7 @@ const RightPanel = ({
                           }
                           heartedCars={heartedCars}
                           toggleHeartClick={toggleHeartClick}
+                          chosenCars={chosenCars}
                         />
                       );
                     })}

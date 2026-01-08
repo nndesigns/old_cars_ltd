@@ -11,6 +11,8 @@ import RedditIcon from "@mui/icons-material/Reddit";
 import { LiaSmsSolid } from "react-icons/lia";
 import { motion, AnimatePresence } from "framer-motion";
 import "./invCard.css";
+import { unlockScroll } from "../uiSlice";
+import { useDispatch } from "react-redux";
 
 const ITEM_STYLE = {
   border: "none",
@@ -47,7 +49,7 @@ const ShareModal = ({
   chosenCars,
   showShareModal,
   setShowShareModal,
-  setPreventScroll,
+  // setPreventScroll,
   compare,
 }) => {
   // console.log("ShareModal received car", car);
@@ -59,6 +61,7 @@ const ShareModal = ({
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [copied, setCopied] = useState(false);
   const [copyMessage, setCopyMessage] = useState();
+  const dispatch = useDispatch();
 
   const handleCopyLink = (prop) => {
     console.log("received prop", prop);
@@ -200,7 +203,8 @@ const ShareModal = ({
   // CLOSE SHARE
   const closeShare = (e) => {
     setShowShareModal(false);
-    setPreventScroll(false);
+    // setPreventScroll(false);
+    dispatch(unlockScroll());
     e.stopPropagation();
   };
 

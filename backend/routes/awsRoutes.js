@@ -43,6 +43,9 @@ function capitalizeWords(str) {
   return str.replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
+//
+// MODULE.EXPORTS (AWS ROUTES)
+//
 module.exports = (app) => {
   // CONNECT TO DYNAMO (holds all s3 image urls, mapped there by Mapto_model_images_dynamo.py)
   const client = new DynamoDBClient({
@@ -283,12 +286,35 @@ module.exports = (app) => {
       res.status(500).json({ error: "Internal server error" });
     }
   });
-
+  //
   // GET INVENTORY ROUTE
+  //
   app.post("/api/inv", async (req, res) => {
     try {
       const command = new ScanCommand({
         TableName: "Inventory_OldCarsLtd",
+      });
+
+      const response = await client.send(command);
+
+      // DynamoDB returns items in raw AttributeValue format (e.g., { S: "text" })
+      // Convert them to plain JS objects using unmarshall:
+      const { unmarshall } = require("@aws-sdk/util-dynamodb");
+
+      const items = response.Items.map(unmarshall); // now it's clean JSON
+
+      res.json(items); // returns array of objects
+    } catch (err) {
+      console.error("Error fetching inventory:", err);
+      res.status(500).json({ error: "Failed to fetch inventory" });
+    }
+  });
+
+  /// GET UNIQUE INV LOCATIONS
+  app.post("/api/uniqueLocs", async (req, res) => {
+    try {
+      const command = new ScanCommand({
+        TableName: "uniqueInvLocations",
       });
 
       const response = await client.send(command);

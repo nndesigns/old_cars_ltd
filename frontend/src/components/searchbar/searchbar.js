@@ -4,6 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { TfiClose } from "react-icons/tfi";
 import { CiSearch } from "react-icons/ci";
 import { motion, AnimatePresence } from "framer-motion";
+import { useDispatch } from "react-redux";
+import { setLocObjs } from "../../user/userSlice.js";
+import { lockScroll } from "../../uiSlice.js";
+
 import {
   SearchInput,
   InputWrapper,
@@ -25,22 +29,26 @@ function Searchbar({
   darkRoute,
   mode,
   inv, ////WHY  DOES SEARCHBAR NEED INV (THIS ISN'T BEING USED)
-  locationInputValue,
-  setLocationInputValue,
   shopByValue,
   setShopByValue,
   inputRef,
-  setAppliedFilters,
-  setOrderedFilters,
-  handleClearFilters,
   ...props
 }) {
+  const dispatch = useDispatch();
   const [border, setBorder] = useState(false);
-  const [isActive, setIsActive] = useState(
-    mode === "location" || mode === "locationChange"
-      ? locationInputValue.length > 0
-      : false
-  );
+  //LOCATIONS STATE (modal or change modal)
+
+  // VALUE
+  const [value, setValue] = useState("");
+  // IS ACTIVE
+  // const [isActive, setIsActive] = useState(
+  //   mode === "location" || mode === "locationChange"
+  //     ? inputRef.current?.value.length > 0
+  //     : false
+  // );
+  const isActive = value.length > 0;
+
+  console.log("Searchbar received 'mode'", mode);
 
   const [invSearch, setInvSearch] = useState("");
   const [isFocused, setIsFocused] = useState(
@@ -68,6 +76,9 @@ function Searchbar({
     if (!isFocused) setBorder(false);
   };
 
+  //
+  // /HANDEL ON BLUR
+  //
   const handleOnBlur = (e) => {
     if (e.relatedTarget && e.relatedTarget.closest(".droplist")) return;
     setBorder(false);
@@ -86,25 +97,30 @@ function Searchbar({
       ...prev,
       [key]: !prev[key],
     }));
-    // setHighlightedIndex(-1);
   };
 
+  //
+  /// HANDLE CHANGE
+  //
   const handleChange = (e) => {
-    const value = e.target.value;
+    const currValue = e.target.value;
 
-    if (value.length && !isActive) setIsActive(true);
-    if (!value.length && isActive) setIsActive(false);
+    setValue(currValue);
+    // if (value.length && !isActive) setIsActive(true);
+    // if (!value.length && isActive) setIsActive(false);
 
-    if (mode === "location" || mode === "locationChange") {
-      setLocationInputValue(value);
-    } else if (mode === "distLocFilter") {
-      setShopByValue(value);
+    // DISTANCE FILTER
+    if (mode === "distLocFilter") {
+      setShopByValue(currValue);
+      // INVENTORY
     } else if (mode === "inventory") {
-      setInvSearch(value); // triggers droplist useEffect
+      setInvSearch(currValue); // triggers droplist useEffect
     }
   };
 
+  //
   // HANDLE SUBMIT
+  //
   const handleSubmit = useCallback(
     async (e) => {
       const key = e.key;
@@ -112,40 +128,24 @@ function Searchbar({
       const searchValue = e.value ?? inputRef.current.value ?? "";
 
       if (mode === "location" || mode === "locationChange") {
-        if (!searchValue) {
-          setLocationInputValue("");
-          return;
-        }
-        setLocationInputValue(searchValue);
+        console.log("rec'd searchValue", searchValue);
+
         const results = await handleLocationSearch(searchValue);
-        props.setLocObjs(results);
+
+        dispatch(setLocObjs(results));
         if (mode === "location") {
-          props.setPreventScroll(true);
+          // REDUX
+          dispatch(lockScroll());
         }
       } else {
         if (key === "Enter" || isClick) {
+          console.log("THIS ALSO STILL RAN HERE");
           handleOnBlur(e);
-          invStringSearch(
-            navigate,
-            currentRoute,
-            setAppliedFilters,
-            setOrderedFilters,
-            handleClearFilters,
-            invSearch
-          );
+          invStringSearch(navigate, currentRoute, invSearch, dispatch);
         }
       }
     },
-    [
-      mode,
-      invSearch,
-      navigate,
-      currentRoute,
-      setAppliedFilters,
-      setOrderedFilters,
-      handleClearFilters,
-      props,
-    ]
+    [mode, invSearch, navigate, currentRoute, dispatch, props]
   );
 
   // AUTO SCROLLING
@@ -172,7 +172,7 @@ function Searchbar({
       });
     }
   };
-
+  // INV SEARCH: SET 'FLAT MATCHES' W/DROP MATCHES
   useEffect(() => {
     if (dropMatches && Object.keys(dropMatches).length) {
       const flattened = [
@@ -212,6 +212,7 @@ function Searchbar({
     }
   }, [dropMatches, expandedKeys, invSearch]);
 
+  //INV SEARCH : SET DROP MATCHES, SHOW DROPLIST
   useEffect(() => {
     if (
       mode === "inventory" &&
@@ -231,7 +232,7 @@ function Searchbar({
     suppressDroplistRef.current = false;
   }, [invSearch, mode]);
 
-  // Focus/blur management
+  // FOCUS / BLUR INPUT
   useEffect(() => {
     if (isFocused && inputRef.current) {
       inputRef.current.focus();
@@ -269,7 +270,7 @@ function Searchbar({
             ? invSearch
             : mode === "rightPanel"
             ? props.inputValue
-            : locationInputValue
+            : value // DOES THIS HAVE TO BE A STATE?
         }
         onFocus={handleFocus}
         onBlur={handleOnBlur}
@@ -326,9 +327,10 @@ function Searchbar({
                   makeModelSearch(
                     navigate,
                     currentRoute,
-                    setAppliedFilters,
+                    dispatch,
+                    /*    setAppliedFilters,
                     setOrderedFilters,
-                    handleClearFilters,
+                    handleClearFilters, */
                     key,
                     raw,
                     inputRef,
@@ -351,24 +353,24 @@ function Searchbar({
         showDroplist={showDroplist}
       />
 
+      {/* CIRCLE X CLEAR INPUT BTN */}
       {isActive && (
         <button
           className="clearInputBtn"
           style={{ right: mode === "distLocFilter" ? ".5rem" : "" }}
           onClick={(e) => {
             e.stopPropagation();
-            inputRef.current.value = null;
+            inputRef.current.value = "";
 
-            if (mode === "locationChange" || mode === "location") {
-              setLocationInputValue("");
-              if (mode === "locationChange") props.setLocObjs([]);
+            if (mode === "locationChange") {
+              dispatch(setLocObjs([]));
             } else if (mode === "inventory") {
               setInvSearch("");
             } else if (mode === "distLocFilter") {
               setShopByValue("");
             }
 
-            setIsActive(false);
+            // setIsActive(false);
             inputRef.current.focus();
           }}
         >
@@ -434,9 +436,10 @@ function Searchbar({
                               makeModelSearch(
                                 navigate,
                                 currentRoute,
-                                setAppliedFilters,
+                                dispatch,
+                                /*           setAppliedFilters,
                                 setOrderedFilters,
-                                handleClearFilters,
+                                handleClearFilters, */
                                 key,
                                 item,
                                 inputRef,
@@ -486,9 +489,10 @@ function Searchbar({
                                   makeModelSearch(
                                     navigate,
                                     currentRoute,
-                                    setAppliedFilters,
-                                    setOrderedFilters,
-                                    handleClearFilters,
+                                    dispatch,
+                                    // setAppliedFilters,
+                                    // setOrderedFilters,
+                                    // handleClearFilters,
                                     key,
                                     item,
                                     inputRef,

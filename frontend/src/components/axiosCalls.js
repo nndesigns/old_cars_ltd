@@ -1,10 +1,6 @@
 import axios from "axios";
 
 export async function getModelImageURLs(modelIds, inv, mobile) {
-  // console.log("rec'd modelIds arg", modelIds);
-
-  // console.log("rec'd 'inv arg", inv);
-
   try {
     const res = await axios.post("http://localhost:5001/api/batch", {
       modelIds,
@@ -21,6 +17,18 @@ export async function getModelImageURLs(modelIds, inv, mobile) {
 export async function getInventory() {
   try {
     const res = await axios.post("http://localhost:5001/api/inv");
+
+    return res.data;
+  } catch (err) {
+    console.error("Error fetching model image URLs:", err);
+    throw err; // optionally rethrow for upstream handling
+  }
+}
+
+//UNIQUE LOCATIONS AWS TABLE
+export async function getUniqueLocations() {
+  try {
+    const res = await axios.post("http://localhost:5001/api/uniqueLocs");
     return res.data;
   } catch (err) {
     console.error("Error fetching model image URLs:", err);

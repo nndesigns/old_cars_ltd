@@ -88,7 +88,7 @@ const CustomSelect = ({
           paddingInline: ".75rem 3rem",
           marginTop: ".4rem",
           color: prop ? "black" : "rgba(0,0,0, .6)",
-          border: clickedOn ? "2px solid var(--btnBG)" : "",
+          border: clickedOn ? "1px solid var(--btnBG)" : "",
           ...selectStyle,
         }}
       >
@@ -112,8 +112,9 @@ const CustomSelect = ({
           right: ".6rem",
           top: "50%",
           pointerEvents: "none",
-          color: "rgb(25, 118, 210)",
+          color: clickedOn ? "var(--btnBG)" : "rgb(25, 118, 210)",
           fontSize: "1.5rem",
+          transition: "color .3s ease",
         }}
       />
     </div>

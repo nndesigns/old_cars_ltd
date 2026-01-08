@@ -1,5 +1,6 @@
 const connection = require("../config/db");
 
+/// OLD SQL CONNECTION
 module.exports = function (app) {
   app.get("/api/inventory", async (req, res) => {
     const invQuery = `

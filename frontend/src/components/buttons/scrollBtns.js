@@ -7,6 +7,7 @@ const buttonStyleLeft = (size) => ({
   padding: `${size === "sm" ? "14px 10px 14px 7px" : "40px 12px 40px 9px"}`,
   minWidth: "unset",
   position: "absolute",
+
   border: "none",
   borderRadius: "0px 12px 12px 0px",
   boxShadow: "5px 8px 15px -7px rgba(0, 0, 0, 0.4)",
