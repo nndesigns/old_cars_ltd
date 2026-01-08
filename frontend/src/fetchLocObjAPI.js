@@ -4,8 +4,11 @@
 
 const fetchLocObjFromCoords = async (lat, lng) => {
   const USER_NAME = "matrix90";
+  // const response = await fetch(
+  //   `http://api.geonames.org/findNearbyPostalCodesJSON?lat=${lat}&lng=${lng}&username=${USER_NAME}`
+  // );
   const response = await fetch(
-    `http://api.geonames.org/findNearbyPostalCodesJSON?lat=${lat}&lng=${lng}&username=${USER_NAME}`
+    `https://secure.geonames.org/findNearbyPostalCodesJSON?lat=${lat}&lng=${lng}&username=${USER_NAME}`
   );
 
   const data = await response.json();
