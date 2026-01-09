@@ -96,11 +96,11 @@ const LocationHoverBox = ({
   }
   function handleMouseLeave() {
     if (locObjs !== null) {
-      //logic if LCM IS being returned
+      // if LCM IS being returned (don't affect SLM state)
       return;
     } else {
       //logic if LCM is NOT being returned
-      if (isInputFocused(locationInputRef.current)) {
+      if (isInputFocused(locationInputRef)) {
         return;
       } else {
         console.log("👉 handleMouseLeave closed LM");
@@ -126,7 +126,7 @@ const LocationHoverBox = ({
         }
       } else if (
         showLocationModal &&
-        isInputFocused(locationInputRef.current) &&
+        isInputFocused(locationInputRef) &&
         !locationRef.current.contains(event.target)
       ) {
         // clicked outside of LM while input was active
