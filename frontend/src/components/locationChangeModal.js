@@ -41,7 +41,7 @@ const Modal = styled(Box)(({ theme }) => ({
 
 /////////////  COMPONENT
 const LocationChangeModal = forwardRef(
-  ({ distMode, locationInputRef, setShowLocationChangeModal }, ref) => {
+  ({ distMode, locationInputRef }, ref) => {
     const dispatch = useDispatch();
 
     return (
@@ -60,12 +60,13 @@ const LocationChangeModal = forwardRef(
           onClick={(e) => {
             if (distMode) {
               dispatch(setLocObjs([]));
-              setShowLocationChangeModal(false);
+
               if (window.innerWidth >= 820) {
                 dispatch(unlockScroll());
               }
             } else {
-              clearLocObjs();
+              dispatch(clearLocObjs());
+              dispatch(unlockScroll());
             }
             e.stopPropagation();
           }}
