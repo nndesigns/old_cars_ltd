@@ -17,7 +17,7 @@ export const handleLocationSearch = async (loc, distFilter = false) => {
   // add distFilter as a query param
   const query = `${param}&distFilter=${distFilter}`;
 
-  const url = `http://localhost:5001/api/locations/search?${query}`;
+  const url = `${process.env.REACT_APP_API_URL}/api/locations/search?${query}`;
 
   try {
     const res = await fetch(url);

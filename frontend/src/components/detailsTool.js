@@ -20,7 +20,7 @@ import { AiOutlineClose } from "react-icons/ai"; // X (NO)
 
 const handleGetCoords = async (zip) => {
   // const query = `${zip}`;
-  const url = `http://localhost:5001/api/locations/coords?zip=${zip}`;
+  const url = `${process.env.REACT_APP_API_URL}/api/locations/coords?zip=${zip}`;
   try {
     const res = await fetch(url);
     if (!res.ok) {

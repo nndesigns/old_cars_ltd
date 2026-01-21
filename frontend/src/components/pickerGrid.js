@@ -40,7 +40,7 @@ const PickerGrid = ({
 
       const getModelImageURLs = async () => {
         try {
-          const res = await axios.post("http://localhost:5001/api/batch", {
+          const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/batch`, {
             modelIds: allModelImgKeys,
             mobile: true,
           });

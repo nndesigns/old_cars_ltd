@@ -2,7 +2,7 @@ import axios from "axios";
 
 export async function getModelImageURLs(modelIds, inv, mobile) {
   try {
-    const res = await axios.post("http://localhost:5001/api/batch", {
+    const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/batch`, {
       modelIds,
       inv, //boolean (true = inv imgs (VehiclePage), false/null = model imgs (InventoryCard))
       mobile,
@@ -16,7 +16,7 @@ export async function getModelImageURLs(modelIds, inv, mobile) {
 
 export async function getInventory() {
   try {
-    const res = await axios.post("http://localhost:5001/api/inv");
+    const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/inv`);
 
     return res.data;
   } catch (err) {
@@ -28,7 +28,7 @@ export async function getInventory() {
 //UNIQUE LOCATIONS AWS TABLE
 export async function getUniqueLocations() {
   try {
-    const res = await axios.post("http://localhost:5001/api/uniqueLocs");
+    const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/uniqueLocs`);
     return res.data;
   } catch (err) {
     console.error("Error fetching model image URLs:", err);
@@ -41,7 +41,7 @@ export async function searchInventory(query) {
   if (!query) return [];
 
   try {
-    const res = await axios.get(`http://localhost:5001/api/inventory/search`, {
+    const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/inventory/search`, {
       params: { query },
     });
 
@@ -57,7 +57,7 @@ export async function smartSearch(invSearch) {
 
   try {
     const res = await axios.get(
-      `http://localhost:5001/api/inventory/smartsearch`,
+      `${process.env.REACT_APP_API_URL}/api/inventory/smartsearch`,
       {
         params: { invSearch },
       }

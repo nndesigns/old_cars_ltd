@@ -1,0 +1,8 @@
+#.env (frontend/ & backend/)
+.env
+
+# dependencies (frontend/ & backend/)
+node_modules
+
+#macOS metadata
+.DS_Store
